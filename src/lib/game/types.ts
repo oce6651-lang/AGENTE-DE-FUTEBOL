@@ -16,6 +16,7 @@ export interface Player {
   idade: number;
   posicao: Position;
   pe: Foot;
+  altura: number; // cm
   cidade: string;
   clube: string | null;
   empresario: string | null; // agency id
@@ -27,6 +28,40 @@ export interface Player {
   historico: string[];
   observado: number; // number of times scouted
   status: string;
+  timeline: TimelineEvent[];
+}
+
+export type TimelineType =
+  | "descoberta"
+  | "observacao"
+  | "assinatura"
+  | "peneira"
+  | "aprovado"
+  | "reprovado"
+  | "transferencia"
+  | "aposentadoria"
+  | "nota";
+
+export interface TimelineEvent {
+  ano: number;
+  mes: number;
+  semana: number;
+  tipo: TimelineType;
+  texto: string;
+}
+
+export interface Tryout {
+  id: string;
+  playerId: string;
+  clubId: string;
+  enviadaAno: number;
+  enviadaMes: number;
+  enviadaSemana: number;
+  duracaoSemanas: number; // ex: 1 = ~5 dias, 2 = ~10 dias
+  restanteSemanas: number;
+  status: "em_andamento" | "aprovado" | "reprovado" | "mais_tempo" | "lesionado";
+  notas: string[];
+  resultadoTexto?: string;
 }
 
 export interface Club {
@@ -85,9 +120,11 @@ export interface GameState {
   semana: number;
   dinheiro: number;
   prestigio: number; // 1-5
+  reputacao: number; // 0-100, cresce lentamente
   jogadores: Player[];
   clubes: Club[];
   negociacoes: Negotiation[];
+  peneiras: Tryout[];
   noticias: NewsItem[];
   financas: FinanceEntry[];
   seed: number;

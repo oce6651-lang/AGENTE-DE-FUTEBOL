@@ -6,10 +6,11 @@ export function PlayerCard({ player, onClick, revealPotencial = false }: {
   onClick?: () => void;
   revealPotencial?: boolean;
 }) {
+  const showAtual = player.observado >= 1 || !!player.empresario;
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-2xl border border-border bg-card p-4 hover:bg-secondary transition-colors shadow-[var(--shadow-card)]"
+      className="w-full text-left rounded-2xl border border-border bg-card p-4 hover:bg-secondary transition-all hover:scale-[1.01] shadow-[var(--shadow-card)]"
     >
       <div className="flex items-center gap-3">
         <div className="h-12 w-12 shrink-0 rounded-xl grid place-items-center font-black text-lg"
@@ -22,13 +23,13 @@ export function PlayerCard({ player, onClick, revealPotencial = false }: {
             <span className="text-xs text-muted-foreground">{player.idade}a</span>
           </div>
           <div className="text-xs text-muted-foreground truncate">
-            {player.id} • {player.pe} • {player.cidade}
+            {player.pe} • {player.altura}cm • {player.cidade}
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-xl font-black">{player.atual}</div>
-          {revealPotencial && (
-            <div className="text-[10px] text-primary">POT {player.potencial}</div>
+          <div className="text-xl font-black">{showAtual ? player.atual : "??"}</div>
+          {revealPotencial && player.observado >= 3 && (
+            <div className="text-[10px] text-primary">POT ~{Math.round(player.potencial / 5) * 5}</div>
           )}
         </div>
       </div>
@@ -36,6 +37,7 @@ export function PlayerCard({ player, onClick, revealPotencial = false }: {
         <Badge variant="secondary" className="text-[10px]">{player.status}</Badge>
         {player.empresario && <Badge className="text-[10px]">Contratado</Badge>}
         {player.idade < 18 && <Badge variant="outline" className="text-[10px]">Menor</Badge>}
+        {player.observado === 0 && <Badge variant="outline" className="text-[10px]">Novo</Badge>}
       </div>
     </button>
   );
