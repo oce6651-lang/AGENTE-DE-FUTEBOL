@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { GameState, Player } from "@/lib/game/types";
+import type { GameState, Player, TimelineEvent } from "@/lib/game/types";
+import { MESES } from "@/lib/game/types";
 
 export function PlayerDetail({
   player,
@@ -11,6 +12,7 @@ export function PlayerDetail({
   onObservar,
   onConversar,
   onPropor,
+  onPeneira,
 }: {
   player: Player;
   state: GameState;
@@ -18,8 +20,14 @@ export function PlayerDetail({
   onObservar: () => void;
   onConversar: () => void;
   onPropor: () => void;
+  onPeneira?: () => void;
 }) {
   const contratado = player.empresario === state.agent.id;
+  const nivel = player.observado; // 0..∞
+  const revelaAtual = nivel >= 1 || contratado;
+  const revelaAtributos = nivel >= 2 || contratado;
+  const revelaPotencial = nivel >= 3 || contratado;
+
   const attrs: [string, number][] = [
     ["Técnica", player.atributos.tecnica],
     ["Velocidade", player.atributos.velocidade],
@@ -28,7 +36,6 @@ export function PlayerDetail({
     ["Físico", player.atributos.fisico],
     ["Mental", player.atributos.mental],
   ];
-  const potencialRevelado = contratado || player.observado >= 2;
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -42,64 +49,80 @@ export function PlayerDetail({
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-black truncate">{player.nome}</h2>
-            <p className="text-xs text-muted-foreground">{player.id}</p>
+            <p className="text-xs text-muted-foreground">{player.id} • {player.altura} cm</p>
             <div className="mt-2 flex flex-wrap gap-1">
               <Badge variant="secondary">{player.idade} anos</Badge>
               <Badge variant="secondary">{player.pe}</Badge>
               <Badge variant="secondary">{player.cidade}</Badge>
-              <Badge>{player.personalidade}</Badge>
+              {revelaAtributos && <Badge>{player.personalidade}</Badge>}
             </div>
           </div>
           <div className="text-right shrink-0">
-            <div className="text-3xl font-black">{player.atual}</div>
+            <div className="text-3xl font-black">{revelaAtual ? player.atual : "??"}</div>
             <div className="text-[10px] text-muted-foreground">ATUAL</div>
-            {potencialRevelado && (
+            {revelaPotencial && (
               <>
-                <div className="text-xl font-black text-primary mt-1">{player.potencial}</div>
-                <div className="text-[10px] text-muted-foreground">POT</div>
+                <div className="text-xl font-black text-primary mt-1">~{Math.round(player.potencial / 5) * 5}</div>
+                <div className="text-[10px] text-muted-foreground">POT ESTIM.</div>
               </>
             )}
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          {attrs.map(([nome, v]) => (
-            <div key={nome}>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">{nome}</span>
-                <span className="font-bold">{v}</span>
+        {revelaAtributos ? (
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            {attrs.map(([nome, v]) => (
+              <div key={nome}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">{nome}</span>
+                  <span className="font-bold">{v}</span>
+                </div>
+                <Progress value={v} className="h-2" />
               </div>
-              <Progress value={v} className="h-2" />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+            {nivel === 0
+              ? "Você só o avistou. Observe algumas vezes para conhecer seus atributos."
+              : "Continue observando para revelar os atributos técnicos."}
+            <div className="mt-1 text-primary font-bold">Observações: {nivel} / 2</div>
+          </div>
+        )}
 
         <div className="mt-5 text-xs text-muted-foreground space-y-1">
           <div>Clube: {player.clube ?? "Sem clube"}</div>
           <div>Empresário: {player.empresario ? (contratado ? state.agent.agencia : "Outro empresário") : "Nenhum"}</div>
           <div>Descoberto em: {player.local}</div>
-          <div>Observações: {player.observado}</div>
+          <div>Observações realizadas: {nivel}</div>
         </div>
 
-        {player.historico.length > 0 && (
+        {player.timeline.length > 0 && (
           <div className="mt-5">
-            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Histórico</div>
-            <ul className="text-xs space-y-1">
-              {player.historico.map((h, i) => <li key={i}>• {h}</li>)}
-            </ul>
+            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Linha do tempo</div>
+            <ol className="relative border-s-2 border-border ms-2 space-y-3">
+              {player.timeline.map((e, i) => (
+                <TimelineItem key={i} e={e} />
+              ))}
+            </ol>
           </div>
         )}
 
         {!contratado && !player.empresario && (
           <div className="mt-6 grid grid-cols-3 gap-2">
-            <Button variant="secondary" onClick={onObservar}>Observar</Button>
-            <Button variant="secondary" onClick={onConversar}>Conversar</Button>
-            <Button onClick={onPropor}>Propor</Button>
+            <Button variant="secondary" onClick={onObservar}>Observar (R$60)</Button>
+            <Button variant="secondary" onClick={onConversar}>Conversar (R$80)</Button>
+            <Button onClick={onPropor}>Propor (R$300)</Button>
+          </div>
+        )}
+        {contratado && !player.clube && onPeneira && (
+          <div className="mt-6">
+            <Button onClick={onPeneira} className="w-full">Enviar para peneira em um clube</Button>
           </div>
         )}
         {contratado && (
-          <div className="mt-6 text-center text-sm text-primary font-bold">
-            Este jogador é representado pela sua agência.
+          <div className="mt-4 text-center text-sm text-primary font-bold">
+            Representado por {state.agent.agencia}
           </div>
         )}
         {!contratado && player.empresario && (
@@ -109,5 +132,28 @@ export function PlayerDetail({
         )}
       </Card>
     </div>
+  );
+}
+
+function TimelineItem({ e }: { e: TimelineEvent }) {
+  const cor: Record<TimelineEvent["tipo"], string> = {
+    descoberta: "bg-muted-foreground",
+    observacao: "bg-muted-foreground",
+    assinatura: "bg-primary",
+    peneira: "bg-accent",
+    aprovado: "bg-primary",
+    reprovado: "bg-destructive",
+    transferencia: "bg-primary",
+    aposentadoria: "bg-muted-foreground",
+    nota: "bg-muted-foreground",
+  };
+  return (
+    <li className="ms-4">
+      <span className={`absolute -start-1.5 mt-1.5 h-3 w-3 rounded-full ring-2 ring-background ${cor[e.tipo]}`} />
+      <div className="text-[10px] uppercase text-muted-foreground">
+        {MESES[e.mes - 1]} {e.ano} • sem {e.semana}
+      </div>
+      <div className="text-sm">{e.texto}</div>
+    </li>
   );
 }
