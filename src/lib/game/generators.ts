@@ -1,4 +1,4 @@
-import type { Attributes, Club, Player, Position, Foot } from "./types";
+import type { Attributes, Club, Player, Position, Foot, TimelineEvent } from "./types";
 
 // Deterministic-ish PRNG for future save-friendly rolls (still uses Math.random for events)
 export function rid(prefix: string, n: number): string {
@@ -38,22 +38,52 @@ export function gerarAtributos(base: number): Attributes {
   };
 }
 
+// Curva de potencial *muito* enviesada para baixo.
+// A grande maioria dos jogadores é medíocre. Craques são raríssimos.
+function rolarPotencial(): number {
+  const r = Math.random();
+  if (r < 0.55) return rnd(35, 55);           // 55% — jogador comum
+  if (r < 0.85) return rnd(55, 68);           // 30% — jogador de divisões inferiores
+  if (r < 0.965) return rnd(68, 78);          // 11.5% — bom jogador regional
+  if (r < 0.995) return rnd(78, 87);          // 3% — talento nacional
+  if (r < 0.9995) return rnd(87, 92);         // 0.45% — grande talento
+  if (r < 0.99995) return rnd(92, 96);        // 0.045% — jogador de elite
+  return rnd(96, 99);                          // ~0.005% — craque histórico
+}
+
+function rolarAltura(posicao: Position): number {
+  // média por posição em cm
+  const base = posicao === "GOL" ? 188 : posicao === "ZAG" ? 186 : posicao === "ATA" ? 180 : 175;
+  return base + rnd(-8, 8);
+}
+
 export interface GerarPlayerOpts {
   cidade: string;
   local: string;
   nextId: number;
+  ano: number;
+  mes: number;
+  semana: number;
 }
 
-export function gerarJogador({ cidade, local, nextId }: GerarPlayerOpts): Player {
+export function gerarJogador({ cidade, local, nextId, ano, mes, semana }: GerarPlayerOpts): Player {
   const idade = rnd(12, 22);
-  const potencial = rnd(40, 95);
-  const atual = Math.max(20, Math.min(potencial, rnd(potencial - 35, potencial - 5)));
+  const posicao = pick(POSICOES);
+  const potencial = rolarPotencial();
+  // atual muito abaixo do potencial (jogador jovem cru)
+  const gap = Math.max(15, 55 - idade * 2);
+  const atual = Math.max(15, Math.min(potencial, rnd(potencial - gap - 5, potencial - gap + 5)));
+  const nome = `${pick(NOMES)} ${pick(SOBRENOMES)}`;
+  const timeline: TimelineEvent[] = [
+    { ano, mes, semana, tipo: "descoberta", texto: `Avistado em ${local} (${cidade}).` },
+  ];
   return {
     id: rid("PLY", nextId),
-    nome: `${pick(NOMES)} ${pick(SOBRENOMES)}`,
+    nome,
     idade,
-    posicao: pick(POSICOES),
+    posicao,
     pe: pick(PES),
+    altura: rolarAltura(posicao),
     cidade,
     clube: null,
     empresario: null,
@@ -65,6 +95,7 @@ export function gerarJogador({ cidade, local, nextId }: GerarPlayerOpts): Player
     historico: [`Descoberto em ${local} (${cidade}).`],
     observado: 0,
     status: "Sem clube",
+    timeline,
   };
 }
 
