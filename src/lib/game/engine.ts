@@ -379,7 +379,7 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     s.semana = 1;
     s.mes += 1;
     if (s.mes > 12) { s.mes = 1; s.ano += 1; }
-    const desp = 300 + s.jogadores.length * 50;
+    const desp = 500 + s.jogadores.length * 120;
     s = {
       ...s,
       dinheiro: s.dinheiro - desp,
@@ -395,18 +395,46 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   }
 
   s.jogadores = s.jogadores.map(p => {
-    if (p.atual < p.potencial && Math.random() < 0.35) {
-      const inc = rnd(1, 2);
-      return { ...p, atual: Math.min(p.potencial, p.atual + inc) };
+    // Evolução lenta: mais rápida para jovens em clube
+    if (p.atual >= p.potencial) return p;
+    const emClube = !!p.clube;
+    const jovem = p.idade < 21;
+    const chance = (jovem ? 0.18 : 0.08) * (emClube ? 1.3 : 0.6);
+    if (Math.random() < chance) {
+      return { ...p, atual: Math.min(p.potencial, p.atual + 1) };
     }
     return p;
   });
 
-  if (Math.random() < 0.6) {
+  // ===== processa peneiras em andamento =====
+  const emAndamento = s.peneiras.filter(t => t.status === "em_andamento" || t.status === "mais_tempo");
+  for (const t of emAndamento) {
+    const restante = Math.max(0, t.restanteSemanas - 1);
+    if (restante === 0) {
+      const { s: s2, not } = avaliarPeneira(s, t);
+      s = s2;
+      if (not) { s = { ...s, noticias: [not, ...s.noticias] }; eventos.push(not.titulo); }
+    } else {
+      s = { ...s, peneiras: s.peneiras.map(x => x.id === t.id ? { ...x, restanteSemanas: restante } : x) };
+    }
+  }
+
+  // reputação decai lentamente se você não faz nada
+  if (Math.random() < 0.15) {
+    s = { ...s, reputacao: Math.max(0, s.reputacao - 1) };
+  }
+
+  // Eventos aleatórios. Sondagens de clubes só chegam para jogadores JÁ contratados por você.
+  const meus = s.jogadores.filter(j => j.empresario === s.agent.id && j.clube);
+  const chanceEvento = 0.25 + s.reputacao * 0.004;
+  if (Math.random() < chanceEvento) {
     const roll = Math.random();
-    if (roll < 0.35 && s.jogadores.length > 0) {
-      const jogador = pick(s.jogadores);
+    if (roll < 0.35 && meus.length > 0) {
+      const jogador = pick(meus);
       const clube = pick(s.clubes);
+      if (clube.nome === jogador.clube) {
+        // ignora se for o mesmo clube
+      } else {
       const valor = Math.floor(clube.orcamento * 0.001 * (jogador.atual / 60) * (0.5 + Math.random()));
       const salario = Math.max(1000, Math.floor(valor * 0.005));
       const comissao = 0.1;
@@ -430,12 +458,13 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
       };
       s = { ...s, noticias: [not, ...s.noticias] };
       eventos.push(not.titulo);
+      }
     } else if (roll < 0.6) {
       const not: NewsItem = {
         id: nextNewsId(),
         semana: s.semana, mes: s.mes, ano: s.ano,
         titulo: `Novo talento surgiu em ${s.agent.cidade}`,
-        texto: `Boatos apontam um jovem promissor em ${pick(LOCAIS as unknown as string[])}.`,
+        texto: `Boatos apontam um jovem promissor em ${pick(LOCAIS as unknown as string[])}. Vá até lá.`,
         tipo: "descoberta",
       };
       s = { ...s, noticias: [not, ...s.noticias] };
@@ -458,13 +487,29 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
         texto: `${s.agent.agencia} ganhou destaque na imprensa esportiva.`,
         tipo: "info",
       };
-      s = { ...s, noticias: [not, ...s.noticias], prestigio: Math.min(5, s.prestigio + (Math.random() < 0.15 ? 1 : 0)) };
+      s = {
+        ...s,
+        noticias: [not, ...s.noticias],
+        reputacao: Math.min(100, s.reputacao + 2),
+        prestigio: Math.min(5, s.prestigio + (Math.random() < 0.05 ? 1 : 0)),
+      };
       eventos.push(not.titulo);
     }
   }
 
   if (s.semana === 1 && s.mes === 1) {
     s.jogadores = s.jogadores.map(p => ({ ...p, idade: p.idade + 1 }));
+    // aposentadorias
+    s.jogadores = s.jogadores.map(p => {
+      if (p.idade >= 36 && Math.random() < 0.2) {
+        const evt: TimelineEvent = {
+          ano: s.ano, mes: 1, semana: 1, tipo: "aposentadoria",
+          texto: `Encerrou a carreira aos ${p.idade}.`,
+        };
+        return { ...p, status: "Aposentado", timeline: [...p.timeline, evt] };
+      }
+      return p;
+    });
   }
 
   return { state: s, eventos };
@@ -517,6 +562,11 @@ export function responderNegociacao(
         clube: clube.nome,
         status: `No ${clube.nome}`,
         historico: [...p.historico, `Transferido para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
+        timeline: [...p.timeline, {
+          ano: state.ano, mes: state.mes, semana: state.semana,
+          tipo: "transferencia" as const,
+          texto: `Transferido para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`,
+        }],
       } : p),
     },
     mensagem: `Você ganhou R$ ${receita.toLocaleString("pt-BR")} de comissão!`,
