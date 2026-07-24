@@ -38,6 +38,7 @@ let PLAYER_COUNTER = 1;
 let NEWS_COUNTER = 100;
 let FIN_COUNTER = 1;
 let NEG_COUNTER = 1;
+let TRY_COUNTER = 1;
 
 function nextPlayerId(state: GameState) {
   const max = state.jogadores.reduce((m, p) => {
@@ -50,6 +51,7 @@ function nextPlayerId(state: GameState) {
 function nextNewsId() { NEWS_COUNTER++; return rid("NEW", NEWS_COUNTER); }
 function nextFinId() { FIN_COUNTER++; return rid("FIN", FIN_COUNTER); }
 function nextNegId() { NEG_COUNTER++; return rid("NEG", NEG_COUNTER); }
+function nextTryoutId() { TRY_COUNTER++; return rid("TRY", TRY_COUNTER); }
 
 export function dataLabel(s: GameState) {
   return `${MESES[s.mes - 1]} ${s.ano} • Semana ${s.semana}`;
