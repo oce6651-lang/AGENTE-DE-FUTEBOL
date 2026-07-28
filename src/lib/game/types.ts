@@ -10,6 +10,9 @@ export interface Attributes {
   mental: number;
 }
 
+/** Categoria de idade das partidas observadas nos locais. */
+export type AgeCategory = "Sub-13" | "Sub-15" | "Sub-17" | "Livre" | "Veterano";
+
 export interface Player {
   id: string;
   nome: string;
@@ -19,16 +22,30 @@ export interface Player {
   altura: number; // cm
   cidade: string;
   clube: string | null;
-  empresario: string | null; // agency id
+  empresario: string | null; // id da agência (jogador ou rival)
   atributos: Attributes;
   atual: number;
   potencial: number;
   personalidade: "Ambicioso" | "Humilde" | "Ganancioso" | "Calmo" | "Explosivo";
-  local: string; // where discovered
+  local: string; // onde foi descoberto
   historico: string[];
-  observado: number; // number of times scouted
+  observado: number; // quantas vezes foi observado tecnicamente
+  confianca: number; // 0-100 confiança do atleta/família em você
   status: string;
   timeline: TimelineEvent[];
+  /** Notas de scout acumuladas nas partidas assistidas. */
+  relatorios: ScoutNote[];
+  /** Semente visual do avatar (cores/traços). */
+  visual: number;
+}
+
+export interface ScoutNote {
+  ano: number;
+  mes: number;
+  semana: number;
+  partida: string;
+  nota: number; // 0-10 desempenho na partida
+  texto: string;
 }
 
 export type TimelineType =
@@ -57,20 +74,39 @@ export interface Tryout {
   enviadaAno: number;
   enviadaMes: number;
   enviadaSemana: number;
-  duracaoSemanas: number; // ex: 1 = ~5 dias, 2 = ~10 dias
+  duracaoSemanas: number;
   restanteSemanas: number;
   status: "em_andamento" | "aprovado" | "reprovado" | "mais_tempo" | "lesionado";
   notas: string[];
   resultadoTexto?: string;
 }
 
+export type ClubPersonality =
+  | "Formador"       // aposta na base
+  | "Imediatista"    // quer jogadores prontos
+  | "Pechincha"      // só compra barato
+  | "Vitrine"        // compra jovens para revender
+  | "Tradicional";   // conservador, exige muito
+
+export type Division = "Amador" | "Serie D" | "Serie C" | "Serie B" | "Serie A" | "Elite";
+
 export interface Club {
   id: string;
   nome: string;
-  categoria: "Base" | "Amador" | "Serie D" | "Serie C" | "Serie B" | "Serie A" | "Elite";
+  abrev: string;
+  categoria: Division;
+  personalidade: ClubPersonality;
   orcamento: number;
   cidade: string;
-  interesse: string[]; // player ids
+  cores: [string, string];
+  tecnico: string;
+  moralTecnico: number; // 0-100
+  pontos: number;       // temporada corrente
+  jogos: number;
+  elenco: number;
+  necessidades: Position[];
+  interesse: string[]; // ids de jogadores
+  confiancaEmVoce: number; // 0-100
 }
 
 export interface Negotiation {
@@ -78,10 +114,19 @@ export interface Negotiation {
   playerId: string;
   clubId: string;
   valorProposta: number;
-  comissao: number; // fraction to agent
+  comissao: number;
   salario: number;
-  status: "aberta" | "aceita" | "recusada";
+  status: "aberta" | "aceita" | "recusada" | "expirada";
+  expiraEm: number; // semanas restantes
   criadaEm: string;
+}
+
+export interface RivalAgent {
+  id: string;
+  nome: string;
+  agencia: string;
+  reputacao: number;
+  clientes: number;
 }
 
 export interface NewsItem {
@@ -91,14 +136,14 @@ export interface NewsItem {
   ano: number;
   titulo: string;
   texto: string;
-  tipo: "info" | "mercado" | "financeiro" | "descoberta";
+  tipo: "info" | "mercado" | "financeiro" | "descoberta" | "mundo";
 }
 
 export interface FinanceEntry {
   id: string;
   data: string;
   descricao: string;
-  valor: number; // + or -
+  valor: number;
   tipo: "receita" | "despesa";
 }
 
@@ -120,9 +165,13 @@ export interface GameState {
   semana: number;
   dinheiro: number;
   prestigio: number; // 1-5
-  reputacao: number; // 0-100, cresce lentamente
-  jogadores: Player[];
+  reputacao: number; // 0-100
+  energia: number;   // ações por semana
+  energiaMax: number;
+  jogadores: Player[];   // representados por você
+  radar: Player[];       // atletas mapeados, ainda não assinados
   clubes: Club[];
+  rivais: RivalAgent[];
   negociacoes: Negotiation[];
   peneiras: Tryout[];
   noticias: NewsItem[];
@@ -144,3 +193,48 @@ export const LOCAIS = [
   "Escola Estadual",
   "Várzea",
 ] as const;
+
+export const CATEGORIAS: AgeCategory[] = ["Sub-13", "Sub-15", "Sub-17", "Livre", "Veterano"];
+
+// ============ Partidas (não persistidas) ============
+
+export interface MatchPlayer {
+  player: Player;
+  numero: number;
+  nota: number;
+  titular: boolean;
+  minutos: number;
+  gols: number;
+  destaque: boolean;
+}
+
+export interface MatchTeam {
+  nome: string;
+  abrev: string;
+  cores: [string, string];
+  tecnico: string;
+  formacao: string;
+  titulares: MatchPlayer[];
+  reservas: MatchPlayer[];
+  gols: number;
+}
+
+export interface MatchEvent {
+  minuto: number;
+  tipo: "apito" | "gol" | "chance" | "defesa" | "falta" | "cartao" | "substituicao" | "lance" | "fim";
+  lado: "casa" | "fora" | "neutro";
+  texto: string;
+  playerId?: string;
+}
+
+export interface Fixture {
+  id: string;
+  local: string;
+  categoria: AgeCategory;
+  casa: MatchTeam;
+  fora: MatchTeam;
+  arbitro: string;
+  horario: string;
+  publico: number;
+  custoIngresso: number;
+}
