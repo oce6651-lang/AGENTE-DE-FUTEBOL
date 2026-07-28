@@ -10,8 +10,8 @@ import type { Fixture, GameState, MatchEvent, MatchPlayer, MatchTeam } from "@/l
 import { LOCATION_IMAGES } from "@/lib/game/locations";
 import bgMatch from "@/assets/bg-match.jpg";
 import {
-  ArrowLeft, Clock, Users, Whistle, Play, Pause, FastForward, Star, Ticket,
-} from "./icons";
+  ArrowLeft, Clock, Users, Flag as Whistle, Play, Pause, FastForward, Star, Ticket,
+} from "lucide-react";
 
 type Step = "fixtures" | "lineups" | "live" | "report";
 
@@ -90,7 +90,7 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
               <div className="text-xs uppercase tracking-widest text-primary font-bold">Dia de jogo</div>
               <div className="text-2xl font-black">{local}</div>
             </div>
-            <Badge variant="secondary" className="gap-1"><Ticket /> viagem + ingresso</Badge>
+            <Badge variant="secondary" className="gap-1"><Ticket className="h-4 w-4" /> viagem + ingresso</Badge>
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-center gap-1 w-16">
                   <Badge className="text-[10px]">{f.categoria}</Badge>
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock />{f.horario}</span>
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock className="h-4 w-4" />{f.horario}</span>
                 </div>
                 <div className="flex flex-1 items-center justify-center gap-3 min-w-0">
                   <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
@@ -120,8 +120,8 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1"><Users />{f.publico} pessoas</span>
-                <span className="flex items-center gap-1"><Whistle />{f.arbitro}</span>
+                <span className="flex items-center gap-1"><Users className="h-4 w-4" />{f.publico} pessoas</span>
+                <span className="flex items-center gap-1"><Whistle className="h-4 w-4" />{f.arbitro}</span>
                 <span className="ml-auto text-primary font-bold group-hover:translate-x-1 transition-transform">Assistir →</span>
               </div>
             </button>
@@ -143,7 +143,7 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
             <div className="text-center">
               <div className="text-3xl font-black">VS</div>
               <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-center mt-1">
-                <Whistle />{fx.arbitro}
+                <Whistle className="h-4 w-4" />{fx.arbitro}
               </div>
             </div>
             <TeamHead time={fx.fora} />
@@ -157,7 +157,7 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
 
         <Button onClick={iniciar} className="w-full h-14 font-black text-base"
           style={{ background: "var(--gradient-primary)", color: "var(--primary-foreground)" }}>
-          <Play /> Assistir à partida
+          <Play className="h-4 w-4" /> Assistir à partida
         </Button>
       </div>
     );
@@ -190,10 +190,10 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
 
         <div className="flex gap-2">
           <Button variant="secondary" className="flex-1" onClick={() => setRodando(r => !r)}>
-            {rodando ? <><Pause /> Pausar</> : <><Play /> Continuar</>}
+            {rodando ? <><Pause className="h-4 w-4" /> Pausar</> : <><Play className="h-4 w-4" /> Continuar</>}
           </Button>
           <Button variant="secondary" className="flex-1" onClick={() => setVelocidade(v => v === 1 ? 2 : v === 2 ? 4 : 1)}>
-            <FastForward /> {velocidade}x
+            <FastForward className="h-4 w-4" /> {velocidade}x
           </Button>
           <Button variant="outline" onClick={() => setMinuto(duracao)}>Pular</Button>
         </div>
@@ -222,7 +222,7 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
         <Header title="Relatório de scout" sub={`${sim.casa.nome} ${sim.casa.gols} x ${sim.fora.gols} ${sim.fora.nome}`} onBack={onSair} />
 
         <Card className="p-4">
-          <div className="text-xs uppercase font-bold text-primary flex items-center gap-1"><Star /> Chamaram atenção</div>
+          <div className="text-xs uppercase font-bold text-primary flex items-center gap-1"><Star className="h-4 w-4" /> Chamaram atenção</div>
           {destaques.length === 0 ? (
             <p className="mt-2 text-sm text-muted-foreground">
               Ninguém se destacou. Foi uma tarde perdida — acontece na vida de olheiro.
@@ -279,7 +279,7 @@ function Header({ title, sub, onBack }: { title: string; sub?: string; onBack: (
   return (
     <div className="flex items-center gap-3">
       <button onClick={onBack} className="rounded-lg border border-border bg-card p-2 hover:bg-secondary transition-colors">
-        <ArrowLeft />
+        <ArrowLeft className="h-4 w-4" />
       </button>
       <div className="min-w-0">
         <h2 className="text-xl font-black truncate">{title}</h2>
