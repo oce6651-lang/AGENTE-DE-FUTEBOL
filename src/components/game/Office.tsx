@@ -1,22 +1,28 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { StatusBar } from "./StatusBar";
 import { PlayerCard } from "./PlayerCard";
 import { PlayerDetail } from "./PlayerDetail";
+import { MatchDay } from "./MatchDay";
+import { ClubCrest } from "./ClubCrest";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LOCAIS } from "@/lib/game/types";
-import type { GameState, Player, Club } from "@/lib/game/types";
+import type { Club, Fixture, GameState, MatchPlayer, Player } from "@/lib/game/types";
 import {
-  avancarSemana, buscarJogadores, conversar, observarJogador, propor,
-  responderNegociacao, enviarPeneira, custoPeneira,
+  avancarSemana, conversar, observarJogador, propor, responderNegociacao,
+  enviarPeneira, custoPeneira, podeAssistir, pagarPartida, adicionarAoRadar, CUSTOS,
 } from "@/lib/game/engine";
 import { LOCATION_IMAGES, LOCATION_DESC } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
+import {
+  Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
+} from "lucide-react";
 
-type View = "home" | "search" | "myPlayers" | "negotiations" | "news" | "agency" | "detail" | "tryouts";
+type View = "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news" | "agency" | "detail" | "tryouts" | "clubs";
 
 export function Office({ state, setState, onExit }: {
   state: GameState;
@@ -25,66 +31,62 @@ export function Office({ state, setState, onExit }: {
 }) {
   const [view, setView] = useState<View>("home");
   const [local, setLocal] = useState<string | null>(null);
-  const [descobertos, setDescobertos] = useState<Player[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [voltarPara, setVoltarPara] = useState<View>("radar");
   const [peneiraFor, setPeneiraFor] = useState<Player | null>(null);
 
-  const allKnown = useMemo(() => {
-    const map = new Map<string, Player>();
-    for (const p of state.jogadores) map.set(p.id, p);
-    for (const p of descobertos) if (!map.has(p.id)) map.set(p.id, p);
-    return map;
-  }, [state.jogadores, descobertos]);
+  const selected = selectedId
+    ? state.jogadores.find(p => p.id === selectedId) ?? state.radar.find(p => p.id === selectedId) ?? null
+    : null;
 
-  const selected = selectedId ? allKnown.get(selectedId) ?? null : null;
-  const openPlayer = (p: Player) => { setSelectedId(p.id); setView("detail"); };
+  const openPlayer = (p: Player, origem: View) => { setSelectedId(p.id); setVoltarPara(origem); setView("detail"); };
 
   const handleAvancar = () => {
     const { state: next, eventos } = avancarSemana(state);
     setState(next);
-    if (eventos.length) toast(eventos[0]); else toast("Semana avançada");
+    toast(eventos[0] ?? "Semana avançada", { description: eventos[1] });
   };
 
-  const handleBuscar = (l: string) => {
-    if (state.dinheiro < 150) { toast("Sem caixa para viajar (R$ 150)."); return; }
-    const { state: next, novos } = buscarJogadores(state, l);
+  const abrirLocal = (l: string) => {
+    const check = podeAssistir(state);
+    if (!check.ok) { toast(check.motivo!); return; }
+    setLocal(l); setView("matchday");
+  };
+
+  const cobrarPartida = (fx: Fixture) => {
+    const check = podeAssistir(state);
+    if (!check.ok) { toast(check.motivo!); return false; }
+    setState(pagarPartida(state, fx));
+    return true;
+  };
+
+  const salvarRadar = (destaques: MatchPlayer[], fx: Fixture) => {
+    const { state: next, adicionados } = adicionarAoRadar(state, destaques, fx);
     setState(next);
-    setDescobertos(novos);
-    setLocal(l);
-    if (novos.length === 0) toast(`Nada visto em ${l} desta vez.`);
+    toast(adicionados.length ? `${adicionados.length} atleta(s) no radar.` : "Nenhum atleta novo.");
+    setView("radar");
   };
 
   const handleObservar = () => {
     if (!selected) return;
-    if (state.dinheiro < 60) { toast("Sem caixa (R$ 60)."); return; }
-    const next = observarJogador(state, selected.id);
-    setState(next);
-    setDescobertos(descobertos.map(p => p.id === selected.id ? { ...p, observado: p.observado + 1 } : p));
-    toast(`Você observou ${selected.nome}.`);
+    const { state: next, mensagem } = observarJogador(state, selected.id);
+    setState(next); toast(mensagem);
   };
   const handleConversar = () => {
     if (!selected) return;
     const { state: next, mensagem } = conversar(state, selected);
-    setState(next);
-    toast(mensagem);
+    setState(next); toast(mensagem);
   };
   const handlePropor = () => {
     if (!selected) return;
     const { state: next, sucesso, mensagem } = propor(state, selected);
-    setState(next);
-    toast(mensagem);
-    if (sucesso) {
-      setDescobertos(descobertos.filter(p => p.id !== selected.id));
-      setView("myPlayers");
-    }
+    setState(next); toast(mensagem);
+    if (sucesso) setView("myPlayers");
   };
-  const handleAbrirPeneira = () => { if (selected) setPeneiraFor(selected); };
   const handleEnviarPeneira = (clube: Club) => {
     if (!peneiraFor) return;
     const { state: next, mensagem } = enviarPeneira(state, peneiraFor.id, clube.id);
-    setState(next);
-    toast(mensagem);
-    setPeneiraFor(null);
+    setState(next); toast(mensagem); setPeneiraFor(null);
   };
 
   const abertas = state.negociacoes.filter(n => n.status === "aberta").length;
@@ -96,88 +98,132 @@ export function Office({ state, setState, onExit }: {
       <div className="max-w-3xl mx-auto pb-24">
         {view === "home" && (
           <div className="p-4 space-y-4 animate-in fade-in duration-300">
-            <Card className="relative overflow-hidden shadow-[var(--shadow-card)] border-border">
-              <img src={officeHero} alt="Escritório da agência" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+            <Card className="relative overflow-hidden border-border shadow-[var(--shadow-card)]">
+              <img src={officeHero} alt="Escritório da agência" className="absolute inset-0 w-full h-full object-cover opacity-35" />
               <div className="relative p-5 bg-gradient-to-t from-background/95 via-background/60 to-transparent">
-                <div className="text-xs uppercase font-bold text-primary">Escritório</div>
+                <div className="text-xs uppercase font-bold text-primary tracking-widest">Escritório</div>
                 <div className="text-2xl font-black">{state.agent.agencia}</div>
                 <div className="text-sm mt-1 text-muted-foreground">
                   {state.agent.nome} {state.agent.sobrenome} • {state.agent.cidade}/{state.agent.estado}
                 </div>
-                <div className="mt-3 flex items-center gap-4 text-xs">
-                  <div><span className="text-muted-foreground">Reputação </span><span className="font-black text-primary">{state.reputacao}</span></div>
-                  <div><span className="text-muted-foreground">Prestígio </span>{"⭐".repeat(state.prestigio)}</div>
+                <div className="mt-3">
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span className="text-muted-foreground">Reputação no meio</span>
+                    <span className="font-black text-primary">{state.reputacao}/100</span>
+                  </div>
+                  <Progress value={state.reputacao} className="h-1.5" />
                 </div>
               </div>
             </Card>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <MenuTile icon="⚽" label="Procurar jogadores" onClick={() => setView("search")} />
-              <MenuTile icon="👥" label="Meus jogadores" badge={state.jogadores.length} onClick={() => setView("myPlayers")} />
-              <MenuTile icon="🎯" label="Peneiras" badge={peneirasAtivas} onClick={() => setView("tryouts")} />
-              <MenuTile icon="🤝" label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
-              <MenuTile icon="📰" label="Notícias" badge={state.noticias.length} onClick={() => setView("news")} />
-              <MenuTile icon="🏢" label="Agência" onClick={() => setView("agency")} />
+              <MenuTile icon={<Search className="h-6 w-6" />} label="Ir a campo" onClick={() => setView("locais")} />
+              <MenuTile icon={<Radar className="h-6 w-6" />} label="Radar" badge={state.radar.length} onClick={() => setView("radar")} />
+              <MenuTile icon={<Users className="h-6 w-6" />} label="Meus atletas" badge={state.jogadores.length} onClick={() => setView("myPlayers")} />
+              <MenuTile icon={<Target className="h-6 w-6" />} label="Peneiras" badge={peneirasAtivas} onClick={() => setView("tryouts")} />
+              <MenuTile icon={<Handshake className="h-6 w-6" />} label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
+              <MenuTile icon={<Newspaper className="h-6 w-6" />} label="Notícias" onClick={() => setView("news")} />
+              <MenuTile icon={<Briefcase className="h-6 w-6" />} label="Agência" onClick={() => setView("agency")} />
+              <MenuTile icon={<ClubCrest cores={["#1f8ecd", "#0b1d2e"]} abrev="CLB" size={26} />} label="Clubes" onClick={() => setView("clubs")} />
             </div>
 
-            <Button onClick={handleAvancar} className="w-full h-14 text-base font-black" style={{ background: "var(--gradient-primary)", color: "var(--primary-foreground)" }}>
-              ⏩ Avançar Semana
+            <Button onClick={handleAvancar} className="w-full h-14 text-base font-black hover:scale-[1.01] transition-transform"
+              style={{ background: "var(--gradient-primary)", color: "var(--primary-foreground)" }}>
+              Avançar semana
             </Button>
             <Button variant="ghost" onClick={onExit} className="w-full">Voltar ao menu principal</Button>
           </div>
         )}
 
-        {view === "search" && (
-          <div className="p-4 space-y-4">
-            <SubHeader title="Procurar jogadores" onBack={() => setView("home")} />
+        {view === "locais" && (
+          <div className="p-4 space-y-4 animate-in fade-in duration-300">
+            <SubHeader title="Ir a campo" onBack={() => setView("home")} />
             <p className="text-xs text-muted-foreground">
-              Cada viagem custa R$ 150. Nem toda ida a campo revela algo — quanto maior sua reputação, mais talentos você consegue avistar.
+              Cada deslocamento custa R$ {CUSTOS.viagem} + ingresso e consome 1 ponto de energia da semana.
+              Escolha o local, veja a programação do dia e assista a uma partida inteira.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {LOCAIS.map(l => (
-                <button
-                  key={l}
-                  onClick={() => handleBuscar(l)}
-                  className={"group relative overflow-hidden rounded-2xl border text-left shadow-[var(--shadow-card)] transition-all hover:scale-[1.01] " +
-                    (local === l ? "border-primary" : "border-border")}
-                >
-                  <img src={LOCATION_IMAGES[l]} alt={l} loading="lazy" className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                <button key={l} onClick={() => abrirLocal(l)}
+                  className="group relative overflow-hidden rounded-2xl border border-border text-left shadow-[var(--shadow-card)] transition-all hover:border-primary hover:scale-[1.01]">
+                  <img src={LOCATION_IMAGES[l]} alt={l} loading="lazy" className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-3">
-                    <div className="font-black">{l}</div>
+                    <div className="font-black flex items-center gap-1">{l} <ChevronRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" /></div>
                     <div className="text-[10px] text-muted-foreground line-clamp-2">{LOCATION_DESC[l]}</div>
                   </div>
                 </button>
               ))}
             </div>
-            {local && (
-              <div className="text-xs text-muted-foreground">
-                Última visita: <b>{local}</b> — {descobertos.length} pessoas avistadas.
+          </div>
+        )}
+
+        {view === "matchday" && local && (
+          <MatchDay
+            state={state}
+            local={local}
+            onSair={() => setView("locais")}
+            onAssistir={cobrarPartida}
+            onSalvarRadar={salvarRadar}
+          />
+        )}
+
+        {view === "radar" && (
+          <div className="p-4 space-y-3">
+            <SubHeader title="Radar da agência" onBack={() => setView("home")} />
+            <p className="text-xs text-muted-foreground">
+              Atletas que chamaram sua atenção. Observe mais vezes para revelar atributos e conquistar confiança —
+              empresários rivais também estão de olho.
+            </p>
+            {state.radar.length === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Radar vazio. Vá a campo e assista partidas.
               </div>
             )}
-            <div className="space-y-2">
-              {descobertos.map(p => (
-                <PlayerCard key={p.id} player={p} onClick={() => openPlayer(p)} />
-              ))}
-              {!descobertos.length && (
-                <div className="text-center text-sm text-muted-foreground py-8">
-                  Escolha um local para procurar jogadores.
-                </div>
-              )}
-            </div>
+            {state.radar.map(p => <PlayerCard key={p.id} player={p} onClick={() => openPlayer(p, "radar")} />)}
           </div>
         )}
 
         {view === "myPlayers" && (
           <div className="p-4 space-y-3">
-            <SubHeader title="Meus jogadores" onBack={() => setView("home")} />
+            <SubHeader title="Meus atletas" onBack={() => setView("home")} />
             {state.jogadores.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-8">
-                Ainda sem jogadores. Vá procurar em campos e escolinhas.
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Nenhum cliente ainda. Conquiste a confiança de um atleta no radar.
               </div>
             )}
             {state.jogadores.map(p => (
-              <PlayerCard key={p.id} player={p} onClick={() => openPlayer(p)} revealPotencial />
+              <PlayerCard key={p.id} player={p} revealPotencial onClick={() => openPlayer(p, "myPlayers")} />
+            ))}
+          </div>
+        )}
+
+        {view === "clubs" && (
+          <div className="p-4 space-y-3">
+            <SubHeader title="Clubes" onBack={() => setView("home")} />
+            {state.clubes.map(c => (
+              <Card key={c.id} className="p-4 flex items-center gap-3 hover:bg-secondary/40 transition-colors">
+                <ClubCrest cores={c.cores} abrev={c.abrev} size={44} />
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold truncate">{c.nome}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {c.categoria} • {c.cidade} • {c.personalidade}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    Técnico: {c.tecnico} • Precisa de: {c.necessidades.join(", ") || "nada"}
+                  </div>
+                  <div className="mt-1.5">
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>Confiança em você</span><span>{c.confiancaEmVoce}%</span>
+                    </div>
+                    <Progress value={c.confiancaEmVoce} className="h-1" />
+                  </div>
+                </div>
+                <div className="text-right text-[11px]">
+                  <div className="font-black text-primary">{c.pontos} pts</div>
+                  <div className="text-muted-foreground">{c.jogos} jogos</div>
+                </div>
+              </Card>
             ))}
           </div>
         )}
@@ -186,38 +232,34 @@ export function Office({ state, setState, onExit }: {
           <div className="p-4 space-y-3">
             <SubHeader title="Peneiras" onBack={() => setView("home")} />
             <p className="text-xs text-muted-foreground">
-              Jogadores desconhecidos não recebem propostas. Você precisa levá-los para testes. Cada clube avalia por conta própria.
+              Clubes só aceitam inscrições de empresários em quem confiam. Reprovações machucam sua reputação.
             </p>
             {state.peneiras.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-8">
-                Nenhuma peneira em andamento.
-                <div className="mt-3">
-                  <Button variant="secondary" onClick={() => setView("myPlayers")}>Escolher jogador</Button>
-                </div>
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Nenhuma peneira registrada.
+                <div className="mt-3"><Button variant="secondary" onClick={() => setView("myPlayers")}>Escolher atleta</Button></div>
               </div>
             )}
             {state.peneiras.map(t => {
               const p = state.jogadores.find(j => j.id === t.playerId);
               const c = state.clubes.find(cl => cl.id === t.clubId);
               if (!p || !c) return null;
-              const statusColor: Record<string, string> = {
-                em_andamento: "secondary", mais_tempo: "outline",
-                aprovado: "default", reprovado: "destructive", lesionado: "destructive",
-              };
+              const variant = t.status === "aprovado" ? "default"
+                : t.status === "reprovado" || t.status === "lesionado" ? "destructive"
+                : t.status === "mais_tempo" ? "outline" : "secondary";
               return (
                 <Card key={t.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <ClubCrest cores={c.cores} abrev={c.abrev} size={36} />
+                    <div className="min-w-0 flex-1">
                       <div className="font-bold truncate">{p.nome} → {c.nome}</div>
-                      <div className="text-xs text-muted-foreground">{c.categoria} • {c.cidade}</div>
+                      <div className="text-xs text-muted-foreground">{c.categoria} • {c.tecnico}</div>
                     </div>
-                    <Badge variant={(statusColor[t.status] as "secondary" | "outline" | "default" | "destructive")}>
-                      {t.status === "em_andamento" ? `${t.restanteSemanas}sem` : t.status.replace("_", " ")}
+                    <Badge variant={variant}>
+                      {t.status === "em_andamento" ? `${t.restanteSemanas} sem` : t.status.replace("_", " ")}
                     </Badge>
                   </div>
-                  {t.resultadoTexto && (
-                    <div className="mt-2 text-xs text-muted-foreground italic">"{t.resultadoTexto}"</div>
-                  )}
+                  {t.resultadoTexto && <div className="mt-2 text-xs italic text-muted-foreground">"{t.resultadoTexto}"</div>}
                   <ul className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
                     {t.notas.map((n, i) => <li key={i}>• {n}</li>)}
                   </ul>
@@ -231,8 +273,8 @@ export function Office({ state, setState, onExit }: {
           <div className="p-4 space-y-3">
             <SubHeader title="Negociações" onBack={() => setView("home")} />
             {state.negociacoes.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-8">
-                Nenhuma negociação ainda. Clubes só sondam jogadores que já jogam profissionalmente.
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Nenhuma proposta. Clubes só procuram empresários com reputação.
               </div>
             )}
             {state.negociacoes.map(n => {
@@ -241,25 +283,29 @@ export function Office({ state, setState, onExit }: {
               if (!p || !c) return null;
               return (
                 <Card key={n.id} className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <ClubCrest cores={c.cores} abrev={c.abrev} size={36} />
+                    <div className="min-w-0 flex-1">
                       <div className="font-bold truncate">{p.nome} → {c.nome}</div>
                       <div className="text-xs text-muted-foreground">
-                        R$ {n.valorProposta.toLocaleString("pt-BR")} • Comissão {(n.comissao * 100).toFixed(0)}%
+                        R$ {n.valorProposta.toLocaleString("pt-BR")} • comissão {(n.comissao * 100).toFixed(0)}% • salário R$ {n.salario.toLocaleString("pt-BR")}
                       </div>
-                      <div className="text-xs text-muted-foreground">{n.criadaEm}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {n.criadaEm}{n.status === "aberta" ? ` • expira em ${n.expiraEm} sem` : ""}
+                      </div>
                     </div>
                     <Badge variant={n.status === "aberta" ? "default" : "secondary"}>{n.status}</Badge>
                   </div>
                   {n.status === "aberta" && (
-                    <div className="grid grid-cols-2 gap-2 mt-3">
+                    <div className="grid grid-cols-3 gap-2 mt-3">
                       <Button variant="secondary" onClick={() => {
-                        const { state: next, mensagem } = responderNegociacao(state, n.id, "recusar");
-                        setState(next); toast(mensagem);
+                        const r = responderNegociacao(state, n.id, "recusar"); setState(r.state); toast(r.mensagem);
                       }}>Recusar</Button>
+                      <Button variant="outline" onClick={() => {
+                        const r = responderNegociacao(state, n.id, "contraproposta"); setState(r.state); toast(r.mensagem);
+                      }}>Contrapor</Button>
                       <Button onClick={() => {
-                        const { state: next, mensagem } = responderNegociacao(state, n.id, "aceitar");
-                        setState(next); toast(mensagem);
+                        const r = responderNegociacao(state, n.id, "aceitar"); setState(r.state); toast(r.mensagem);
                       }}>Aceitar</Button>
                     </div>
                   )}
@@ -273,8 +319,8 @@ export function Office({ state, setState, onExit }: {
           <div className="p-4 space-y-3">
             <SubHeader title="Notícias" onBack={() => setView("home")} />
             {state.noticias.map(n => (
-              <Card key={n.id} className="p-4">
-                <div className="text-[10px] uppercase text-muted-foreground">
+              <Card key={n.id} className="p-4 hover:bg-secondary/30 transition-colors">
+                <div className="text-[10px] uppercase text-primary font-bold">
                   Semana {n.semana} • {n.mes}/{n.ano} • {n.tipo}
                 </div>
                 <div className="font-bold mt-1">{n.titulo}</div>
@@ -288,19 +334,30 @@ export function Office({ state, setState, onExit }: {
           <div className="p-4 space-y-4">
             <SubHeader title="Agência" onBack={() => setView("home")} />
             <Card className="p-4">
-              <div className="text-xs uppercase text-muted-foreground">Perfil</div>
-              <div className="font-bold mt-1">{state.agent.agencia} ({state.agent.id})</div>
-              <div className="text-sm">{state.agent.nome} {state.agent.sobrenome} • {state.agent.nacionalidade}</div>
-              <div className="text-sm text-muted-foreground">{state.agent.cidade} - {state.agent.estado}, {state.agent.pais}</div>
+              <div className="font-bold">{state.agent.agencia}</div>
+              <div className="text-sm text-muted-foreground">
+                {state.agent.nome} {state.agent.sobrenome} • {state.agent.cidade} - {state.agent.estado}
+              </div>
               <div className="mt-3 grid grid-cols-4 gap-3 text-center">
-                <div><div className="text-lg font-black text-primary">R$ {state.dinheiro.toLocaleString("pt-BR")}</div><div className="text-[10px] text-muted-foreground">CAIXA</div></div>
-                <div><div className="text-lg font-black">{"⭐".repeat(state.prestigio)}</div><div className="text-[10px] text-muted-foreground">PRESTÍGIO</div></div>
-                <div><div className="text-lg font-black">{state.reputacao}</div><div className="text-[10px] text-muted-foreground">REPUTAÇÃO</div></div>
-                <div><div className="text-lg font-black">{state.jogadores.length}</div><div className="text-[10px] text-muted-foreground">JOGADORES</div></div>
+                <Stat label="CAIXA" value={`R$ ${state.dinheiro.toLocaleString("pt-BR")}`} />
+                <Stat label="PRESTÍGIO" value={"★".repeat(state.prestigio)} />
+                <Stat label="REPUTAÇÃO" value={String(state.reputacao)} />
+                <Stat label="CLIENTES" value={String(state.jogadores.length)} />
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-xs uppercase font-bold text-muted-foreground mb-2">Empresários rivais</div>
+              <div className="space-y-2">
+                {state.rivais.map(r => (
+                  <div key={r.id} className="flex items-center justify-between text-sm">
+                    <span className="truncate">{r.agencia} <span className="text-muted-foreground">• {r.nome}</span></span>
+                    <span className="text-xs text-muted-foreground">{r.clientes} clientes • rep {r.reputacao}</span>
+                  </div>
+                ))}
               </div>
             </Card>
             <div>
-              <div className="text-xs uppercase font-bold text-muted-foreground mb-2">Histórico financeiro</div>
+              <div className="text-xs uppercase font-bold text-muted-foreground mb-2">Movimentações financeiras</div>
               <div className="space-y-2">
                 {state.financas.slice(0, 30).map(f => (
                   <div key={f.id} className="flex justify-between items-center bg-card border border-border rounded-lg px-3 py-2">
@@ -313,9 +370,7 @@ export function Office({ state, setState, onExit }: {
                     </div>
                   </div>
                 ))}
-                {state.financas.length === 0 && (
-                  <div className="text-center text-xs text-muted-foreground py-4">Sem lançamentos.</div>
-                )}
+                {state.financas.length === 0 && <div className="text-center text-xs text-muted-foreground py-4">Sem lançamentos.</div>}
               </div>
             </div>
           </div>
@@ -325,38 +380,32 @@ export function Office({ state, setState, onExit }: {
           <PlayerDetail
             player={selected}
             state={state}
-            onBack={() => setView(state.jogadores.find(j => j.id === selected.id) ? "myPlayers" : "search")}
+            onBack={() => setView(voltarPara)}
             onObservar={handleObservar}
             onConversar={handleConversar}
             onPropor={handlePropor}
-            onPeneira={handleAbrirPeneira}
+            onPeneira={() => setPeneiraFor(selected)}
           />
         )}
       </div>
 
       <Dialog open={!!peneiraFor} onOpenChange={(o) => !o && setPeneiraFor(null)}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enviar {peneiraFor?.nome} para peneira</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Inscrever {peneiraFor?.nome} em peneira</DialogTitle></DialogHeader>
           <p className="text-xs text-muted-foreground">
-            Escolha um clube. Clubes maiores exigem mais, mas abrem portas maiores.
+            Cada clube tem um perfil próprio. Nem todos vão atender você.
           </p>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {state.clubes.map(c => {
               const custo = custoPeneira(c);
-              const podeEnviar = state.dinheiro >= custo;
               return (
-                <button
-                  key={c.id}
-                  disabled={!podeEnviar}
-                  onClick={() => handleEnviarPeneira(c)}
-                  className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors disabled:opacity-40"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-bold">{c.nome}</div>
-                      <div className="text-xs text-muted-foreground">{c.categoria} • {c.cidade}</div>
+                <button key={c.id} disabled={state.dinheiro < custo} onClick={() => handleEnviarPeneira(c)}
+                  className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors disabled:opacity-40">
+                  <div className="flex items-center gap-3">
+                    <ClubCrest cores={c.cores} abrev={c.abrev} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold truncate">{c.nome}</div>
+                      <div className="text-xs text-muted-foreground truncate">{c.categoria} • {c.personalidade}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-black text-primary">R$ {custo}</div>
@@ -373,22 +422,25 @@ export function Office({ state, setState, onExit }: {
   );
 }
 
-function MenuTile({ icon, label, onClick, badge, highlight }: {
-  icon: string; label: string; onClick: () => void; badge?: number; highlight?: boolean;
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-base font-black text-primary truncate">{value}</div>
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function MenuTile({ icon, label, onClick, badge }: {
+  icon: React.ReactNode; label: string; onClick: () => void; badge?: number;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={
-        "relative rounded-2xl border border-border p-4 text-left transition-all hover:scale-[1.02] shadow-[var(--shadow-card)] " +
-        (highlight ? "text-primary-foreground" : "bg-card hover:bg-secondary")
-      }
-      style={highlight ? { background: "var(--gradient-primary)" } : undefined}
-    >
-      <div className="text-2xl">{icon}</div>
+    <button onClick={onClick}
+      className="relative rounded-2xl border border-border bg-card p-4 text-left transition-all hover:border-primary hover:bg-secondary hover:scale-[1.03] shadow-[var(--shadow-card)]">
+      <div className="text-primary">{icon}</div>
       <div className="mt-2 text-sm font-bold">{label}</div>
       {badge !== undefined && badge > 0 && (
-        <span className="absolute top-2 right-2 min-w-5 h-5 px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-black grid place-items-center">
+        <span className="absolute top-2 right-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground animate-in zoom-in">
           {badge}
         </span>
       )}
@@ -399,7 +451,9 @@ function MenuTile({ icon, label, onClick, badge, highlight }: {
 function SubHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-3">
-      <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">← Voltar</button>
+      <button onClick={onBack} className="rounded-lg border border-border bg-card p-2 hover:bg-secondary transition-colors">
+        <ArrowLeft className="h-4 w-4" />
+      </button>
       <h2 className="text-xl font-black">{title}</h2>
     </div>
   );
