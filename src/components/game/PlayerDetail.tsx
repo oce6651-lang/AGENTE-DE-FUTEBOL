@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { GameState, Player, TimelineEvent } from "@/lib/game/types";
 import { MESES } from "@/lib/game/types";
+import { potencialEstimado, CUSTOS } from "@/lib/game/engine";
+import { PlayerAvatar } from "./PlayerAvatar";
 
 export function PlayerDetail({
   player,
@@ -24,9 +26,10 @@ export function PlayerDetail({
 }) {
   const contratado = player.empresario === state.agent.id;
   const nivel = player.observado; // 0..∞
-  const revelaAtual = nivel >= 1 || contratado;
-  const revelaAtributos = nivel >= 2 || contratado;
-  const revelaPotencial = nivel >= 3 || contratado;
+  const revelaAtual = nivel >= 2 || contratado;
+  const revelaAtributos = nivel >= 3 || contratado;
+  const revelaPotencial = nivel >= 4 || contratado;
+  const est = potencialEstimado(player);
 
   const attrs: [string, number][] = [
     ["Técnica", player.atributos.tecnica],
@@ -43,10 +46,7 @@ export function PlayerDetail({
 
       <Card className="p-5 shadow-[var(--shadow-card)]">
         <div className="flex items-start gap-4">
-          <div className="h-16 w-16 rounded-2xl grid place-items-center font-black text-xl shrink-0"
-            style={{ background: "var(--gradient-primary)", color: "var(--primary-foreground)" }}>
-            {player.posicao}
-          </div>
+          <PlayerAvatar seed={player.visual} size={64} ring={contratado} />
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-black truncate">{player.nome}</h2>
             <p className="text-xs text-muted-foreground">{player.id} • {player.altura} cm</p>
@@ -62,7 +62,7 @@ export function PlayerDetail({
             <div className="text-[10px] text-muted-foreground">ATUAL</div>
             {revelaPotencial && (
               <>
-                <div className="text-xl font-black text-primary mt-1">~{Math.round(player.potencial / 5) * 5}</div>
+                <div className="text-xl font-black text-primary mt-1">{est.min}-{est.max}</div>
                 <div className="text-[10px] text-muted-foreground">POT ESTIM.</div>
               </>
             )}
@@ -86,7 +86,7 @@ export function PlayerDetail({
             {nivel === 0
               ? "Você só o avistou. Observe algumas vezes para conhecer seus atributos."
               : "Continue observando para revelar os atributos técnicos."}
-            <div className="mt-1 text-primary font-bold">Observações: {nivel} / 2</div>
+            <div className="mt-1 text-primary font-bold">Observações: {nivel} / 3</div>
           </div>
         )}
 
@@ -95,7 +95,25 @@ export function PlayerDetail({
           <div>Empresário: {player.empresario ? (contratado ? state.agent.agencia : "Outro empresário") : "Nenhum"}</div>
           <div>Descoberto em: {player.local}</div>
           <div>Observações realizadas: {nivel}</div>
+          <div>Confiança do atleta: {player.confianca}%</div>
         </div>
+
+        {player.relatorios.length > 0 && (
+          <div className="mt-5">
+            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Relatórios de scout</div>
+            <div className="space-y-2">
+              {player.relatorios.map((r, i) => (
+                <div key={i} className="rounded-xl border border-border bg-secondary/40 p-3">
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>{r.partida}</span>
+                    <span className="font-black text-primary">{r.nota.toFixed(1)}</span>
+                  </div>
+                  <div className="text-xs mt-1">{r.texto}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {player.timeline.length > 0 && (
           <div className="mt-5">
@@ -110,9 +128,9 @@ export function PlayerDetail({
 
         {!contratado && !player.empresario && (
           <div className="mt-6 grid grid-cols-3 gap-2">
-            <Button variant="secondary" onClick={onObservar}>Observar (R$60)</Button>
-            <Button variant="secondary" onClick={onConversar}>Conversar (R$80)</Button>
-            <Button onClick={onPropor}>Propor (R$300)</Button>
+            <Button variant="secondary" onClick={onObservar}>Observar (R$ {CUSTOS.observacao})</Button>
+            <Button variant="secondary" onClick={onConversar}>Conversar (R$ {CUSTOS.conversa})</Button>
+            <Button onClick={onPropor}>Propor (R$ {CUSTOS.proposta})</Button>
           </div>
         )}
         {contratado && !player.clube && onPeneira && (
