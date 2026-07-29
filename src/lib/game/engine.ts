@@ -1,5 +1,7 @@
 import { gerarClubes, gerarRivais, pick, rid, rnd } from "./generators";
 import { mundoSemanal, viradaDeAno } from "./world";
+import type { ScoutLocation } from "./locations";
+import { localLiberado } from "./locations";
 import type {
   Agent, GameState, NewsItem, Player, FinanceEntry, Negotiation, Tryout, TimelineEvent, Club,
   MatchPlayer, Fixture, ScoutNote,
@@ -10,8 +12,6 @@ import { MESES } from "./types";
 // CONSTANTES ECONÔMICAS — dinheiro é escasso de propósito
 // ============================================================
 export const CUSTOS = {
-  viagem: 180,        // ir até um local
-  ingresso: 40,       // assistir uma partida
   observacao: 90,     // observação técnica dedicada
   conversa: 120,      // aproximação com atleta/família
   proposta: 450,      // documentação, advogado, reunião
@@ -19,8 +19,56 @@ export const CUSTOS = {
   porAtleta: 180,     // acompanhamento mensal de cada cliente
 };
 
+// ============================================================
+// MELHORIAS DA AGÊNCIA — investimentos de longo prazo
+// ============================================================
+export interface Upgrade {
+  id: string;
+  nome: string;
+  descricao: string;
+  custo: number;
+  reputacaoMin: number;
+}
+
+export const UPGRADES: Upgrade[] = [
+  { id: "carro", nome: "Carro próprio", descricao: "Reduz em 30% o custo de todos os deslocamentos.", custo: 6_000, reputacaoMin: 0 },
+  { id: "assistente", nome: "Assistente de scout", descricao: "+1 ponto de energia por semana.", custo: 14_000, reputacaoMin: 15 },
+  { id: "analista", nome: "Analista de vídeo", descricao: "Observações 40% mais baratas e estimativas de potencial mais precisas.", custo: 22_000, reputacaoMin: 25 },
+  { id: "sede", nome: "Sede da agência", descricao: "Clubes confiam mais em você e sua reputação para de oscilar tanto.", custo: 45_000, reputacaoMin: 40 },
+  { id: "juridico", nome: "Departamento jurídico", descricao: "+3% de comissão em todas as transferências.", custo: 80_000, reputacaoMin: 55 },
+  { id: "filial", nome: "Filial internacional", descricao: "+1 energia e acesso facilitado a clubes da elite europeia.", custo: 180_000, reputacaoMin: 75 },
+];
+
+export function temUpgrade(state: GameState, id: string) {
+  return state.upgrades.includes(id);
+}
+
+export function comprarUpgrade(state: GameState, id: string): { state: GameState; mensagem: string } {
+  const up = UPGRADES.find(u => u.id === id);
+  if (!up) return { state, mensagem: "Melhoria inválida." };
+  if (temUpgrade(state, id)) return { state, mensagem: "Você já possui essa estrutura." };
+  if (state.reputacao < up.reputacaoMin) return { state, mensagem: `Exige ${up.reputacaoMin} de reputação.` };
+  if (state.dinheiro < up.custo) return { state, mensagem: `Sem caixa. Custo: R$ ${up.custo.toLocaleString("pt-BR")}.` };
+  let s = gastar(state, up.custo, `Investimento: ${up.nome}`);
+  s = { ...s, upgrades: [...s.upgrades, id], reputacao: Math.min(100, s.reputacao + 2) };
+  s = { ...s, energiaMax: energiaMaxima(s) };
+  return { state: s, mensagem: `${up.nome} em operação!` };
+}
+
 export function energiaMaxima(state: GameState) {
-  return 3 + Math.floor(state.reputacao / 30);
+  return 3 + Math.floor(state.reputacao / 30)
+    + (state.upgrades.includes("assistente") ? 1 : 0)
+    + (state.upgrades.includes("filial") ? 1 : 0);
+}
+
+/** Custo real de deslocamento até um palco, considerando estrutura da agência. */
+export function custoViagem(state: GameState, loc: ScoutLocation) {
+  const desconto = state.upgrades.includes("carro") ? 0.7 : 1;
+  return Math.round(loc.custoViagem * desconto);
+}
+
+export function custoObservacao(state: GameState) {
+  return Math.round(CUSTOS.observacao * (state.upgrades.includes("analista") ? 0.6 : 1));
 }
 
 export function novoJogo(agent: Omit<Agent, "id">): GameState {
@@ -30,7 +78,7 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     ano: 2026,
     mes: 3,
     semana: 1,
-    dinheiro: 1800,
+    dinheiro: 3000,
     prestigio: 1,
     reputacao: 1,
     energia: 3,
@@ -41,6 +89,8 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     rivais: gerarRivais(),
     negociacoes: [],
     peneiras: [],
+    upgrades: [],
+    locaisVisitados: [],
     noticias: [
       {
         id: rid("NEW", 1),
