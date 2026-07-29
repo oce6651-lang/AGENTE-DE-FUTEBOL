@@ -212,6 +212,21 @@ const CLUBES_BASE: ClubSeed[] = [
   { nome: "Esportivo", abrev: "ESP", categoria: "Amador", liga: "Copa Regional Amadora", personalidade: "Formador", orcamento: 600_000, cidade: "Bento Gonçalves", cores: ["#1f7a4d", "#0c221a"] },
 ];
 
+export function gerarClubes(): Club[] {
+  return CLUBES_BASE.map((c, i) => ({
+    id: rid("CLB", i + 1),
+    ...c,
+    tecnico: pick(TECNICOS),
+    moralTecnico: rnd(45, 80),
+    pontos: 0,
+    jogos: 0,
+    elenco: rnd(22, 30),
+    necessidades: [pick(POSICOES), pick(POSICOES)],
+    interesse: [],
+    confiancaEmVoce: c.categoria === "Amador" ? rnd(4, 14) : 0,
+  }));
+}
+
 const AGENCIAS_RIVAIS = [
   "Prime Sports","Elite Foot","Nova Geração","Base Talentos","Grupo Vanguarda","Sul Scout",
 ];
