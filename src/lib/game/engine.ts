@@ -183,7 +183,8 @@ export function adicionarAoRadar(state: GameState, destaques: MatchPlayer[], fx:
 /** Observação técnica dedicada: revela gradualmente atributos e potencial. */
 export function observarJogador(state: GameState, playerId: string): { state: GameState; mensagem: string } {
   if (state.energia <= 0) return { state, mensagem: "Sem energia nesta semana." };
-  if (state.dinheiro < CUSTOS.observacao) return { state, mensagem: `Sem caixa (R$ ${CUSTOS.observacao}).` };
+  const custoObs = custoObservacao(state);
+  if (state.dinheiro < custoObs) return { state, mensagem: `Sem caixa (R$ ${custoObs}).` };
   const player = state.radar.find(p => p.id === playerId) ?? state.jogadores.find(p => p.id === playerId);
   if (!player) return { state, mensagem: "Atleta não encontrado." };
 
@@ -200,7 +201,7 @@ export function observarJogador(state: GameState, playerId: string): { state: Ga
     ]),
   };
 
-  let s = consumirEnergia(gastar(state, CUSTOS.observacao, `Observação técnica de ${player.nome}`));
+  let s = consumirEnergia(gastar(state, custoObs, `Observação técnica de ${player.nome}`));
   const upd = (p: Player): Player => p.id !== playerId ? p : {
     ...p,
     observado: p.observado + 1,
@@ -212,8 +213,8 @@ export function observarJogador(state: GameState, playerId: string): { state: Ga
 }
 
 /** Estimativa de potencial mostrada ao jogador (nunca exata). */
-export function potencialEstimado(p: Player): { min: number; max: number } {
-  const erro = Math.max(3, 22 - p.observado * 4);
+export function potencialEstimado(p: Player, precisao = 0): { min: number; max: number } {
+  const erro = Math.max(2, 22 - p.observado * 4 - precisao);
   const centro = p.potencial + ((p.visual % 7) - 3);
   return { min: Math.max(20, Math.round(centro - erro)), max: Math.min(99, Math.round(centro + erro)) };
 }
@@ -321,7 +322,9 @@ export function custoPeneira(clube: Club): number {
 /** Clubes recusam inscrições quando não confiam no empresário ou não precisam da posição. */
 export function aceitaInscricao(state: GameState, clube: Club, player: Player): { ok: boolean; motivo?: string } {
   const exigeConfianca = { Amador: 0, "Serie D": 8, "Serie C": 18, "Serie B": 32, "Serie A": 50, Elite: 70 }[clube.categoria];
-  if (clube.confiancaEmVoce + state.reputacao * 0.4 < exigeConfianca)
+  const bonusEstrutura = (state.upgrades.includes("sede") ? 10 : 0)
+    + (state.upgrades.includes("filial") && clube.categoria === "Elite" ? 25 : 0);
+  if (clube.confiancaEmVoce + state.reputacao * 0.4 + bonusEstrutura < exigeConfianca)
     return { ok: false, motivo: `${clube.nome} não responde às suas mensagens. Ganhe reputação primeiro.` };
   if (clube.personalidade === "Formador" && player.idade > 20)
     return { ok: false, motivo: `${clube.nome} só avalia atletas de base.` };
@@ -513,7 +516,8 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   };
 
   // reputação decai sem resultados
-  if (Math.random() < 0.2) s = { ...s, reputacao: Math.max(0, s.reputacao - 1) };
+  const chanceQueda = s.upgrades.includes("sede") ? 0.08 : 0.2;
+  if (Math.random() < chanceQueda) s = { ...s, reputacao: Math.max(0, s.reputacao - 1) };
 
   // clubes sondam seus atletas conforme personalidade e necessidade
   s = sondagensDeClubes(s, eventos);
@@ -549,7 +553,7 @@ function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
   const neg: Negotiation = {
     id: nextNegId(), playerId: jogador.id, clubId: clube.id,
     valorProposta: valor,
-    comissao: 0.06 + Math.min(0.06, s.reputacao / 1000),
+    comissao: 0.06 + Math.min(0.06, s.reputacao / 1000) + (s.upgrades.includes("juridico") ? 0.03 : 0),
     salario: Math.max(1200, Math.floor(valor * 0.004)),
     status: "aberta",
     expiraEm: rnd(2, 4),
