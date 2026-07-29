@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { GameState, Player, TimelineEvent } from "@/lib/game/types";
 import { MESES } from "@/lib/game/types";
-import { potencialEstimado, CUSTOS } from "@/lib/game/engine";
+import { potencialEstimado, CUSTOS, custoObservacao } from "@/lib/game/engine";
 import { PlayerAvatar } from "./PlayerAvatar";
 
 export function PlayerDetail({
@@ -29,7 +29,7 @@ export function PlayerDetail({
   const revelaAtual = nivel >= 2 || contratado;
   const revelaAtributos = nivel >= 3 || contratado;
   const revelaPotencial = nivel >= 4 || contratado;
-  const est = potencialEstimado(player);
+  const est = potencialEstimado(player, state.upgrades?.includes("analista") ? 6 : 0);
 
   const attrs: [string, number][] = [
     ["Técnica", player.atributos.tecnica],
@@ -128,7 +128,7 @@ export function PlayerDetail({
 
         {!contratado && !player.empresario && (
           <div className="mt-6 grid grid-cols-3 gap-2">
-            <Button variant="secondary" onClick={onObservar}>Observar (R$ {CUSTOS.observacao})</Button>
+            <Button variant="secondary" onClick={onObservar}>Observar (R$ {custoObservacao(state)})</Button>
             <Button variant="secondary" onClick={onConversar}>Conversar (R$ {CUSTOS.conversa})</Button>
             <Button onClick={onPropor}>Propor (R$ {CUSTOS.proposta})</Button>
           </div>

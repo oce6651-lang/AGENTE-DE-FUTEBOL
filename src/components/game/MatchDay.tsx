@@ -7,7 +7,7 @@ import { ClubCrest } from "./ClubCrest";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { gerarRodada, simularPartida, destaquesDaPartida } from "@/lib/game/matches";
 import type { Fixture, GameState, MatchEvent, MatchPlayer, MatchTeam } from "@/lib/game/types";
-import { LOCATION_IMAGES } from "@/lib/game/locations";
+import type { ScoutLocation } from "@/lib/game/locations";
 import bgMatch from "@/assets/bg-match.jpg";
 import {
   ArrowLeft, Clock, Users, Flag as Whistle, Play, Pause, FastForward, Star, Ticket,
@@ -15,16 +15,16 @@ import {
 
 type Step = "fixtures" | "lineups" | "live" | "report";
 
-export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
+export function MatchDay({ state, loc, onSair, onAssistir, onSalvarRadar }: {
   state: GameState;
-  local: string;
+  loc: ScoutLocation;
   onSair: () => void;
   /** Cobra viagem + ingresso. Retorna false se não for possível. */
   onAssistir: (fx: Fixture) => boolean;
   onSalvarRadar: (destaques: MatchPlayer[], fx: Fixture) => void;
 }) {
   const [step, setStep] = useState<Step>("fixtures");
-  const [fixtures] = useState<Fixture[]>(() => gerarRodada(state, local, Math.floor(Math.random() * 500000) + 5000));
+  const [fixtures] = useState<Fixture[]>(() => gerarRodada(state, loc, Math.floor(Math.random() * 500000) + 5000));
   const [fx, setFx] = useState<Fixture | null>(null);
   const [sim, setSim] = useState<{ eventos: MatchEvent[]; casa: MatchTeam; fora: MatchTeam } | null>(null);
   const [minuto, setMinuto] = useState(0);
@@ -81,14 +81,14 @@ export function MatchDay({ state, local, onSair, onAssistir, onSalvarRadar }: {
   if (step === "fixtures") {
     return (
       <div className="p-4 space-y-4 animate-in fade-in duration-300">
-        <Header title={local} sub="Programação de hoje" onBack={onSair} />
+        <Header title={loc.nome} sub="Programação de hoje" onBack={onSair} />
         <div className="relative overflow-hidden rounded-3xl border border-border shadow-[var(--shadow-card)]">
-          <img src={LOCATION_IMAGES[local]} alt={local} className="h-40 w-full object-cover" width={1600} height={900} />
+          <img src={loc.imagem} alt={loc.nome} className="h-40 w-full object-cover" width={1600} height={900} />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
           <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div>
               <div className="text-xs uppercase tracking-widest text-primary font-bold">Dia de jogo</div>
-              <div className="text-2xl font-black">{local}</div>
+              <div className="text-2xl font-black">{loc.nome}</div>
             </div>
             <Badge variant="secondary" className="gap-1"><Ticket className="h-4 w-4" /> viagem + ingresso</Badge>
           </div>

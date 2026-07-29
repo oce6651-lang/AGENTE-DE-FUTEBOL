@@ -11,7 +11,8 @@ export interface Attributes {
 }
 
 /** Categoria de idade das partidas observadas nos locais. */
-export type AgeCategory = "Sub-13" | "Sub-15" | "Sub-17" | "Livre" | "Veterano";
+export type AgeCategory =
+  | "Sub-11" | "Sub-13" | "Sub-15" | "Sub-17" | "Sub-18" | "Sub-20" | "Livre" | "Veterano";
 
 export interface Player {
   id: string;
@@ -95,6 +96,8 @@ export interface Club {
   nome: string;
   abrev: string;
   categoria: Division;
+  /** Competição em que o clube disputa a temporada. */
+  liga: string;
   personalidade: ClubPersonality;
   orcamento: number;
   cidade: string;
@@ -176,6 +179,10 @@ export interface GameState {
   peneiras: Tryout[];
   noticias: NewsItem[];
   financas: FinanceEntry[];
+  /** Melhorias estruturais compradas pela agência. */
+  upgrades: string[];
+  /** Locais de scouting já desbloqueados manualmente (além dos liberados por reputação). */
+  locaisVisitados: string[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;
@@ -186,15 +193,9 @@ export const MESES = [
   "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
 ];
 
-export const LOCAIS = [
-  "Campo Municipal",
-  "Quadra do Bairro",
-  "Escolinha de Futebol",
-  "Escola Estadual",
-  "Várzea",
-] as const;
-
-export const CATEGORIAS: AgeCategory[] = ["Sub-13", "Sub-15", "Sub-17", "Livre", "Veterano"];
+export const CATEGORIAS: AgeCategory[] = [
+  "Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-18", "Sub-20", "Livre", "Veterano",
+];
 
 // ============ Partidas (não persistidas) ============
 

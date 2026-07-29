@@ -2,7 +2,7 @@ import { gerarJogador, pick, rnd, TECNICOS, ARBITROS, rid } from "./generators";
 import type {
   AgeCategory, Fixture, GameState, MatchEvent, MatchPlayer, MatchTeam, Player, Position,
 } from "./types";
-import { CATEGORIAS } from "./types";
+import type { ScoutLocation } from "./locations";
 
 const FORMACOES = ["4-4-2", "4-3-3", "4-2-3-1", "3-5-2", "5-3-2"];
 const ESCALACAO_BASE: Position[] = ["GOL","LD","ZAG","ZAG","LE","VOL","MC","MEI","PD","PE","ATA"];
@@ -27,24 +27,29 @@ function abrev(nome: string) {
     .map(w => w[0].toUpperCase()).join("").padEnd(3, "C").slice(0, 3);
 }
 
+const HORARIOS: Record<AgeCategory, string> = {
+  "Sub-11": "08:00",
+  "Sub-13": "08:30",
+  "Sub-15": "10:00",
+  "Sub-17": "13:30",
+  "Sub-18": "14:30",
+  "Sub-20": "16:00",
+  Livre: "15:30",
+  Veterano: "17:00",
+};
+
 function horarioPara(cat: AgeCategory) {
-  switch (cat) {
-    case "Sub-13": return "08:30";
-    case "Sub-15": return "10:00";
-    case "Sub-17": return "13:30";
-    case "Livre": return "15:30";
-    case "Veterano": return "17:00";
-  }
+  return HORARIOS[cat] ?? "15:00";
 }
 
-function gerarTime(state: GameState, local: string, categoria: AgeCategory, idBase: number): { time: MatchTeam; usados: number } {
+function gerarTime(state: GameState, local: string, categoria: AgeCategory, idBase: number, nivel: number): { time: MatchTeam; usados: number } {
   const nome = nomeTime();
   const cores = pick(PALETAS);
   let n = idBase;
   const criar = (pos: Position, numero: number, titular: boolean): MatchPlayer => {
     const player = gerarJogador({
       cidade: state.agent.cidade, local, nextId: n++, ano: state.ano, mes: state.mes,
-      semana: state.semana, categoria, posicao: pos,
+      semana: state.semana, categoria, posicao: pos, nivel,
     });
     return { player, numero, nota: 6, titular, minutos: titular ? 0 : 0, gols: 0, destaque: false };
   };
@@ -59,28 +64,30 @@ function gerarTime(state: GameState, local: string, categoria: AgeCategory, idBa
   };
 }
 
-/** Gera a rodada do dia em um local: uma partida por categoria. */
-export function gerarRodada(state: GameState, local: string, idBase: number): Fixture[] {
+/** Gera a rodada do dia em um local: uma partida por categoria disponível. */
+export function gerarRodada(state: GameState, loc: ScoutLocation, idBase: number): Fixture[] {
   let n = idBase;
   const fixtures: Fixture[] = [];
-  const cats = CATEGORIAS.filter(() => Math.random() < 0.85);
-  const lista = cats.length ? cats : ["Livre" as AgeCategory];
+  const cats = loc.categorias.filter(() => Math.random() < 0.75);
+  const lista = cats.length ? cats : [pick(loc.categorias)];
   lista.forEach((cat, i) => {
-    const casa = gerarTime(state, local, cat, n); n += casa.usados;
-    const fora = gerarTime(state, local, cat, n); n += fora.usados;
+    const casa = gerarTime(state, loc.nome, cat, n, loc.nivel); n += casa.usados;
+    const fora = gerarTime(state, loc.nome, cat, n, loc.nivel); n += fora.usados;
+    // Categorias mais velhas atraem mais público; palcos grandes atraem ainda mais.
+    const [pMin, pMax] = loc.publico;
     fixtures.push({
       id: rid("FIX", Date.now() % 100000 + i),
-      local,
+      local: loc.nome,
       categoria: cat,
       casa: casa.time,
       fora: fora.time,
       arbitro: pick(ARBITROS),
       horario: horarioPara(cat),
-      publico: cat === "Livre" ? rnd(120, 900) : rnd(25, 250),
-      custoIngresso: cat === "Livre" ? 40 : 25,
+      publico: rnd(pMin, pMax),
+      custoIngresso: loc.custoIngresso,
     });
   });
-  return fixtures;
+  return fixtures.sort((a, b) => a.horario.localeCompare(b.horario));
 }
 
 function forcaJogador(p: Player) {
@@ -105,7 +112,8 @@ const LANCES_NEUTROS = [
  * e os times com notas/gols atualizados (a UI reproduz os eventos no tempo).
  */
 export function simularPartida(fx: Fixture): { eventos: MatchEvent[]; casa: MatchTeam; fora: MatchTeam } {
-  const dur = fx.categoria === "Sub-13" ? 50 : fx.categoria === "Sub-15" ? 60 : fx.categoria === "Veterano" ? 70 : 90;
+  const dur = fx.categoria === "Sub-11" ? 40 : fx.categoria === "Sub-13" ? 50
+    : fx.categoria === "Sub-15" ? 60 : fx.categoria === "Veterano" ? 70 : 90;
   const casa: MatchTeam = { ...fx.casa, gols: 0, titulares: fx.casa.titulares.map(m => ({ ...m, nota: 6, gols: 0 })), reservas: fx.casa.reservas.map(m => ({ ...m })) };
   const fora: MatchTeam = { ...fx.fora, gols: 0, titulares: fx.fora.titulares.map(m => ({ ...m, nota: 6, gols: 0 })), reservas: fx.fora.reservas.map(m => ({ ...m })) };
 

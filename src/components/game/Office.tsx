@@ -10,16 +10,18 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LOCAIS } from "@/lib/game/types";
 import type { Club, Fixture, GameState, MatchPlayer, Player } from "@/lib/game/types";
 import {
   avancarSemana, conversar, observarJogador, propor, responderNegociacao,
   enviarPeneira, custoPeneira, podeAssistir, pagarPartida, adicionarAoRadar, CUSTOS,
+  UPGRADES, comprarUpgrade, temUpgrade, custoViagem, custoObservacao,
 } from "@/lib/game/engine";
-import { LOCATION_IMAGES, LOCATION_DESC } from "@/lib/game/locations";
+import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
+import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
+  Lock, Star, Building2, Check,
 } from "lucide-react";
 
 type View = "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news" | "agency" | "detail" | "tryouts" | "clubs";
@@ -30,7 +32,7 @@ export function Office({ state, setState, onExit }: {
   onExit: () => void;
 }) {
   const [view, setView] = useState<View>("home");
-  const [local, setLocal] = useState<string | null>(null);
+  const [localId, setLocalId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [voltarPara, setVoltarPara] = useState<View>("radar");
   const [peneiraFor, setPeneiraFor] = useState<Player | null>(null);
@@ -47,16 +49,18 @@ export function Office({ state, setState, onExit }: {
     toast(eventos[0] ?? "Semana avançada", { description: eventos[1] });
   };
 
-  const abrirLocal = (l: string) => {
-    const check = podeAssistir(state);
+  const abrirLocal = (l: ScoutLocation) => {
+    const check = podeAssistir(state, l);
     if (!check.ok) { toast(check.motivo!); return; }
-    setLocal(l); setView("matchday");
+    setLocalId(l.id); setView("matchday");
   };
 
   const cobrarPartida = (fx: Fixture) => {
-    const check = podeAssistir(state);
+    if (!localId) return false;
+    const l = getLocation(localId);
+    const check = podeAssistir(state, l);
     if (!check.ok) { toast(check.motivo!); return false; }
-    setState(pagarPartida(state, fx));
+    setState(pagarPartida(state, fx, l));
     return true;
   };
 
@@ -139,29 +143,58 @@ export function Office({ state, setState, onExit }: {
           <div className="p-4 space-y-4 animate-in fade-in duration-300">
             <SubHeader title="Ir a campo" onBack={() => setView("home")} />
             <p className="text-xs text-muted-foreground">
-              Cada deslocamento custa R$ {CUSTOS.viagem} + ingresso e consome 1 ponto de energia da semana.
-              Escolha o local, veja a programação do dia e assista a uma partida inteira.
+              Cada palco tem suas próprias categorias, custo e nível de talento. Palcos maiores só abrem as portas
+              quando o meio do futebol passa a te conhecer. Todo deslocamento consome 1 ponto de energia da semana.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {LOCAIS.map(l => (
-                <button key={l} onClick={() => abrirLocal(l)}
-                  className="group relative overflow-hidden rounded-2xl border border-border text-left shadow-[var(--shadow-card)] transition-all hover:border-primary hover:scale-[1.01]">
-                  <img src={LOCATION_IMAGES[l]} alt={l} loading="lazy" className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-3">
-                    <div className="font-black flex items-center gap-1">{l} <ChevronRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" /></div>
-                    <div className="text-[10px] text-muted-foreground line-clamp-2">{LOCATION_DESC[l]}</div>
-                  </div>
-                </button>
-              ))}
+              {LOCATIONS.map(l => {
+                const liberado = localLiberado(l, state.reputacao, state.prestigio);
+                const total = custoViagem(state, l) + l.custoIngresso;
+                return (
+                  <button
+                    key={l.id}
+                    onClick={() => liberado ? abrirLocal(l) : toast(requisitoTexto(l))}
+                    className={"group relative overflow-hidden rounded-2xl border text-left shadow-[var(--shadow-card)] transition-all "
+                      + (liberado ? "border-border hover:border-primary hover:scale-[1.01]" : "border-border/60 opacity-70")}
+                  >
+                    <img src={l.imagem} alt={l.nome} loading="lazy" width={1024} height={576}
+                      className={"w-full h-32 object-cover transition-transform duration-700 "
+                        + (liberado ? "group-hover:scale-110" : "grayscale")} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/55 to-transparent" />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Badge variant="secondary" className="text-[10px] gap-1">
+                        <Star className="h-3 w-3" /> Nível {l.nivel}
+                      </Badge>
+                      {!liberado && <Badge variant="outline" className="text-[10px] gap-1"><Lock className="h-3 w-3" /> Bloqueado</Badge>}
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 p-3">
+                      <div className="font-black flex items-center gap-1">
+                        {l.nome}
+                        {liberado && <ChevronRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" />}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground line-clamp-2">{l.descricao}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {l.categorias.map(c => (
+                          <span key={c} className="rounded bg-secondary/80 px-1.5 py-0.5 text-[9px] font-bold text-secondary-foreground">{c}</span>
+                        ))}
+                      </div>
+                      <div className="mt-1.5 text-[10px] font-bold">
+                        {liberado
+                          ? <span className="text-primary">R$ {total.toLocaleString("pt-BR")} por viagem</span>
+                          : <span className="text-muted-foreground">{requisitoTexto(l)}</span>}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {view === "matchday" && local && (
+        {view === "matchday" && localId && (
           <MatchDay
             state={state}
-            local={local}
+            loc={getLocation(localId)}
             onSair={() => setView("locais")}
             onAssistir={cobrarPartida}
             onSalvarRadar={salvarRadar}
@@ -207,7 +240,7 @@ export function Office({ state, setState, onExit }: {
                 <div className="min-w-0 flex-1">
                   <div className="font-bold truncate">{c.nome}</div>
                   <div className="text-[11px] text-muted-foreground truncate">
-                    {c.categoria} • {c.cidade} • {c.personalidade}
+                    {c.liga} • {c.cidade} • {c.personalidade}
                   </div>
                   <div className="text-[11px] text-muted-foreground truncate">
                     Técnico: {c.tecnico} • Precisa de: {c.necessidades.join(", ") || "nada"}
@@ -343,6 +376,36 @@ export function Office({ state, setState, onExit }: {
                 <Stat label="PRESTÍGIO" value={"★".repeat(state.prestigio)} />
                 <Stat label="REPUTAÇÃO" value={String(state.reputacao)} />
                 <Stat label="CLIENTES" value={String(state.jogadores.length)} />
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-xs uppercase font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                <Building2 className="h-4 w-4" /> Estrutura da agência
+              </div>
+              <div className="space-y-2">
+                {UPGRADES.map(u => {
+                  const possui = temUpgrade(state, u.id);
+                  const podeComprar = !possui && state.reputacao >= u.reputacaoMin && state.dinheiro >= u.custo;
+                  return (
+                    <div key={u.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 p-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-sm flex items-center gap-2">
+                          {u.nome}
+                          {possui && <Badge className="text-[9px] gap-1"><Check className="h-3 w-3" /> ativo</Badge>}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">{u.descricao}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          R$ {u.custo.toLocaleString("pt-BR")}{u.reputacaoMin > 0 ? ` • exige ${u.reputacaoMin} de reputação` : ""}
+                        </div>
+                      </div>
+                      {!possui && (
+                        <Button size="sm" disabled={!podeComprar} onClick={() => {
+                          const r = comprarUpgrade(state, u.id); setState(r.state); toast(r.mensagem);
+                        }}>Investir</Button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </Card>
             <Card className="p-4">
