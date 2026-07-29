@@ -1,4 +1,4 @@
-import { pick, rnd, TECNICOS, POSICOES } from "./generators";
+import { pick, rnd, TECNICOS, POSICOES, LIGAS } from "./generators";
 import type { Club, Division, GameState, NewsItem, Player, TimelineEvent } from "./types";
 
 const ORDEM: Division[] = ["Amador", "Serie D", "Serie C", "Serie B", "Serie A", "Elite"];
@@ -130,19 +130,31 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
 
   // ---- fim de temporada: promoções e rebaixamentos ----
   if (s.mes === 12 && s.semana === 4) {
-    const ordenados = [...s.clubes].sort((a, b) => (b.pontos / Math.max(1, b.jogos)) - (a.pontos / Math.max(1, a.jogos)));
-    const promovidos = ordenados.slice(0, 2);
-    const rebaixados = ordenados.slice(-2);
+    // Cada divisão tem seu próprio campeão, promovido e rebaixado.
+    const promovidos: Club[] = [];
+    const rebaixados: Club[] = [];
+    const campeoes: string[] = [];
+    for (const div of ORDEM) {
+      const daDivisao = s.clubes
+        .filter(c => c.categoria === div)
+        .sort((a, b) => (b.pontos / Math.max(1, b.jogos)) - (a.pontos / Math.max(1, a.jogos)));
+      if (daDivisao.length < 2) continue;
+      campeoes.push(`${daDivisao[0].nome} (${LIGAS[div]})`);
+      if (div !== "Elite") promovidos.push(daDivisao[0]);
+      if (div !== "Amador") rebaixados.push(daDivisao[daDivisao.length - 1]);
+    }
     s = {
       ...s,
       clubes: s.clubes.map(c => {
         let cat = c.categoria;
         if (promovidos.some(p => p.id === c.id)) cat = sobe(c.categoria);
         if (rebaixados.some(p => p.id === c.id)) cat = desce(c.categoria);
-        return { ...c, categoria: cat, pontos: 0, jogos: 0 };
+        const liga = cat === c.categoria ? c.liga : LIGAS[cat];
+        return { ...c, categoria: cat, liga, pontos: 0, jogos: 0, orcamento: Math.round(c.orcamento * (cat === c.categoria ? 1 : promovidos.some(p => p.id === c.id) ? 1.6 : 0.6)) };
       }),
     };
-    const n = noticia(s, `Temporada ${s.ano} encerrada`, `${promovidos.map(p => p.nome).join(" e ")} sobem de divisão. ${rebaixados.map(p => p.nome).join(" e ")} caem.`, "mundo");
+    const n = noticia(s, `Temporada ${s.ano} encerrada`,
+      `Campeões: ${campeoes.join(", ")}. ${promovidos.map(p => p.nome).join(", ")} sobem de divisão e ${rebaixados.map(p => p.nome).join(", ")} caem.`, "mundo");
     novas.push(n); manchetes.push(n.titulo);
   }
 
