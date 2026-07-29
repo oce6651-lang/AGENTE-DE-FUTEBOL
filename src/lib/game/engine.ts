@@ -133,16 +133,24 @@ function consumirEnergia(state: GameState, qtd = 1): GameState {
 // SCOUTING — assistir partidas
 // ============================================================
 
-export function podeAssistir(state: GameState): { ok: boolean; motivo?: string } {
+export function podeAssistir(state: GameState, loc: ScoutLocation): { ok: boolean; motivo?: string } {
+  if (!localLiberado(loc, state.reputacao, state.prestigio))
+    return { ok: false, motivo: `Você ainda não tem acesso a ${loc.nome}.` };
   if (state.energia <= 0) return { ok: false, motivo: "Você está exausto. Avance a semana." };
-  if (state.dinheiro < CUSTOS.viagem + CUSTOS.ingresso)
-    return { ok: false, motivo: `Sem caixa para a viagem (R$ ${CUSTOS.viagem + CUSTOS.ingresso}).` };
+  const total = custoViagem(state, loc) + loc.custoIngresso;
+  if (state.dinheiro < total)
+    return { ok: false, motivo: `Sem caixa para ir até ${loc.nome} (R$ ${total.toLocaleString("pt-BR")}).` };
   return { ok: true };
 }
 
-export function pagarPartida(state: GameState, fx: Fixture): GameState {
-  const custo = CUSTOS.viagem + fx.custoIngresso;
-  return consumirEnergia(gastar(state, custo, `Viagem e ingresso: ${fx.categoria} em ${fx.local}`));
+export function pagarPartida(state: GameState, fx: Fixture, loc: ScoutLocation): GameState {
+  const custo = custoViagem(state, loc) + fx.custoIngresso;
+  let s = consumirEnergia(gastar(state, custo, `Viagem e ingresso: ${fx.categoria} em ${fx.local}`));
+  // Frequentar palcos maiores dá visibilidade no meio.
+  const ganho = loc.nivel >= 6 && Math.random() < 0.45 ? 1 : 0;
+  if (ganho) s = { ...s, reputacao: Math.min(100, s.reputacao + ganho) };
+  if (!s.locaisVisitados.includes(loc.id)) s = { ...s, locaisVisitados: [...s.locaisVisitados, loc.id] };
+  return s;
 }
 
 /** Registra atletas observados na partida dentro do radar da agência. */
