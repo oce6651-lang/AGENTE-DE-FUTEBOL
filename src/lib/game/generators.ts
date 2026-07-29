@@ -55,7 +55,7 @@ export function gerarAtributos(base: number, posicao: Position): Attributes {
 }
 
 /** Curva de potencial extremamente enviesada para baixo. Craques são raríssimos. */
-function rolarPotencial(): number {
+function sortearPotencial(): number {
   const r = Math.random();
   if (r < 0.62) return rnd(30, 52);
   if (r < 0.88) return rnd(52, 64);
@@ -66,6 +66,17 @@ function rolarPotencial(): number {
   return rnd(95, 99);
 }
 
+/**
+ * Palcos melhores concentram talento: sorteia várias vezes e fica com o melhor
+ * resultado, mas nunca garante um craque.
+ */
+function rolarPotencial(nivel: number): number {
+  const tentativas = 1 + Math.floor(Math.max(0, nivel - 1) / 2);
+  let melhor = 0;
+  for (let i = 0; i < tentativas; i++) melhor = Math.max(melhor, sortearPotencial());
+  return melhor;
+}
+
 function rolarAltura(posicao: Position, idade: number): number {
   const base = posicao === "GOL" ? 188 : posicao === "ZAG" ? 186 : posicao === "ATA" ? 180 : 175;
   const crescimento = idade >= 18 ? 0 : -(18 - idade) * 3;
@@ -74,11 +85,15 @@ function rolarAltura(posicao: Position, idade: number): number {
 
 export function faixaIdade(cat: AgeCategory): [number, number] {
   switch (cat) {
+    case "Sub-11": return [9, 11];
     case "Sub-13": return [11, 13];
     case "Sub-15": return [13, 15];
     case "Sub-17": return [15, 17];
-    case "Livre": return [18, 30];
-    case "Veterano": return [31, 41];
+    case "Sub-18": return [16, 18];
+    case "Sub-20": return [18, 20];
+    case "Livre": return [18, 32];
+    case "Veterano": return [33, 41];
+    default: return [12, 22];
   }
 }
 
@@ -91,15 +106,18 @@ export interface GerarPlayerOpts {
   semana: number;
   categoria?: AgeCategory;
   posicao?: Position;
+  /** Nível do palco (1 a 10). Eleva a média de talento em campo. */
+  nivel?: number;
 }
 
-export function gerarJogador({ cidade, local, nextId, ano, mes, semana, categoria, posicao }: GerarPlayerOpts): Player {
+export function gerarJogador({ cidade, local, nextId, ano, mes, semana, categoria, posicao, nivel = 1 }: GerarPlayerOpts): Player {
   const [minI, maxI] = categoria ? faixaIdade(categoria) : [12, 22];
   const idade = rnd(minI, maxI);
   const pos = posicao ?? pick(POSICOES);
-  const potencial = rolarPotencial();
+  const potencial = rolarPotencial(nivel);
   // Quanto mais jovem, maior a distância entre o nível atual e o potencial.
-  const gap = Math.max(6, 52 - idade * 2);
+  // Palcos de elite já entregam atletas mais desenvolvidos para a idade.
+  const gap = Math.max(4, 52 - idade * 2 - nivel);
   const atual = Math.max(12, Math.min(potencial, rnd(potencial - gap - 5, potencial - gap + 5)));
   const nome = `${pick(NOMES)} ${pick(SOBRENOMES)}`;
   const timeline: TimelineEvent[] = [
