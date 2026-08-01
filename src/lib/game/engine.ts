@@ -594,10 +594,9 @@ export function responderNegociacao(
   };
   return {
     state: {
-      ...state,
-      dinheiro: state.dinheiro + receita,
       ...ganharReputacao(state, neg.valorProposta > 800_000 ? REP_XP.transferenciaGrande
         : neg.valorProposta > 200_000 ? REP_XP.transferenciaMedia : REP_XP.transferenciaPequena),
+      dinheiro: state.dinheiro + receita,
       prestigio: Math.min(5, state.prestigio + (neg.valorProposta > 800_000 ? 1 : 0)),
       clubes: state.clubes.map(c => c.id === clube.id
         ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 10), necessidades: c.necessidades.filter(p => p !== player.posicao) } : c),
