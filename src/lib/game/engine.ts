@@ -1,5 +1,8 @@
-import { gerarClubes, gerarRivais, pick, rid, rnd } from "./generators";
+import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, sortearSonhos } from "./generators";
 import { mundoSemanal, viradaDeAno } from "./world";
+import { ganharReputacao, REP_XP } from "./reputation";
+import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
+import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
 import type {
@@ -73,22 +76,26 @@ export function custoObservacao(state: GameState) {
 
 export function novoJogo(agent: Omit<Agent, "id">): GameState {
   const agentWithId: Agent = { ...agent, id: rid("EMP", 1) };
-  return {
+  const base: GameState = {
     agent: agentWithId,
     ano: 2026,
     mes: 3,
     semana: 1,
-    dinheiro: 3000,
+    dinheiro: 6000,
     prestigio: 1,
-    reputacao: 1,
+    reputacao: 0,
+    repXP: 0,
     energia: 3,
     energiaMax: 3,
     jogadores: [],
     radar: [],
+    historicoAgencia: [],
     clubes: gerarClubes(),
     rivais: gerarRivais(),
     negociacoes: [],
     peneiras: [],
+    peneirasAbertas: [],
+    titulosMundo: [],
     upgrades: [],
     locaisVisitados: [],
     noticias: [
@@ -96,7 +103,7 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
         id: rid("NEW", 1),
         semana: 1, mes: 3, ano: 2026,
         titulo: `${agentWithId.agencia} foi fundada em ${agentWithId.cidade}`,
-        texto: `${agentWithId.nome} ${agentWithId.sobrenome} começa do absoluto zero. Nenhum clube atende suas ligações, nenhuma família confia em você. Vá aos campos, assista partidas e construa uma reputação.`,
+        texto: `${agentWithId.nome} ${agentWithId.sobrenome} começa do zero com R$ 6.000 no caixa e dois contatos dispostos a assinar. Vá aos campos, assista partidas e construa uma reputação.`,
         tipo: "info",
       },
     ],
@@ -105,6 +112,44 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
   };
+  return { ...base, radar: contatosIniciais(base) };
+}
+
+/** Dois atletas de contato inicial, 100% dispostos a assinar com a agência. */
+function contatosIniciais(s: GameState): Player[] {
+  const comum = gerarJogador({
+    cidade: s.agent.cidade, local: "Contato pessoal", nextId: 1,
+    ano: s.ano, mes: s.mes, semana: s.semana,
+    estado: s.agent.estado, pais: s.agent.pais,
+    forcarIdade: rnd(9, 23), forcarAtual: [10, 30], forcarPotencial: [80, 100],
+  });
+  const gustavo = gerarJogador({
+    cidade: s.agent.cidade, local: "Indicação de família", nextId: 2,
+    ano: s.ano, mes: s.mes, semana: s.semana,
+    estado: s.agent.estado, pais: s.agent.pais,
+    forcarIdade: 16, forcarAtual: [5, 38], forcarPotencial: [90, 100],
+  });
+  const gremio = clubesDaRegiao("RS").find(c => c.nome === "Grêmio FBPA")?.nome ?? "Grêmio FBPA";
+  const prep = (p: Player, extra: Partial<Player>): Player => ({
+    ...p,
+    empresario: null,
+    clube: null,
+    confianca: 100,
+    status: "Quer assinar com você",
+    valorMercado: calcularValorMercado(p.atual, p.potencial, p.idade, false),
+    observado: 1,
+    ...extra,
+  });
+  return [
+    prep(gustavo, {
+      nome: "Gustavo Oliveira",
+      personalidade: "Humilde",
+      tracos: ["Humilde", "Generoso", "Esforçado", "Talentoso", "Tímido"],
+      clubeCoracao: gremio,
+      sonhos: sortearSonhos(gremio, 95),
+    }),
+    prep(comum, {}),
+  ];
 }
 
 let ID_COUNTER = 1000;
