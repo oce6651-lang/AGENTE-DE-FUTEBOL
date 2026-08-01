@@ -1,6 +1,6 @@
 import type { GameState } from "./types";
 
-const KEY = "pfa_save_v4";
+const KEY = "pfa_save_v5";
 
 export function saveGame(state: GameState) {
   if (typeof window === "undefined") return;
