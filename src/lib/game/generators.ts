@@ -2,6 +2,10 @@ import type {
   Attributes, Club, ClubPersonality, Division, Player, Position, Foot,
   TimelineEvent, AgeCategory, RivalAgent,
 } from "./types";
+import { CLUB_SEEDS, clubesDaRegiao } from "./data/clubs";
+import { competicoesDoClube, ligaPrincipal } from "./data/leagues";
+import { SONHOS, TRACOS } from "./data/dreams";
+import { getPais } from "./data/geo";
 
 export function rid(prefix: string, n: number): string {
   return `${prefix}${String(n).padStart(6, "0")}`;
