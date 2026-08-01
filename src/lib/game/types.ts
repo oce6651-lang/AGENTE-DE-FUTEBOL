@@ -22,12 +22,26 @@ export interface Player {
   pe: Foot;
   altura: number; // cm
   cidade: string;
+  /** Estado e país de nascimento — definem o clube do coração e o mercado natural. */
+  estado: string;
+  pais: string;
+  nacionalidade: string;
   clube: string | null;
   empresario: string | null; // id da agência (jogador ou rival)
   atributos: Attributes;
   atual: number;
   potencial: number;
   personalidade: "Ambicioso" | "Humilde" | "Ganancioso" | "Calmo" | "Explosivo";
+  /** Traços que temperam negociações, evolução e disciplina. */
+  tracos: string[];
+  /** Sonhos de carreira — influenciam aceitação de propostas. */
+  sonhos: string[];
+  /** Clube do coração, sempre da região onde nasceu. */
+  clubeCoracao: string;
+  valorMercado: number;
+  salario: number;
+  /** Histórico permanente por temporada, no estilo Football Manager. */
+  temporadas: SeasonRecord[];
   local: string; // onde foi descoberto
   historico: string[];
   observado: number; // quantas vezes foi observado tecnicamente
@@ -38,6 +52,25 @@ export interface Player {
   relatorios: ScoutNote[];
   /** Semente visual do avatar (cores/traços). */
   visual: number;
+  /** Semanas restantes de lesão (0 = apto). */
+  lesaoSemanas?: number;
+}
+
+/** Uma temporada completa na carreira do atleta. */
+export interface SeasonRecord {
+  ano: number;
+  clube: string;
+  categoria: string;
+  liga: string;
+  jogos: number;
+  gols: number;
+  assistencias: number;
+  overall: number;
+  valorMercado: number;
+  salario: number;
+  titulos: string[];
+  premios: string[];
+  lesoes: string[];
 }
 
 export interface ScoutNote {
@@ -77,9 +110,37 @@ export interface Tryout {
   enviadaSemana: number;
   duracaoSemanas: number;
   restanteSemanas: number;
-  status: "em_andamento" | "aprovado" | "reprovado" | "mais_tempo" | "lesionado";
+  status: "em_andamento" | "aprovado" | "reprovado" | "mais_tempo" | "lesionado" | "destaque" | "convocado";
+  /** Peneira aberta gratuita ou inscrição paga direto no clube. */
+  gratuita?: boolean;
+  categoria?: AgeCategory;
   notas: string[];
   resultadoTexto?: string;
+}
+
+/** Peneira aberta divulgada por um clube. Inscrição gratuita. */
+export interface OpenTryout {
+  id: string;
+  clubId: string;
+  categoria: AgeCategory;
+  idadeMax: number;
+  ano: number;
+  mes: number;
+  semana: number;
+  vagas: number;
+  /** 1 a 10 — o quanto a avaliação é disputada. */
+  nivel: number;
+  inscritos: string[];
+}
+
+/** Resposta de um clube a uma oferta de atleta. */
+export interface ClubResponse {
+  clubId: string;
+  clube: string;
+  resultado:
+    | "interessado" | "sem_orcamento" | "posicao_ocupada"
+    | "abaixo_do_nivel" | "pede_teste" | "pede_informacoes" | "ignorou";
+  texto: string;
 }
 
 export type ClubPersonality =
@@ -98,6 +159,10 @@ export interface Club {
   categoria: Division;
   /** Competição em que o clube disputa a temporada. */
   liga: string;
+  /** Todas as competições disputadas na temporada. */
+  competicoes: string[];
+  pais: string;
+  estado: string;
   personalidade: ClubPersonality;
   orcamento: number;
   cidade: string;
@@ -169,14 +234,22 @@ export interface GameState {
   dinheiro: number;
   prestigio: number; // 1-5
   reputacao: number; // 0-100
+  /** Experiência acumulada de reputação. Nunca diminui. */
+  repXP: number;
   energia: number;   // ações por semana
   energiaMax: number;
   jogadores: Player[];   // representados por você
   radar: Player[];       // atletas mapeados, ainda não assinados
+  /** Arquivo permanente de todos os atletas que já passaram pela agência. */
+  historicoAgencia: Player[];
   clubes: Club[];
   rivais: RivalAgent[];
   negociacoes: Negotiation[];
   peneiras: Tryout[];
+  /** Peneiras gratuitas divulgadas pelos clubes. */
+  peneirasAbertas: OpenTryout[];
+  /** Campeões de cada competição por temporada. */
+  titulosMundo: { ano: number; competicao: string; campeao: string }[];
   noticias: NewsItem[];
   financas: FinanceEntry[];
   /** Melhorias estruturais compradas pela agência. */
