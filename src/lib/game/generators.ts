@@ -2,6 +2,10 @@ import type {
   Attributes, Club, ClubPersonality, Division, Player, Position, Foot,
   TimelineEvent, AgeCategory, RivalAgent,
 } from "./types";
+import { CLUB_SEEDS, clubesDaRegiao } from "./data/clubs";
+import { competicoesDoClube, ligaPrincipal } from "./data/leagues";
+import { SONHOS, TRACOS } from "./data/dreams";
+import { getPais } from "./data/geo";
 
 export function rid(prefix: string, n: number): string {
   return `${prefix}${String(n).padStart(6, "0")}`;
@@ -108,18 +112,64 @@ export interface GerarPlayerOpts {
   posicao?: Position;
   /** Nível do palco (1 a 10). Eleva a média de talento em campo. */
   nivel?: number;
+  estado?: string;
+  pais?: string;
+  /** Força uma faixa específica de overall/potencial (usado nos contatos iniciais). */
+  forcarAtual?: [number, number];
+  forcarPotencial?: [number, number];
+  forcarIdade?: number;
 }
 
-export function gerarJogador({ cidade, local, nextId, ano, mes, semana, categoria, posicao, nivel = 1 }: GerarPlayerOpts): Player {
+/** Valor de mercado inicial: baixíssimo para quem ainda não jogou nada. */
+export function calcularValorMercado(atual: number, potencial: number, idade: number, temClube: boolean): number {
+  const base = Math.pow(Math.max(1, atual - 8), 2.35) * 7;
+  const fatorPot = 1 + Math.max(0, potencial - atual) / 55;
+  const fatorIdade = idade <= 18 ? 1.5 : idade <= 22 ? 1.25 : idade <= 27 ? 1 : idade <= 31 ? 0.6 : 0.25;
+  const fatorClube = temClube ? 1 : 0.25;
+  return Math.max(0, Math.round((base * fatorPot * fatorIdade * fatorClube) / 100) * 100);
+}
+
+export function calcularSalario(atual: number, temClube: boolean): number {
+  if (!temClube) return 0;
+  return Math.max(1200, Math.round((Math.pow(atual, 2.1) * 0.9) / 100) * 100);
+}
+
+/** Sorteia sonhos coerentes com o perfil do atleta. */
+export function sortearSonhos(clubeCoracao: string, potencial: number): string[] {
+  const pool = SONHOS.filter(s => {
+    if (s === "Ser campeão da Champions League" && potencial < 78) return false;
+    if (s === "Jogar apenas em clubes grandes" && potencial < 70) return false;
+    return true;
+  });
+  const escolhidos = new Set<string>();
+  if (Math.random() < 0.4) escolhidos.add("Defender o clube do coração");
+  while (escolhidos.size < rnd(2, 3)) escolhidos.add(pick(pool));
+  return Array.from(escolhidos).map(s => s === "Defender o clube do coração" ? `Defender o ${clubeCoracao}` : s);
+}
+
+function sortearTracos(): string[] {
+  const set = new Set<string>();
+  while (set.size < rnd(2, 4)) set.add(pick(TRACOS));
+  return Array.from(set);
+}
+
+export function gerarJogador(opts: GerarPlayerOpts): Player {
+  const {
+    cidade, local, nextId, ano, mes, semana, categoria, posicao, nivel = 1,
+    estado = "RS", pais = "Brasil", forcarAtual, forcarPotencial, forcarIdade,
+  } = opts;
   const [minI, maxI] = categoria ? faixaIdade(categoria) : [12, 22];
-  const idade = rnd(minI, maxI);
+  const idade = forcarIdade ?? rnd(minI, maxI);
   const pos = posicao ?? pick(POSICOES);
-  const potencial = rolarPotencial(nivel);
+  const potencial = forcarPotencial ? rnd(forcarPotencial[0], forcarPotencial[1]) : rolarPotencial(nivel);
   // Quanto mais jovem, maior a distância entre o nível atual e o potencial.
   // Palcos de elite já entregam atletas mais desenvolvidos para a idade.
   const gap = Math.max(4, 52 - idade * 2 - nivel);
-  const atual = Math.max(12, Math.min(potencial, rnd(potencial - gap - 5, potencial - gap + 5)));
+  const atual = forcarAtual
+    ? Math.min(potencial, rnd(forcarAtual[0], forcarAtual[1]))
+    : Math.max(10, Math.min(potencial, rnd(potencial - gap - 5, potencial - gap + 5)));
   const nome = `${pick(NOMES)} ${pick(SOBRENOMES)}`;
+  const clubeCoracao = pick(clubesDaRegiao(estado)).nome;
   const timeline: TimelineEvent[] = [
     { ano, mes, semana, tipo: "descoberta", texto: `Avistado em ${local} (${cidade}).` },
   ];
@@ -131,12 +181,21 @@ export function gerarJogador({ cidade, local, nextId, ano, mes, semana, categori
     pe: pick(PES),
     altura: rolarAltura(pos, idade),
     cidade,
+    estado,
+    pais,
+    nacionalidade: getPais(pais).nacionalidade,
     clube: null,
     empresario: null,
     atributos: gerarAtributos(atual, pos),
     atual,
     potencial,
     personalidade: pick(PERSONALIDADES),
+    tracos: sortearTracos(),
+    sonhos: sortearSonhos(clubeCoracao, potencial),
+    clubeCoracao,
+    valorMercado: calcularValorMercado(atual, potencial, idade, false),
+    salario: 0,
+    temporadas: [],
     local,
     historico: [`Descoberto em ${local} (${cidade}).`],
     observado: 0,
@@ -148,84 +207,42 @@ export function gerarJogador({ cidade, local, nextId, ano, mes, semana, categori
   };
 }
 
-interface ClubSeed {
-  nome: string; abrev: string; categoria: Division; liga: string; personalidade: ClubPersonality;
-  orcamento: number; cidade: string; cores: [string, string];
-}
-
-/** Competições disputadas no mundo do jogo. */
+/** Liga principal por divisão (compatibilidade com o mundo). */
 export const LIGAS: Record<Division, string> = {
-  Amador: "Copa Regional Amadora",
+  Amador: "Campeonato Amador Municipal",
   "Serie D": "Brasileirão Série D",
   "Serie C": "Brasileirão Série C",
   "Serie B": "Brasileirão Série B",
   "Serie A": "Brasileirão Série A",
-  Elite: "Elite Europeia",
+  Elite: "Liga Internacional",
 };
 
-const CLUBES_BASE: ClubSeed[] = [
-  // ---------- Elite (mercado internacional) ----------
-  { nome: "Vitória de Lisboa", abrev: "VLX", categoria: "Elite", liga: "Primeira Liga (POR)", personalidade: "Vitrine", orcamento: 900_000_000, cidade: "Lisboa", cores: ["#1f6f4a", "#0a1a12"] },
-  { nome: "Ajaccio United", abrev: "AJU", categoria: "Elite", liga: "Eredivisie (NED)", personalidade: "Formador", orcamento: 820_000_000, cidade: "Amsterdã", cores: ["#c0392b", "#141414"] },
-  { nome: "Real Castilla", abrev: "RCA", categoria: "Elite", liga: "La Liga (ESP)", personalidade: "Imediatista", orcamento: 1_400_000_000, cidade: "Madri", cores: ["#e8e8e8", "#1b1b1b"] },
-  { nome: "Milano Nord", abrev: "MNO", categoria: "Elite", liga: "Serie A (ITA)", personalidade: "Tradicional", orcamento: 1_100_000_000, cidade: "Milão", cores: ["#1d3f8f", "#0a1128"] },
-
-  // ---------- Série A ----------
-  { nome: "Grêmio FBPA", abrev: "GRE", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Formador", orcamento: 250_000_000, cidade: "Porto Alegre", cores: ["#1f8ecd", "#0b1d2e"] },
-  { nome: "Internacional", abrev: "INT", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Imediatista", orcamento: 240_000_000, cidade: "Porto Alegre", cores: ["#c8102e", "#2a0a10"] },
-  { nome: "Juventude", abrev: "JUV", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Pechincha", orcamento: 60_000_000, cidade: "Caxias do Sul", cores: ["#1c8a4a", "#0e2b1b"] },
-  { nome: "Athletico Paranaense", abrev: "CAP", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Vitrine", orcamento: 210_000_000, cidade: "Curitiba", cores: ["#c0392b", "#161616"] },
-  { nome: "Palmeiras", abrev: "PAL", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Formador", orcamento: 430_000_000, cidade: "São Paulo", cores: ["#0f6b3d", "#08210f"] },
-  { nome: "São Paulo FC", abrev: "SPF", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Tradicional", orcamento: 300_000_000, cidade: "São Paulo", cores: ["#b71c1c", "#101010"] },
-  { nome: "Santos FC", abrev: "SAN", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Vitrine", orcamento: 180_000_000, cidade: "Santos", cores: ["#e6e6e6", "#151515"] },
-  { nome: "Flamengo", abrev: "FLA", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Imediatista", orcamento: 520_000_000, cidade: "Rio de Janeiro", cores: ["#c62828", "#1a1a1a"] },
-  { nome: "Fluminense", abrev: "FLU", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Formador", orcamento: 190_000_000, cidade: "Rio de Janeiro", cores: ["#7b1e3a", "#0f2419"] },
-  { nome: "Atlético Mineiro", abrev: "CAM", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Imediatista", orcamento: 320_000_000, cidade: "Belo Horizonte", cores: ["#1c1c1c", "#3a3a3a"] },
-  { nome: "Cruzeiro", abrev: "CRU", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Formador", orcamento: 230_000_000, cidade: "Belo Horizonte", cores: ["#1e3f9c", "#0a132b"] },
-  { nome: "Bahia", abrev: "BAH", categoria: "Serie A", liga: "Brasileirão Série A", personalidade: "Vitrine", orcamento: 200_000_000, cidade: "Salvador", cores: ["#1565c0", "#0b1c2e"] },
-
-  // ---------- Série B ----------
-  { nome: "Caxias", abrev: "CAX", categoria: "Serie B", liga: "Brasileirão Série B", personalidade: "Vitrine", orcamento: 20_000_000, cidade: "Caxias do Sul", cores: ["#d9a441", "#20160a"] },
-  { nome: "Coritiba", abrev: "CFC", categoria: "Serie B", liga: "Brasileirão Série B", personalidade: "Formador", orcamento: 45_000_000, cidade: "Curitiba", cores: ["#0f6b3d", "#e0e0e0"] },
-  { nome: "Guarani", abrev: "GUR", categoria: "Serie B", liga: "Brasileirão Série B", personalidade: "Pechincha", orcamento: 18_000_000, cidade: "Campinas", cores: ["#1b7a45", "#0d2419"] },
-  { nome: "Ponte Preta", abrev: "PON", categoria: "Serie B", liga: "Brasileirão Série B", personalidade: "Formador", orcamento: 22_000_000, cidade: "Campinas", cores: ["#2b2b2b", "#c9c9c9"] },
-  { nome: "Avaí", abrev: "AVA", categoria: "Serie B", liga: "Brasileirão Série B", personalidade: "Tradicional", orcamento: 26_000_000, cidade: "Florianópolis", cores: ["#1f5fb0", "#0b1a2e"] },
-  { nome: "Brasil de Pelotas", abrev: "BRA", categoria: "Serie B", liga: "Brasileirão Série B", personalidade: "Tradicional", orcamento: 12_000_000, cidade: "Pelotas", cores: ["#c62828", "#1b1b1b"] },
-
-  // ---------- Série C ----------
-  { nome: "São Luiz", abrev: "SLZ", categoria: "Serie C", liga: "Brasileirão Série C", personalidade: "Formador", orcamento: 5_000_000, cidade: "Ijuí", cores: ["#2b6cb0", "#101a26"] },
-  { nome: "Ypiranga", abrev: "YPI", categoria: "Serie C", liga: "Brasileirão Série C", personalidade: "Vitrine", orcamento: 6_000_000, cidade: "Erechim", cores: ["#1a7f5a", "#0d221a"] },
-  { nome: "Figueirense", abrev: "FIG", categoria: "Serie C", liga: "Brasileirão Série C", personalidade: "Pechincha", orcamento: 8_000_000, cidade: "Florianópolis", cores: ["#2f2f2f", "#d0d0d0"] },
-  { nome: "Londrina", abrev: "LON", categoria: "Serie C", liga: "Brasileirão Série C", personalidade: "Formador", orcamento: 7_000_000, cidade: "Londrina", cores: ["#1e4fa0", "#0a1428"] },
-  { nome: "Volta Redonda", abrev: "VOL", categoria: "Serie C", liga: "Brasileirão Série C", personalidade: "Vitrine", orcamento: 6_500_000, cidade: "Volta Redonda", cores: ["#1d7f4c", "#f0c419"] },
-
-  // ---------- Série D ----------
-  { nome: "Novo Hamburgo", abrev: "NHA", categoria: "Serie D", liga: "Brasileirão Série D", personalidade: "Pechincha", orcamento: 3_000_000, cidade: "Novo Hamburgo", cores: ["#c0392b", "#1a0f0e"] },
-  { nome: "Cianorte", abrev: "CIA", categoria: "Serie D", liga: "Brasileirão Série D", personalidade: "Formador", orcamento: 2_400_000, cidade: "Cianorte", cores: ["#2b6cb0", "#1a1a1a"] },
-  { nome: "Bagé Atlético", abrev: "BGA", categoria: "Serie D", liga: "Brasileirão Série D", personalidade: "Pechincha", orcamento: 1_800_000, cidade: "Bagé", cores: ["#7d3c98", "#180d22"] },
-  { nome: "Santa Cruz", abrev: "STC", categoria: "Serie D", liga: "Brasileirão Série D", personalidade: "Tradicional", orcamento: 4_200_000, cidade: "Recife", cores: ["#b0202a", "#1a1a1a"] },
-
-  // ---------- Amador ----------
-  { nome: "Aimoré", abrev: "AIM", categoria: "Amador", liga: "Copa Regional Amadora", personalidade: "Formador", orcamento: 800_000, cidade: "São Leopoldo", cores: ["#2f855a", "#11251a"] },
-  { nome: "Guarany de Bagé", abrev: "GUA", categoria: "Amador", liga: "Copa Regional Amadora", personalidade: "Pechincha", orcamento: 500_000, cidade: "Bagé", cores: ["#2d6a9f", "#0c1a26"] },
-  { nome: "União Frederiquense", abrev: "UFR", categoria: "Amador", liga: "Copa Regional Amadora", personalidade: "Vitrine", orcamento: 350_000, cidade: "Frederico Westphalen", cores: ["#d4a017", "#1a1408"] },
-  { nome: "Esportivo", abrev: "ESP", categoria: "Amador", liga: "Copa Regional Amadora", personalidade: "Formador", orcamento: 600_000, cidade: "Bento Gonçalves", cores: ["#1f7a4d", "#0c221a"] },
-];
-
 export function gerarClubes(): Club[] {
-  return CLUBES_BASE.map((c, i) => ({
+  return CLUB_SEEDS.map((c, i) => ({
     id: rid("CLB", i + 1),
-    ...c,
+    nome: c.nome,
+    abrev: c.abrev,
+    categoria: c.categoria,
+    pais: c.pais,
+    estado: c.estado,
+    cidade: c.cidade,
+    cores: c.cores,
+    personalidade: c.personalidade,
+    orcamento: c.orcamentoK * 1000,
+    liga: ligaPrincipal(c.categoria, c.pais),
+    competicoes: competicoesDoClube(c.categoria, c.pais, c.estado).map(x => x.nome),
     tecnico: pick(TECNICOS),
     moralTecnico: rnd(45, 80),
     pontos: 0,
     jogos: 0,
     elenco: rnd(22, 30),
     necessidades: [pick(POSICOES), pick(POSICOES)],
-    interesse: [],
-    confiancaEmVoce: c.categoria === "Amador" ? rnd(4, 14) : 0,
+    interesse: [] as string[],
+    // Clubes pequenos da região são os únicos que atendem um empresário iniciante.
+    confiancaEmVoce: c.categoria === "Amador" ? rnd(6, 18) : c.categoria === "Serie D" ? rnd(0, 6) : 0,
   }));
 }
+
 
 const AGENCIAS_RIVAIS = [
   "Prime Sports","Elite Foot","Nova Geração","Base Talentos","Grupo Vanguarda","Sul Scout",

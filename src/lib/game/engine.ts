@@ -1,5 +1,8 @@
-import { gerarClubes, gerarRivais, pick, rid, rnd } from "./generators";
+import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, sortearSonhos } from "./generators";
 import { mundoSemanal, viradaDeAno } from "./world";
+import { ganharReputacao, REP_XP } from "./reputation";
+import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
+import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
 import type {
@@ -50,7 +53,7 @@ export function comprarUpgrade(state: GameState, id: string): { state: GameState
   if (state.reputacao < up.reputacaoMin) return { state, mensagem: `Exige ${up.reputacaoMin} de reputação.` };
   if (state.dinheiro < up.custo) return { state, mensagem: `Sem caixa. Custo: R$ ${up.custo.toLocaleString("pt-BR")}.` };
   let s = gastar(state, up.custo, `Investimento: ${up.nome}`);
-  s = { ...s, upgrades: [...s.upgrades, id], reputacao: Math.min(100, s.reputacao + 2) };
+  s = ganharReputacao({ ...s, upgrades: [...s.upgrades, id] }, REP_XP.estrutura);
   s = { ...s, energiaMax: energiaMaxima(s) };
   return { state: s, mensagem: `${up.nome} em operação!` };
 }
@@ -73,22 +76,26 @@ export function custoObservacao(state: GameState) {
 
 export function novoJogo(agent: Omit<Agent, "id">): GameState {
   const agentWithId: Agent = { ...agent, id: rid("EMP", 1) };
-  return {
+  const base: GameState = {
     agent: agentWithId,
     ano: 2026,
     mes: 3,
     semana: 1,
-    dinheiro: 3000,
+    dinheiro: 6000,
     prestigio: 1,
-    reputacao: 1,
+    reputacao: 0,
+    repXP: 0,
     energia: 3,
     energiaMax: 3,
     jogadores: [],
     radar: [],
+    historicoAgencia: [],
     clubes: gerarClubes(),
     rivais: gerarRivais(),
     negociacoes: [],
     peneiras: [],
+    peneirasAbertas: [],
+    titulosMundo: [],
     upgrades: [],
     locaisVisitados: [],
     noticias: [
@@ -96,7 +103,7 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
         id: rid("NEW", 1),
         semana: 1, mes: 3, ano: 2026,
         titulo: `${agentWithId.agencia} foi fundada em ${agentWithId.cidade}`,
-        texto: `${agentWithId.nome} ${agentWithId.sobrenome} começa do absoluto zero. Nenhum clube atende suas ligações, nenhuma família confia em você. Vá aos campos, assista partidas e construa uma reputação.`,
+        texto: `${agentWithId.nome} ${agentWithId.sobrenome} começa do zero com R$ 6.000 no caixa e dois contatos dispostos a assinar. Vá aos campos, assista partidas e construa uma reputação.`,
         tipo: "info",
       },
     ],
@@ -105,6 +112,44 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
   };
+  return { ...base, radar: contatosIniciais(base) };
+}
+
+/** Dois atletas de contato inicial, 100% dispostos a assinar com a agência. */
+function contatosIniciais(s: GameState): Player[] {
+  const comum = gerarJogador({
+    cidade: s.agent.cidade, local: "Contato pessoal", nextId: 1,
+    ano: s.ano, mes: s.mes, semana: s.semana,
+    estado: s.agent.estado, pais: s.agent.pais,
+    forcarIdade: rnd(9, 23), forcarAtual: [10, 30], forcarPotencial: [80, 100],
+  });
+  const gustavo = gerarJogador({
+    cidade: s.agent.cidade, local: "Indicação de família", nextId: 2,
+    ano: s.ano, mes: s.mes, semana: s.semana,
+    estado: s.agent.estado, pais: s.agent.pais,
+    forcarIdade: 16, forcarAtual: [5, 38], forcarPotencial: [90, 100],
+  });
+  const gremio = clubesDaRegiao("RS").find(c => c.nome === "Grêmio FBPA")?.nome ?? "Grêmio FBPA";
+  const prep = (p: Player, extra: Partial<Player>): Player => ({
+    ...p,
+    empresario: null,
+    clube: null,
+    confianca: 100,
+    status: "Quer assinar com você",
+    valorMercado: calcularValorMercado(p.atual, p.potencial, p.idade, false),
+    observado: 1,
+    ...extra,
+  });
+  return [
+    prep(gustavo, {
+      nome: "Gustavo Oliveira",
+      personalidade: "Humilde",
+      tracos: ["Humilde", "Generoso", "Esforçado", "Talentoso", "Tímido"],
+      clubeCoracao: gremio,
+      sonhos: sortearSonhos(gremio, 95),
+    }),
+    prep(comum, {}),
+  ];
 }
 
 let ID_COUNTER = 1000;
@@ -148,7 +193,7 @@ export function pagarPartida(state: GameState, fx: Fixture, loc: ScoutLocation):
   let s = consumirEnergia(gastar(state, custo, `Viagem e ingresso: ${fx.categoria} em ${fx.local}`));
   // Frequentar palcos maiores dá visibilidade no meio.
   const ganho = loc.nivel >= 6 && Math.random() < 0.45 ? 1 : 0;
-  if (ganho) s = { ...s, reputacao: Math.min(100, s.reputacao + ganho) };
+  if (ganho) s = ganharReputacao(s, REP_XP.palcoDeElite);
   if (!s.locaisVisitados.includes(loc.id)) s = { ...s, locaisVisitados: [...s.locaisVisitados, loc.id] };
   return s;
 }
@@ -293,8 +338,7 @@ export function propor(state: GameState, player: Player): { state: GameState; su
 
   return {
     state: {
-      ...s,
-      reputacao: Math.min(100, s.reputacao + 1),
+      ...ganharReputacao(s, REP_XP.assinatura),
       radar: s.radar.filter(p => p.id !== player.id),
       jogadores: [contratado, ...s.jogadores],
       noticias: [noticia, ...s.noticias],
@@ -371,100 +415,6 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
   };
 }
 
-function avaliarPeneira(state: GameState, t: Tryout): { s: GameState; not: NewsItem | null } {
-  const player = state.jogadores.find(p => p.id === t.playerId);
-  const clube = state.clubes.find(c => c.id === t.clubId);
-  if (!player || !clube) return { s: state, not: null };
-
-  if (Math.random() < 0.07) {
-    const evt: TimelineEvent = {
-      ano: state.ano, mes: state.mes, semana: state.semana, tipo: "nota",
-      texto: `Lesionou-se durante a peneira no ${clube.nome}.`,
-    };
-    return {
-      s: {
-        ...state,
-        peneiras: state.peneiras.map(x => x.id === t.id ? {
-          ...x, status: "lesionado",
-          resultadoTexto: "Lesão muscular durante a avaliação. Fora por algumas semanas.",
-          notas: [...x.notas, "Lesão no terceiro dia de teste."],
-        } : x),
-        jogadores: state.jogadores.map(p => p.id === player.id
-          ? { ...p, status: "Lesionado", timeline: [...p.timeline, evt] } : p),
-      },
-      not: null,
-    };
-  }
-
-  const exig = CATEGORIA_EXIGENCIA[clube.categoria]
-    + (clube.personalidade === "Tradicional" ? 5 : 0)
-    - (clube.personalidade === "Formador" && player.idade < 19 ? 6 : 0);
-  const score = player.atual + Math.round(player.atributos.mental / 20) + rnd(-12, 10);
-
-  if (score >= exig + 5) {
-    const evt: TimelineEvent = {
-      ano: state.ano, mes: state.mes, semana: state.semana, tipo: "aprovado",
-      texto: `Aprovado na peneira e contratado pelo ${clube.nome}.`,
-    };
-    return {
-      s: {
-        ...state,
-        reputacao: Math.min(100, state.reputacao + 3),
-        clubes: state.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 12), elenco: c.elenco + 1 } : c),
-        peneiras: state.peneiras.map(x => x.id === t.id ? {
-          ...x, status: "aprovado",
-          resultadoTexto: `Aprovado! Contrato assinado com o ${clube.nome}.`,
-          notas: [...x.notas, `Avaliação final: ${score} (exigido ${exig}).`],
-        } : x),
-        jogadores: state.jogadores.map(p => p.id === player.id ? {
-          ...p, clube: clube.nome, status: `No ${clube.nome}`,
-          historico: [...p.historico, `Aprovado na peneira do ${clube.nome}.`],
-          timeline: [...p.timeline, evt],
-        } : p),
-      },
-      not: {
-        id: nextNewsId(), semana: state.semana, mes: state.mes, ano: state.ano,
-        titulo: `${player.nome} é aprovado no ${clube.nome}`,
-        texto: `${state.agent.agencia} coloca mais um atleta no futebol organizado.`,
-        tipo: "mercado",
-      },
-    };
-  }
-
-  if (score >= exig - 4) {
-    return {
-      s: {
-        ...state,
-        peneiras: state.peneiras.map(x => x.id === t.id ? {
-          ...x, status: "mais_tempo", restanteSemanas: 2,
-          resultadoTexto: `${clube.tecnico} pediu mais 2 semanas de observação.`,
-          notas: [...x.notas, `Nota parcial ${score}. Reavaliação solicitada.`],
-        } : x),
-      },
-      not: null,
-    };
-  }
-
-  const evt: TimelineEvent = {
-    ano: state.ano, mes: state.mes, semana: state.semana, tipo: "reprovado",
-    texto: `Reprovado na peneira do ${clube.nome}.`,
-  };
-  return {
-    s: {
-      ...state,
-      clubes: state.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 3) } : c),
-      peneiras: state.peneiras.map(x => x.id === t.id ? {
-        ...x, status: "reprovado",
-        resultadoTexto: `Reprovado. Nível abaixo do exigido pela ${clube.categoria}.`,
-        notas: [...x.notas, `Reprovado (nota ${score}, exigido ${exig}).`],
-      } : x),
-      jogadores: state.jogadores.map(p => p.id === player.id
-        ? { ...p, timeline: [...p.timeline, evt], status: "Sem clube" } : p),
-    },
-    not: null,
-  };
-}
-
 // ============================================================
 // TEMPO
 // ============================================================
@@ -500,9 +450,10 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   for (const t of s.peneiras.filter(x => x.status === "em_andamento" || x.status === "mais_tempo")) {
     const restante = Math.max(0, t.restanteSemanas - 1);
     if (restante === 0) {
-      const { s: s2, not } = avaliarPeneira(s, t);
-      s = s2;
-      if (not) { s = { ...s, noticias: [not, ...s.noticias] }; eventos.push(not.titulo); }
+      const r = avaliarPeneiraCompleta(s, t);
+      s = r.state;
+      if (r.noticia) s = { ...s, noticias: [r.noticia, ...s.noticias] };
+      if (r.resumo) eventos.push(r.resumo);
     } else {
       s = { ...s, peneiras: s.peneiras.map(x => x.id === t.id ? { ...x, restanteSemanas: restante } : x) };
     }
@@ -515,9 +466,21 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
       : n.expiraEm <= 1 ? { ...n, status: "expirada" as const } : { ...n, expiraEm: n.expiraEm - 1 }),
   };
 
-  // reputação decai sem resultados
-  const chanceQueda = s.upgrades.includes("sede") ? 0.08 : 0.2;
-  if (Math.random() < chanceQueda) s = { ...s, reputacao: Math.max(0, s.reputacao - 1) };
+  // recuperação de lesões
+  s = {
+    ...s,
+    jogadores: s.jogadores.map(p => {
+      if (!p.lesaoSemanas) return p;
+      const restante = p.lesaoSemanas - 1;
+      return restante <= 0
+        ? { ...p, lesaoSemanas: 0, status: p.clube ? `No ${p.clube}` : "Sem clube" }
+        : { ...p, lesaoSemanas: restante };
+    }),
+  };
+
+  // clubes divulgam peneiras gratuitas (a reputação nunca diminui)
+  const abertas = gerarPeneirasAbertas(s);
+  s = abertas.state;
 
   // clubes sondam seus atletas conforme personalidade e necessidade
   s = sondagensDeClubes(s, eventos);
@@ -631,9 +594,9 @@ export function responderNegociacao(
   };
   return {
     state: {
-      ...state,
+      ...ganharReputacao(state, neg.valorProposta > 800_000 ? REP_XP.transferenciaGrande
+        : neg.valorProposta > 200_000 ? REP_XP.transferenciaMedia : REP_XP.transferenciaPequena),
       dinheiro: state.dinheiro + receita,
-      reputacao: Math.min(100, state.reputacao + (neg.valorProposta > 200_000 ? 6 : 2)),
       prestigio: Math.min(5, state.prestigio + (neg.valorProposta > 800_000 ? 1 : 0)),
       clubes: state.clubes.map(c => c.id === clube.id
         ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 10), necessidades: c.necessidades.filter(p => p !== player.posicao) } : c),
