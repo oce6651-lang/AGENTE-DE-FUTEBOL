@@ -15,6 +15,8 @@ export function PlayerDetail({
   onConversar,
   onPropor,
   onPeneira,
+  onOferecer,
+  onPeneiraAberta,
 }: {
   player: Player;
   state: GameState;
@@ -23,6 +25,8 @@ export function PlayerDetail({
   onConversar: () => void;
   onPropor: () => void;
   onPeneira?: () => void;
+  onOferecer?: () => void;
+  onPeneiraAberta?: () => void;
 }) {
   const contratado = player.empresario === state.agent.id;
   const nivel = player.observado; // 0..∞
@@ -92,11 +96,64 @@ export function PlayerDetail({
 
         <div className="mt-5 text-xs text-muted-foreground space-y-1">
           <div>Clube: {player.clube ?? "Sem clube"}</div>
+          <div>Nascido em: {player.cidade}/{player.estado} • {player.pais} ({player.nacionalidade})</div>
+          <div>Clube do coração: {player.clubeCoracao}</div>
           <div>Empresário: {player.empresario ? (contratado ? state.agent.agencia : "Outro empresário") : "Nenhum"}</div>
           <div>Descoberto em: {player.local}</div>
           <div>Observações realizadas: {nivel}</div>
           <div>Confiança do atleta: {player.confianca}%</div>
         </div>
+
+        {(player.tracos?.length || player.sonhos?.length) && (revelaAtributos || contratado) ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div>
+              <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Personalidade</div>
+              <div className="flex flex-wrap gap-1">
+                {(player.tracos ?? []).map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Sonhos de carreira</div>
+              <ul className="text-xs text-muted-foreground space-y-0.5">
+                {(player.sonhos ?? []).map(s => <li key={s}>• {s}</li>)}
+              </ul>
+            </div>
+          </div>
+        ) : null}
+
+        {(player.temporadas?.length ?? 0) > 0 && (
+          <div className="mt-5">
+            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Histórico por temporada</div>
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full text-[11px]">
+                <thead className="bg-secondary/60 text-muted-foreground">
+                  <tr>
+                    <th className="p-2 text-left">Ano</th>
+                    <th className="p-2 text-left">Clube</th>
+                    <th className="p-2 text-left">Liga</th>
+                    <th className="p-2">J</th>
+                    <th className="p-2">G</th>
+                    <th className="p-2">A</th>
+                    <th className="p-2">OVR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {player.temporadas.map((t, i) => (
+                    <tr key={i} className="border-t border-border">
+                      <td className="p-2 font-bold">{t.ano}</td>
+                      <td className="p-2 truncate">{t.clube}</td>
+                      <td className="p-2 truncate text-muted-foreground">{t.liga}</td>
+                      <td className="p-2 text-center">{t.jogos}</td>
+                      <td className="p-2 text-center">{t.gols}</td>
+                      <td className="p-2 text-center">{t.assistencias}</td>
+                      <td className="p-2 text-center font-black text-primary">{t.overall}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {player.relatorios.length > 0 && (
           <div className="mt-5">
@@ -133,9 +190,21 @@ export function PlayerDetail({
             <Button onClick={onPropor}>Propor (R$ {CUSTOS.proposta})</Button>
           </div>
         )}
-        {contratado && !player.clube && onPeneira && (
-          <div className="mt-6">
-            <Button onClick={onPeneira} className="w-full">Enviar para peneira em um clube</Button>
+        {contratado && (
+          <div className="mt-6 grid gap-2">
+            {onOferecer && (
+              <Button onClick={onOferecer} className="w-full">Oferecer para clubes</Button>
+            )}
+            {!player.clube && onPeneiraAberta && (
+              <Button variant="secondary" onClick={onPeneiraAberta} className="w-full">
+                Inscrever em peneira gratuita
+              </Button>
+            )}
+            {!player.clube && onPeneira && (
+              <Button variant="outline" onClick={onPeneira} className="w-full">
+                Pagar teste em um clube
+              </Button>
+            )}
           </div>
         )}
         {contratado && (

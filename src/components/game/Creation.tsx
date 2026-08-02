@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PAISES, NACIONALIDADES, getEstados, getCidades, getPais } from "@/lib/game/data/geo";
 import type { Agent } from "@/lib/game/types";
 
 interface Props {
@@ -23,6 +25,26 @@ export function Creation({ onCreate, onBack }: Props) {
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [k]: e.target.value });
+
+  const estados = useMemo(() => getEstados(form.pais), [form.pais]);
+  const cidades = useMemo(() => getCidades(form.pais, form.estado), [form.pais, form.estado]);
+
+  /** Trocar de país reinicia estado, cidade e nacionalidade sugerida. */
+  const trocarPais = (pais: string) => {
+    const info = getPais(pais);
+    const estado = info.estados[0];
+    setForm(f => ({
+      ...f, pais,
+      nacionalidade: info.nacionalidade,
+      estado: estado.sigla,
+      cidade: estado.cidades[0],
+    }));
+  };
+
+  const trocarEstado = (sigla: string) => {
+    const cidade = getCidades(form.pais, sigla)[0] ?? "";
+    setForm(f => ({ ...f, estado: sigla, cidade }));
+  };
 
   const valid = Object.values(form).every(v => v.trim().length > 0);
 
@@ -46,20 +68,40 @@ export function Creation({ onCreate, onBack }: Props) {
           </div>
           <div>
             <Label>Nacionalidade</Label>
-            <Input value={form.nacionalidade} onChange={update("nacionalidade")} />
+            <Select value={form.nacionalidade} onValueChange={v => setForm(f => ({ ...f, nacionalidade: v }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {NACIONALIDADES.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label>País</Label>
-              <Input value={form.pais} onChange={update("pais")} />
-            </div>
+          <div>
+            <Label>País de nascimento</Label>
+            <Select value={form.pais} onValueChange={trocarPais}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAISES.map(p => <SelectItem key={p.nome} value={p.nome}>{p.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Estado</Label>
-              <Input value={form.estado} onChange={update("estado")} />
+              <Select value={form.estado} onValueChange={trocarEstado}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {estados.map(e => <SelectItem key={e.sigla} value={e.sigla}>{e.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Cidade</Label>
-              <Input value={form.cidade} onChange={update("cidade")} />
+              <Select value={form.cidade} onValueChange={v => setForm(f => ({ ...f, cidade: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {cidades.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div>
