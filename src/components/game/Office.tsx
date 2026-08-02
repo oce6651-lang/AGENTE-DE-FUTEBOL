@@ -705,6 +705,28 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Aplica ajustes administrativos em um atleta representado. */
+function editarAtleta(
+  state: GameState,
+  setState: (s: GameState) => void,
+  playerId: string,
+  patch: Partial<Player>,
+) {
+  setState({
+    ...state,
+    jogadores: state.jogadores.map(p => p.id === playerId ? { ...p, ...patch } : p),
+  });
+}
+
+function StatUnused({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-base font-black text-primary truncate">{value}</div>
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
 function MenuTile({ icon, label, onClick, badge }: {
   icon: React.ReactNode; label: string; onClick: () => void; badge?: number;
 }) {
