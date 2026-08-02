@@ -718,15 +718,6 @@ function editarAtleta(
   });
 }
 
-function StatUnused({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-base font-black text-primary truncate">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
-    </div>
-  );
-}
-
 function MenuTile({ icon, label, onClick, badge }: {
   icon: React.ReactNode; label: string; onClick: () => void; badge?: number;
 }) {
