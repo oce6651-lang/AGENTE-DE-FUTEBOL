@@ -501,6 +501,100 @@ export function Office({ state, setState, onExit }: {
         )}
 
         {view === "news" && (
+          <></>
+        )}
+
+        {view === "arquivo" && (
+          <div className="p-4 space-y-4">
+            <SubHeader title="Arquivo da agência" onBack={() => setView("home")} />
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+              <img src={heroArquivo} alt="Arquivo de clientes da agência" loading="lazy" width={1280} height={720}
+                className="h-32 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+              <div className="absolute bottom-3 left-4">
+                <div className="text-lg font-black">{state.agent.agencia}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {state.jogadores.length} cliente(s) ativos • {(state.historicoAgencia?.length ?? 0)} ex-cliente(s)
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Todo atleta que passou pela agência fica registrado para sempre, com a carreira completa temporada a temporada.
+            </p>
+
+            <div className="text-xs font-black uppercase text-muted-foreground">Clientes atuais</div>
+            {state.jogadores.length === 0 && (
+              <div className="text-xs text-muted-foreground">Nenhum cliente ativo.</div>
+            )}
+            {state.jogadores.map(p => (
+              <ArquivoItem key={p.id} p={p} aberto={arquivoAberto === p.id}
+                onToggle={() => setArquivoAberto(arquivoAberto === p.id ? null : p.id)} />
+            ))}
+
+            <div className="text-xs font-black uppercase text-muted-foreground pt-2">Ex-clientes</div>
+            {(state.historicoAgencia?.length ?? 0) === 0 && (
+              <div className="text-xs text-muted-foreground">Nenhum ex-cliente ainda.</div>
+            )}
+            {(state.historicoAgencia ?? []).map(p => (
+              <ArquivoItem key={p.id} p={p} antigo aberto={arquivoAberto === p.id}
+                onToggle={() => setArquivoAberto(arquivoAberto === p.id ? null : p.id)} />
+            ))}
+          </div>
+        )}
+
+        {view === "competicoes" && (
+          <div className="p-4 space-y-4">
+            <SubHeader title="Competições" onBack={() => setView("home")} />
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+              <img src={heroTitulos} alt="Sala de troféus" loading="lazy" width={1280} height={720}
+                className="h-32 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+              <div className="absolute bottom-3 left-4">
+                <div className="text-lg font-black">Histórico de competições</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {(state.historicoCompeticoes?.length ?? 0)} edições registradas
+                </div>
+              </div>
+            </div>
+            <Input placeholder="Filtrar por competição, categoria ou campeão"
+              value={compFiltro} onChange={e => setCompFiltro(e.target.value)} />
+            {(state.historicoCompeticoes?.length ?? 0) === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Nenhuma temporada encerrada ainda. Avance até dezembro para conhecer os campeões.
+              </div>
+            )}
+            {(state.historicoCompeticoes ?? [])
+              .filter(e => {
+                const q = compFiltro.trim().toLowerCase();
+                if (!q) return true;
+                return `${e.competicao} ${e.categoria} ${e.campeao} ${e.ano}`.toLowerCase().includes(q);
+              })
+              .slice(0, 120)
+              .map((e, i) => {
+                const c = state.clubes.find(x => x.nome === e.campeao);
+                return (
+                  <Card key={`${e.ano}-${e.competicaoId}-${e.categoria}-${i}`} className="p-3 flex items-center gap-3">
+                    {c ? <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
+                      : <Trophy className="h-7 w-7 text-primary" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold truncate">{e.competicao} <span className="text-muted-foreground font-normal">{e.categoria}</span></div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {e.ano} • Campeão: <span className="text-primary font-bold">{e.campeao}</span> • Vice: {e.vice}
+                      </div>
+                      {!!e.clientes?.length && (
+                        <div className="text-[10px] text-primary mt-0.5 truncate">
+                          Seus clientes campeões: {e.clientes.map(x => x.nome).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">{e.ano}</Badge>
+                  </Card>
+                );
+              })}
+          </div>
+        )}
+
+        {view === "news" && (
           <div className="p-4 space-y-3">
             <SubHeader title="Notícias" onBack={() => setView("home")} />
             {state.noticias.map(n => (
