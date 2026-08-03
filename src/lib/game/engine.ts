@@ -2,6 +2,7 @@ import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMe
 import { mundoSemanal, viradaDeAno } from "./world";
 import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
+import { semanaEsportiva, encerrarTemporada } from "./season";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -96,6 +97,7 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     peneiras: [],
     peneirasAbertas: [],
     titulosMundo: [],
+    historicoCompeticoes: [],
     upgrades: [],
     locaisVisitados: [],
     noticias: [
@@ -136,6 +138,7 @@ function contatosIniciais(s: GameState): Player[] {
     clube: null,
     confianca: 100,
     status: "Quer assinar com você",
+    familiaConfia: true,
     valorMercado: calcularValorMercado(p.atual, p.potencial, p.idade, false),
     observado: 1,
     ...extra,
