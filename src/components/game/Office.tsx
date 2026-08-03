@@ -500,10 +500,6 @@ export function Office({ state, setState, onExit }: {
           </div>
         )}
 
-        {view === "news" && (
-          <></>
-        )}
-
         {view === "arquivo" && (
           <div className="p-4 space-y-4">
             <SubHeader title="Arquivo da agência" onBack={() => setView("home")} />
