@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { StatusBar } from "./StatusBar";
 import { PlayerCard } from "./PlayerCard";
 import { PlayerDetail } from "./PlayerDetail";
+import { CareerHistory } from "./CareerHistory";
+import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { Button } from "@/components/ui/button";
@@ -23,14 +25,18 @@ import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
+import heroArquivo from "@/assets/hero-arquivo.jpg";
+import heroCompeticoes from "@/assets/hero-competicoes.jpg";
+import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
-  Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock,
+  Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
-  | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin";
+  | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
+  | "arquivo" | "competicoes";
 
 /** Único e-mail autorizado a abrir o painel administrativo. */
 const ADMIN_EMAIL = "OCE6651@GMAIL.COM";
@@ -51,6 +57,8 @@ export function Office({ state, setState, onExit }: {
   const [inscreverEm, setInscreverEm] = useState<string | null>(null);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminOk, setAdminOk] = useState(false);
+  const [arquivoAberto, setArquivoAberto] = useState<string | null>(null);
+  const [compFiltro, setCompFiltro] = useState<string>("");
 
   const selected = selectedId
     ? state.jogadores.find(p => p.id === selectedId) ?? state.radar.find(p => p.id === selectedId) ?? null
@@ -157,6 +165,10 @@ export function Office({ state, setState, onExit }: {
               <MenuTile icon={<Megaphone className="h-6 w-6" />} label="Peneiras abertas" badge={peneirasAbertas.length} onClick={() => setView("openTryouts")} />
               <MenuTile icon={<Handshake className="h-6 w-6" />} label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
               <MenuTile icon={<Newspaper className="h-6 w-6" />} label="Notícias" onClick={() => setView("news")} />
+              <MenuTile icon={<Archive className="h-6 w-6" />} label="Arquivo de clientes"
+                badge={state.jogadores.length + (state.historicoAgencia?.length ?? 0)} onClick={() => setView("arquivo")} />
+              <MenuTile icon={<Trophy className="h-6 w-6" />} label="Competições"
+                badge={state.historicoCompeticoes?.length ?? 0} onClick={() => setView("competicoes")} />
               <MenuTile icon={<Briefcase className="h-6 w-6" />} label="Agência" onClick={() => setView("agency")} />
               <MenuTile icon={<ClubCrest cores={["#1f8ecd", "#0b1d2e"]} abrev="CLB" size={26} />} label="Clubes" onClick={() => setView("clubs")} />
               <MenuTile icon={<ShieldCheck className="h-6 w-6" />} label="ADM" onClick={() => setView("admin")} />
@@ -367,6 +379,14 @@ export function Office({ state, setState, onExit }: {
         {view === "clubs" && (
           <div className="p-4 space-y-3">
             <SubHeader title="Clubes" onBack={() => setView("home")} />
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+              <img src={heroCompeticoes} alt="Estádio lotado" loading="lazy" width={1280} height={720}
+                className="h-28 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+              <div className="absolute bottom-2 left-3 text-xs text-muted-foreground">
+                {state.clubes.length} clubes no mundo do jogo
+              </div>
+            </div>
             {state.clubes.map(c => (
               <Card key={c.id} className="p-4 flex items-center gap-3 hover:bg-secondary/40 transition-colors">
                 <ClubCrest cores={c.cores} abrev={c.abrev} size={44} />
@@ -478,6 +498,96 @@ export function Office({ state, setState, onExit }: {
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {view === "arquivo" && (
+          <div className="p-4 space-y-4">
+            <SubHeader title="Arquivo da agência" onBack={() => setView("home")} />
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+              <img src={heroArquivo} alt="Arquivo de clientes da agência" loading="lazy" width={1280} height={720}
+                className="h-32 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+              <div className="absolute bottom-3 left-4">
+                <div className="text-lg font-black">{state.agent.agencia}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {state.jogadores.length} cliente(s) ativos • {(state.historicoAgencia?.length ?? 0)} ex-cliente(s)
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Todo atleta que passou pela agência fica registrado para sempre, com a carreira completa temporada a temporada.
+            </p>
+
+            <div className="text-xs font-black uppercase text-muted-foreground">Clientes atuais</div>
+            {state.jogadores.length === 0 && (
+              <div className="text-xs text-muted-foreground">Nenhum cliente ativo.</div>
+            )}
+            {state.jogadores.map(p => (
+              <ArquivoItem key={p.id} p={p} aberto={arquivoAberto === p.id}
+                onToggle={() => setArquivoAberto(arquivoAberto === p.id ? null : p.id)} />
+            ))}
+
+            <div className="text-xs font-black uppercase text-muted-foreground pt-2">Ex-clientes</div>
+            {(state.historicoAgencia?.length ?? 0) === 0 && (
+              <div className="text-xs text-muted-foreground">Nenhum ex-cliente ainda.</div>
+            )}
+            {(state.historicoAgencia ?? []).map(p => (
+              <ArquivoItem key={p.id} p={p} antigo aberto={arquivoAberto === p.id}
+                onToggle={() => setArquivoAberto(arquivoAberto === p.id ? null : p.id)} />
+            ))}
+          </div>
+        )}
+
+        {view === "competicoes" && (
+          <div className="p-4 space-y-4">
+            <SubHeader title="Competições" onBack={() => setView("home")} />
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+              <img src={heroTitulos} alt="Sala de troféus" loading="lazy" width={1280} height={720}
+                className="h-32 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+              <div className="absolute bottom-3 left-4">
+                <div className="text-lg font-black">Histórico de competições</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {(state.historicoCompeticoes?.length ?? 0)} edições registradas
+                </div>
+              </div>
+            </div>
+            <Input placeholder="Filtrar por competição, categoria ou campeão"
+              value={compFiltro} onChange={e => setCompFiltro(e.target.value)} />
+            {(state.historicoCompeticoes?.length ?? 0) === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Nenhuma temporada encerrada ainda. Avance até dezembro para conhecer os campeões.
+              </div>
+            )}
+            {(state.historicoCompeticoes ?? [])
+              .filter(e => {
+                const q = compFiltro.trim().toLowerCase();
+                if (!q) return true;
+                return `${e.competicao} ${e.categoria} ${e.campeao} ${e.ano}`.toLowerCase().includes(q);
+              })
+              .slice(0, 120)
+              .map((e, i) => {
+                const c = state.clubes.find(x => x.nome === e.campeao);
+                return (
+                  <Card key={`${e.ano}-${e.competicaoId}-${e.categoria}-${i}`} className="p-3 flex items-center gap-3">
+                    {c ? <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
+                      : <Trophy className="h-7 w-7 text-primary" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold truncate">{e.competicao} <span className="text-muted-foreground font-normal">{e.categoria}</span></div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {e.ano} • Campeão: <span className="text-primary font-bold">{e.campeao}</span> • Vice: {e.vice}
+                      </div>
+                      {!!e.clientes?.length && (
+                        <div className="text-[10px] text-primary mt-0.5 truncate">
+                          Seus clientes campeões: {e.clientes.map(x => x.nome).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">{e.ano}</Badge>
+                  </Card>
+                );
+              })}
           </div>
         )}
 
@@ -743,5 +853,44 @@ function SubHeader({ title, onBack }: { title: string; onBack: () => void }) {
       </button>
       <h2 className="text-xl font-black">{title}</h2>
     </div>
+  );
+}
+
+/** Ficha resumida de um cliente (ou ex-cliente) com carreira expansível. */
+function ArquivoItem({ p, aberto, onToggle, antigo = false }: {
+  p: Player; aberto: boolean; onToggle: () => void; antigo?: boolean;
+}) {
+  const totais = (p.temporadas ?? []).reduce(
+    (acc, t) => ({
+      jogos: acc.jogos + t.jogos, gols: acc.gols + t.gols,
+      assist: acc.assist + t.assistencias, titulos: acc.titulos + t.titulos.length,
+    }),
+    { jogos: 0, gols: 0, assist: 0, titulos: 0 },
+  );
+  return (
+    <Card className={"overflow-hidden " + (antigo ? "opacity-90" : "")}>
+      <button onClick={onToggle} className="w-full p-3 text-left hover:bg-secondary/40 transition-colors">
+        <div className="flex items-center gap-3">
+          <PlayerAvatar seed={p.visual} size={40} ring={!antigo} />
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-sm truncate">{p.nome}</div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {p.id} • {p.idade} anos • {p.posicao} • {p.clube ?? (antigo ? "Carreira encerrada" : "Sem clube")}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {totais.jogos} jogos • {totais.gols} gols • {totais.assist} assistências • {totais.titulos} título(s)
+            </div>
+          </div>
+          <Badge variant={antigo ? "secondary" : "default"} className="text-[10px]">
+            {antigo ? "Ex-cliente" : `OVR ${p.atual}`}
+          </Badge>
+        </div>
+      </button>
+      {aberto && (
+        <div className="border-t border-border p-3">
+          <CareerHistory player={p} />
+        </div>
+      )}
+    </Card>
   );
 }

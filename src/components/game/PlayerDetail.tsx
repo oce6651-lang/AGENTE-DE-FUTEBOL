@@ -6,6 +6,8 @@ import type { GameState, Player, TimelineEvent } from "@/lib/game/types";
 import { MESES } from "@/lib/game/types";
 import { potencialEstimado, CUSTOS, custoObservacao } from "@/lib/game/engine";
 import { PlayerAvatar } from "./PlayerAvatar";
+import { CareerHistory } from "./CareerHistory";
+import { Trophy } from "lucide-react";
 
 export function PlayerDetail({
   player,
@@ -121,37 +123,23 @@ export function PlayerDetail({
           </div>
         ) : null}
 
+        {(player.titulos?.length ?? 0) > 0 && (
+          <div className="mt-5">
+            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Galeria de títulos</div>
+            <div className="flex flex-wrap gap-1">
+              {player.titulos!.map((t, i) => (
+                <Badge key={i} className="gap-1 text-[10px]">
+                  <Trophy className="h-3 w-3" /> {t.ano} • {t.competicao} ({t.clube})
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {(player.temporadas?.length ?? 0) > 0 && (
           <div className="mt-5">
-            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Histórico por temporada</div>
-            <div className="overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-[11px]">
-                <thead className="bg-secondary/60 text-muted-foreground">
-                  <tr>
-                    <th className="p-2 text-left">Ano</th>
-                    <th className="p-2 text-left">Clube</th>
-                    <th className="p-2 text-left">Liga</th>
-                    <th className="p-2">J</th>
-                    <th className="p-2">G</th>
-                    <th className="p-2">A</th>
-                    <th className="p-2">OVR</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {player.temporadas.map((t, i) => (
-                    <tr key={i} className="border-t border-border">
-                      <td className="p-2 font-bold">{t.ano}</td>
-                      <td className="p-2 truncate">{t.clube}</td>
-                      <td className="p-2 truncate text-muted-foreground">{t.liga}</td>
-                      <td className="p-2 text-center">{t.jogos}</td>
-                      <td className="p-2 text-center">{t.gols}</td>
-                      <td className="p-2 text-center">{t.assistencias}</td>
-                      <td className="p-2 text-center font-black text-primary">{t.overall}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Histórico de carreira</div>
+            <CareerHistory player={player} />
           </div>
         )}
 

@@ -158,6 +158,53 @@ const T: Tupla[] = [
   ["Brasília FC", "BSB", "Brasil", "DF", "Brasília", "Amador", "Vitrine", 380, "#1f5fb0", "#e4b400"],
   ["Vila Velha AC", "VVA", "Brasil", "ES", "Vila Velha", "Amador", "Pechincha", 180, "#c62828", "#1a1a1a"],
   ["Dourados AC", "DAC", "Brasil", "MS", "Dourados", "Amador", "Pechincha", 160, "#1c8a4a", "#1a1a1a"],
+
+  // ================= EXPANSÃO — ELITE INTERNACIONAL =================
+  ["Bayern de Munique", "BAY", "Espanha", "MAD", "Munique", "Elite", "Imediatista", 1_600_000, "#c8102e", "#14294b"],
+  ["Paris Saint-Germain", "PSG", "Portugal", "LIS", "Paris", "Elite", "Vitrine", 1_500_000, "#0b1d4d", "#c8102e"],
+  ["Ajax", "AJX", "Portugal", "POR", "Amsterdã", "Elite", "Formador", 260_000, "#e6e6e6", "#c8102e"],
+  ["Villarreal CF", "VIL", "Espanha", "AND", "Villarreal", "Elite", "Formador", 250_000, "#e4b400", "#1b3f8f"],
+  ["Real Betis", "BET", "Espanha", "AND", "Sevilha", "Elite", "Tradicional", 230_000, "#1c8a4a", "#e6e6e6"],
+  ["Athletic Bilbao", "ATB", "Espanha", "MAD", "Bilbao", "Elite", "Formador", 240_000, "#c8102e", "#e6e6e6"],
+  ["Napoli", "NAP", "Itália", "LAZ", "Nápoles", "Elite", "Imediatista", 520_000, "#1f8ecd", "#0b1d2e"],
+  ["Atalanta", "ATA", "Itália", "LOM", "Bérgamo", "Elite", "Formador", 340_000, "#1b3f8f", "#1a1a1a"],
+  ["Tottenham", "TOT", "Inglaterra", "LDN", "Londres", "Elite", "Vitrine", 900_000, "#e6e6e6", "#0b1d4d"],
+  ["Newcastle United", "NEW", "Inglaterra", "MAN", "Newcastle", "Elite", "Imediatista", 800_000, "#1a1a1a", "#e6e6e6"],
+  ["Vitória de Guimarães", "VGU", "Portugal", "BRA", "Guimarães", "Elite", "Formador", 120_000, "#e6e6e6", "#1a1a1a"],
+  ["Estudiantes", "EST", "Argentina", "BA", "La Plata", "Elite", "Formador", 90_000, "#c8102e", "#e6e6e6"],
+  ["Racing Club", "RAC", "Argentina", "BA", "Avellaneda", "Elite", "Tradicional", 110_000, "#6cabdd", "#e6e6e6"],
+  ["Nacional", "NAC", "Uruguai", "MO", "Montevidéu", "Elite", "Formador", 85_000, "#e6e6e6", "#1b3f8f"],
+
+  // ================= EXPANSÃO — SÉRIE B/C/D =================
+  ["América-MG", "AMG", "Brasil", "MG", "Belo Horizonte", "Serie B", "Formador", 44_000, "#1c7a3f", "#1a1a1a"],
+  ["Amazonas FC", "AMZ", "Brasil", "AM", "Manaus", "Serie B", "Pechincha", 15_000, "#1c8a4a", "#e4b400"],
+  ["Operário Ferroviário", "OFE", "Brasil", "PR", "Ponta Grossa", "Serie B", "Pechincha", 16_000, "#1a1a1a", "#e0e0e0"],
+  ["Athletic-MG", "ATM2", "Brasil", "MG", "São João del-Rei", "Serie C", "Formador", 4_400, "#1a1a1a", "#e4b400"],
+  ["Floresta EC", "FLO", "Brasil", "CE", "Fortaleza", "Serie C", "Pechincha", 3_900, "#1c8a4a", "#1a1a1a"],
+  ["Aparecidense", "APA", "Brasil", "GO", "Aparecida de Goiânia", "Serie C", "Pechincha", 3_700, "#1c8a4a", "#e0e0e0"],
+  ["Caxias do Sul Base", "CXB", "Brasil", "RS", "Caxias do Sul", "Serie C", "Formador", 4_100, "#e4b400", "#1a1a1a"],
+  ["Pelotas EC", "PEL", "Brasil", "RS", "Pelotas", "Serie D", "Formador", 1_400, "#1a1a1a", "#e4b400"],
+  ["Avenida", "AVE", "Brasil", "RS", "Santa Cruz do Sul", "Serie D", "Pechincha", 1_100, "#c62828", "#e0e0e0"],
+  ["Monsoon FC", "MON", "Brasil", "RS", "Porto Alegre", "Serie D", "Vitrine", 1_000, "#1f8ecd", "#1a1a1a"],
+  ["Grêmio Anápolis", "GAN", "Brasil", "GO", "Anápolis", "Serie D", "Pechincha", 1_050, "#1f5fb0", "#e0e0e0"],
+  ["União Rondonópolis", "URO", "Brasil", "MT", "Rondonópolis", "Serie D", "Pechincha", 900, "#c62828", "#1a1a1a"],
+  ["Trem DC", "TRD", "Brasil", "AP", "Macapá", "Serie D", "Pechincha", 700, "#1f5fb0", "#e4b400"],
+  ["Fast Clube", "FAS", "Brasil", "AM", "Manaus", "Serie D", "Formador", 800, "#c62828", "#e0e0e0"],
+  ["Sousa EC", "SOU", "Brasil", "PB", "Sousa", "Serie D", "Pechincha", 780, "#1c8a4a", "#e0e0e0"],
+
+  // ================= EXPANSÃO — AMADOR / BASE =================
+  ["Cruzeiro-RS", "CRS", "Brasil", "RS", "Porto Alegre", "Amador", "Formador", 200, "#1e3f9c", "#e0e0e0"],
+  ["Lajeadense", "LAJ", "Brasil", "RS", "Lajeado", "Amador", "Pechincha", 170, "#1c8a4a", "#e0e0e0"],
+  ["Veranópolis", "VER", "Brasil", "RS", "Veranópolis", "Amador", "Formador", 240, "#1f5fb0", "#e4b400"],
+  ["São Gabriel AC", "SGA", "Brasil", "RS", "São Gabriel", "Amador", "Pechincha", 150, "#c62828", "#1a1a1a"],
+  ["Taubaté EC", "TAU", "Brasil", "SP", "Taubaté", "Amador", "Formador", 290, "#1f5fb0", "#e0e0e0"],
+  ["Marília AC", "MAC", "Brasil", "SP", "Marília", "Amador", "Pechincha", 210, "#1c8a4a", "#e4b400"],
+  ["Bangu AC", "BAN", "Brasil", "RJ", "Rio de Janeiro", "Amador", "Tradicional", 230, "#c62828", "#e0e0e0"],
+  ["Serra Macaense", "SMA", "Brasil", "RJ", "Macaé", "Amador", "Pechincha", 160, "#1f5fb0", "#1a1a1a"],
+  ["Betim Base", "BET2", "Brasil", "MG", "Betim", "Amador", "Formador", 195, "#1c8a4a", "#e0e0e0"],
+  ["Juazeiro Social", "JZS", "Brasil", "BA", "Juazeiro", "Amador", "Pechincha", 145, "#e4b400", "#1a1a1a"],
+  ["Campina FC", "CFB", "Brasil", "PB", "Campina Grande", "Amador", "Formador", 175, "#1f5fb0", "#e0e0e0"],
+  ["Rio Verde EC", "RVE", "Brasil", "GO", "Rio Verde", "Amador", "Pechincha", 155, "#1c8a4a", "#1a1a1a"],
 ];
 
 export const CLUB_SEEDS: ClubSeed[] = T.map(t => ({

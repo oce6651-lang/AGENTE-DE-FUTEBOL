@@ -13,7 +13,14 @@ export function loadGame(): GameState | null {
   const raw = localStorage.getItem(KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as GameState;
+    const parsed = JSON.parse(raw) as GameState;
+    // Migração leve: campos novos em saves antigos.
+    return {
+      ...parsed,
+      historicoCompeticoes: parsed.historicoCompeticoes ?? [],
+      historicoAgencia: parsed.historicoAgencia ?? [],
+      titulosMundo: parsed.titulosMundo ?? [],
+    };
   } catch {
     return null;
   }

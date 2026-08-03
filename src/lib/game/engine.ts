@@ -2,6 +2,7 @@ import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMe
 import { mundoSemanal, viradaDeAno } from "./world";
 import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
+import { semanaEsportiva, encerrarTemporada } from "./season";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -96,6 +97,7 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     peneiras: [],
     peneirasAbertas: [],
     titulosMundo: [],
+    historicoCompeticoes: [],
     upgrades: [],
     locaisVisitados: [],
     noticias: [
@@ -136,6 +138,7 @@ function contatosIniciais(s: GameState): Player[] {
     clube: null,
     confianca: 100,
     status: "Quer assinar com você",
+    familiaConfia: true,
     valorMercado: calcularValorMercado(p.atual, p.potencial, p.idade, false),
     observado: 1,
     ...extra,
@@ -268,6 +271,18 @@ export function potencialEstimado(p: Player, precisao = 0): { min: number; max: 
 // NEGOCIAÇÃO COM ATLETAS — difícil por padrão
 // ============================================================
 
+/**
+ * Atletas do futebol amador (várzea, quadra, escola, campo municipal) não têm
+ * contrato nem empresário estruturado — assinar com eles é muito mais simples.
+ */
+export function bonusOrigemAmadora(player: Player): number {
+  const origem = (player.local ?? "").toLowerCase();
+  const amador = ["várzea", "varzea", "quadra", "escola", "campo municipal", "pelada"]
+    .some(t => origem.includes(t));
+  if (!amador) return 0;
+  return player.clube ? 12 : 30;
+}
+
 export function conversar(state: GameState, player: Player): { state: GameState; sucesso: boolean; mensagem: string } {
   if (state.energia <= 0) return { state, sucesso: false, mensagem: "Sem energia nesta semana." };
   if (state.dinheiro < CUSTOS.conversa) return { state, sucesso: false, mensagem: `Sem caixa (R$ ${CUSTOS.conversa}).` };
@@ -276,7 +291,9 @@ export function conversar(state: GameState, player: Player): { state: GameState;
   const chance = 6 + s.reputacao * 0.35 + s.prestigio * 4 + player.confianca * 0.25
     + (player.personalidade === "Humilde" ? 10 : 0)
     - (player.personalidade === "Ganancioso" ? 14 : 0)
-    - (player.idade < 16 ? 12 : 0);
+    - (player.idade < 16 && !player.familiaConfia ? 12 : 0)
+    + (player.familiaConfia ? 45 : 0)
+    + bonusOrigemAmadora(player);
   const sucesso = rnd(1, 100) <= Math.max(4, Math.min(88, chance));
 
   const ganho = sucesso ? rnd(6, 14) : rnd(0, 3);
@@ -300,10 +317,12 @@ export function propor(state: GameState, player: Player): { state: GameState; su
   let s = consumirEnergia(gastar(state, CUSTOS.proposta, `Proposta de representação: ${player.nome}`));
 
   let chance = 2 + s.reputacao * 0.3 + s.prestigio * 6 + player.confianca * 0.45 + player.observado * 2;
-  if (player.idade < 18) chance -= 22;
+  if (player.idade < 18 && !player.familiaConfia) chance -= 22;
+  if (player.familiaConfia) chance += 55;
+  chance += bonusOrigemAmadora(player);
   if (player.personalidade === "Ambicioso" && s.prestigio >= 3) chance += 10;
   if (player.personalidade === "Ganancioso") chance -= 15;
-  chance = Math.max(2, Math.min(82, chance));
+  chance = Math.max(2, Math.min(player.familiaConfia ? 97 : 82, chance));
   const sucesso = rnd(1, 100) <= chance;
 
   if (!sucesso) {
@@ -484,6 +503,21 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
 
   // clubes sondam seus atletas conforme personalidade e necessidade
   s = sondagensDeClubes(s, eventos);
+
+  // rodadas das competições disputadas pelos seus atletas
+  const esportiva = semanaEsportiva(s);
+  s = esportiva.state;
+  eventos.push(...esportiva.manchetes);
+
+  // fim de temporada: campeões, colocações e histórico das competições
+  if (s.mes === 12 && s.semana === 4) {
+    const fim = encerrarTemporada(s);
+    s = fim.state;
+    if (fim.noticias.length) {
+      s = { ...s, noticias: [...fim.noticias, ...s.noticias].slice(0, 150) };
+      eventos.push(fim.noticias[0].titulo);
+    }
+  }
 
   // mundo vivo
   const mundo = mundoSemanal(s);
