@@ -54,6 +54,12 @@ export interface Player {
   visual: number;
   /** Semanas restantes de lesão (0 = apto). */
   lesaoSemanas?: number;
+  /** A família confia cegamente no empresário (contatos pessoais iniciais). */
+  familiaConfia?: boolean;
+  /** Títulos conquistados na carreira. */
+  titulos?: { ano: number; competicao: string; clube: string }[];
+  /** Data de saída da agência, quando arquivado. */
+  saiuEm?: string;
 }
 
 /** Uma temporada completa na carreira do atleta. */
@@ -71,6 +77,42 @@ export interface SeasonRecord {
   titulos: string[];
   premios: string[];
   lesoes: string[];
+  /** Cartões acumulados na temporada. */
+  amarelos?: number;
+  vermelhos?: number;
+  /** Média das notas das partidas disputadas. */
+  notaMedia?: number;
+  /** Campanha detalhada por competição, no estilo Football Manager. */
+  competicoes?: SeasonCompetition[];
+}
+
+/** Campanha do atleta em uma competição específica dentro da temporada. */
+export interface SeasonCompetition {
+  competicaoId: string;
+  competicao: string;
+  categoria: string;
+  jogos: number;
+  gols: number;
+  assistencias: number;
+  amarelos: number;
+  vermelhos: number;
+  notaMedia: number;
+  /** Colocação final na competição (1 = campeão). */
+  posicao?: number;
+  campeao?: boolean;
+}
+
+/** Registro histórico de uma edição de competição. */
+export interface CompetitionSeason {
+  ano: number;
+  competicaoId: string;
+  competicao: string;
+  categoria: string;
+  campeao: string;
+  vice: string;
+  artilheiro?: string;
+  /** Atletas da sua agência que participaram desta edição. */
+  clientes?: { playerId: string; nome: string; clube: string; posicao: number }[];
 }
 
 export interface ScoutNote {
@@ -250,6 +292,8 @@ export interface GameState {
   peneirasAbertas: OpenTryout[];
   /** Campeões de cada competição por temporada. */
   titulosMundo: { ano: number; competicao: string; campeao: string }[];
+  /** Histórico completo de todas as edições de competições. */
+  historicoCompeticoes: CompetitionSeason[];
   noticias: NewsItem[];
   financas: FinanceEntry[];
   /** Melhorias estruturais compradas pela agência. */
