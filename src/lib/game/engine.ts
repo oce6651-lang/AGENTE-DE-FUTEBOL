@@ -279,7 +279,9 @@ export function conversar(state: GameState, player: Player): { state: GameState;
   const chance = 6 + s.reputacao * 0.35 + s.prestigio * 4 + player.confianca * 0.25
     + (player.personalidade === "Humilde" ? 10 : 0)
     - (player.personalidade === "Ganancioso" ? 14 : 0)
-    - (player.idade < 16 ? 12 : 0);
+    - (player.idade < 16 && !player.familiaConfia ? 12 : 0)
+    + (player.familiaConfia ? 45 : 0)
+    + bonusOrigemAmadora(player);
   const sucesso = rnd(1, 100) <= Math.max(4, Math.min(88, chance));
 
   const ganho = sucesso ? rnd(6, 14) : rnd(0, 3);
@@ -303,10 +305,12 @@ export function propor(state: GameState, player: Player): { state: GameState; su
   let s = consumirEnergia(gastar(state, CUSTOS.proposta, `Proposta de representação: ${player.nome}`));
 
   let chance = 2 + s.reputacao * 0.3 + s.prestigio * 6 + player.confianca * 0.45 + player.observado * 2;
-  if (player.idade < 18) chance -= 22;
+  if (player.idade < 18 && !player.familiaConfia) chance -= 22;
+  if (player.familiaConfia) chance += 55;
+  chance += bonusOrigemAmadora(player);
   if (player.personalidade === "Ambicioso" && s.prestigio >= 3) chance += 10;
   if (player.personalidade === "Ganancioso") chance -= 15;
-  chance = Math.max(2, Math.min(82, chance));
+  chance = Math.max(2, Math.min(player.familiaConfia ? 97 : 82, chance));
   const sucesso = rnd(1, 100) <= chance;
 
   if (!sucesso) {
