@@ -156,25 +156,36 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
       competicoesDoClube(c.categoria, c.pais, c.estado).some(x => x.id === comp.id));
     if (participantes.length < 2) continue;
 
-    const rank = participantes
-      .map(c => ({ c, score: forcaClube(c) + rnd(-25, 25) }))
-      .sort((a, b) => b.score - a.score);
+    // Competições estaduais, amadoras e regionais têm um campeão por estado.
+    const porEstado = ["estadual", "amadora", "regional"].includes(comp.tipo) || comp.id === "estadual-base";
+    const grupos: Club[][] = porEstado
+      ? Array.from(participantes.reduce((m, c) => {
+        m.set(c.estado, [...(m.get(c.estado) ?? []), c]);
+        return m;
+      }, new Map<string, Club[]>()).values())
+      : [participantes];
 
     const mapa = new Map<string, number>();
-    rank.forEach((r, i) => mapa.set(r.c.nome, i + 1));
-    colocacoes.set(comp.id, mapa);
-
-    for (const cat of comp.categorias) {
-      edicoes.push({
-        ano: state.ano,
-        competicaoId: comp.id,
-        competicao: comp.nome,
-        categoria: cat,
-        campeao: rank[0].c.nome,
-        vice: rank[1].c.nome,
-        clientes: [],
-      });
+    for (const grupo of grupos) {
+      if (grupo.length < 2) continue;
+      const rank = grupo
+        .map(c => ({ c, score: forcaClube(c) + rnd(-25, 25) }))
+        .sort((a, b) => b.score - a.score);
+      rank.forEach((r, i) => mapa.set(r.c.nome, i + 1));
+      const sufixo = porEstado ? ` (${rank[0].c.estado})` : "";
+      for (const cat of comp.categorias) {
+        edicoes.push({
+          ano: state.ano,
+          competicaoId: comp.id,
+          competicao: comp.nome + sufixo,
+          categoria: cat,
+          campeao: rank[0].c.nome,
+          vice: rank[1].c.nome,
+          clientes: [],
+        });
+      }
     }
+    colocacoes.set(comp.id, mapa);
   }
 
   // ---- consolidação individual dos atletas da agência ----
