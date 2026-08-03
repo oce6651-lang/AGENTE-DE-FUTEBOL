@@ -50,6 +50,23 @@ export const COMPETICOES: Competition[] = [
   { id: "pernambucano", nome: "Campeonato Pernambucano", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["PE"] },
   { id: "cearense", nome: "Campeonato Cearense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["CE"] },
   { id: "goiano", nome: "Campeonato Goiano", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["GO", "DF"] },
+  { id: "capixaba", nome: "Campeonato Capixaba", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["ES"] },
+  { id: "matogrossense", nome: "Campeonato Mato-Grossense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["MT"] },
+  { id: "sulmatogrossense", nome: "Campeonato Sul-Mato-Grossense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["MS"] },
+  { id: "paraibano", nome: "Campeonato Paraibano", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["PB"] },
+  { id: "potiguar", nome: "Campeonato Potiguar", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["RN"] },
+  { id: "alagoano", nome: "Campeonato Alagoano", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["AL"] },
+  { id: "sergipano", nome: "Campeonato Sergipano", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["SE"] },
+  { id: "maranhense", nome: "Campeonato Maranhense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["MA"] },
+  { id: "paraense", nome: "Campeonato Paraense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["PA"] },
+  { id: "amazonense", nome: "Campeonato Amazonense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["AM"] },
+  { id: "piauiense", nome: "Campeonato Piauiense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["PI"] },
+  { id: "brasiliense", nome: "Campeonato Brasiliense", pais: "Brasil", tipo: "estadual", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 1, mesFim: 4, estados: ["DF"] },
+
+  // ---------- Supercopas e mundiais ----------
+  { id: "supercopa-brasil", nome: "Supercopa do Brasil", pais: "Brasil", tipo: "copa", divisoes: ["Serie A"], categorias: PRO, mesInicio: 2, mesFim: 2 },
+  { id: "recopa", nome: "CONMEBOL Recopa", pais: "América do Sul", tipo: "continental", divisoes: ["Serie A", "Elite"], categorias: PRO, mesInicio: 2, mesFim: 3 },
+  { id: "mundial-clubes", nome: "Mundial de Clubes", pais: "Mundo", tipo: "continental", divisoes: ["Serie A", "Elite"], categorias: PRO, mesInicio: 6, mesFim: 7 },
 
   // ---------- Base ----------
   { id: "copinha", nome: "Copa São Paulo de Futebol Júnior", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D"], categorias: ["Sub-20"], mesInicio: 1, mesFim: 1 },
@@ -59,11 +76,19 @@ export const COMPETICOES: Competition[] = [
   { id: "copa-brasil-sub17", nome: "Copa do Brasil Sub-17", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C"], categorias: ["Sub-17"], mesInicio: 4, mesFim: 8 },
   { id: "estadual-base", nome: "Estadual de Base", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: BASE, mesInicio: 3, mesFim: 10 },
   { id: "copa-sub23", nome: "Copa Nacional Sub-23", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C"], categorias: ["Sub-20", "Livre"], mesInicio: 6, mesFim: 10 },
+  { id: "bra-sub15", nome: "Brasileirão Sub-15", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B"], categorias: ["Sub-15"], mesInicio: 5, mesFim: 11 },
+  { id: "copa-brasil-sub15", nome: "Copa do Brasil Sub-15", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C"], categorias: ["Sub-15"], mesInicio: 4, mesFim: 8 },
+  { id: "copa-2julho", nome: "Copa 2 de Julho", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D"], categorias: ["Sub-15"], mesInicio: 7, mesFim: 7 },
+  { id: "taca-belo-horizonte", nome: "Taça BH de Juniores", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D"], categorias: ["Sub-17"], mesInicio: 10, mesFim: 11 },
+  { id: "libertadores-sub20", nome: "Libertadores Sub-20", pais: "América do Sul", tipo: "base", divisoes: ["Serie A", "Elite"], categorias: ["Sub-20"], mesInicio: 2, mesFim: 3 },
+  { id: "youth-league", nome: "UEFA Youth League", pais: "Europa", tipo: "base", divisoes: ["Elite"], categorias: ["Sub-20"], mesInicio: 9, mesFim: 4 },
 
   // ---------- Amadoras e regionais ----------
   { id: "amadora", nome: "Campeonato Amador Municipal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 3, mesFim: 11 },
   { id: "regional", nome: "Copa Regional do Interior", pais: "Brasil", tipo: "regional", divisoes: ["Amador", "Serie D"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 5, mesFim: 9 },
   { id: "varzeano", nome: "Copa Várzea", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Livre", "Veterano"], mesInicio: 1, mesFim: 12 },
+  { id: "copa-interior", nome: "Copa do Interior", pais: "Brasil", tipo: "regional", divisoes: ["Amador", "Serie D", "Serie C"], categorias: ["Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 4, mesFim: 8 },
+  { id: "torneio-integracao", nome: "Torneio de Integração Municipal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Livre"], mesInicio: 2, mesFim: 6 },
 ];
 
 /** Liga principal de um clube, conforme divisão e país. */
