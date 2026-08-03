@@ -210,7 +210,8 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
         const rotulo = `${camp.competicao} ${camp.categoria !== "Livre" ? camp.categoria : ""}`.trim();
         titulos.push(rotulo);
         novosTitulos.push({ ano: s.ano, competicao: rotulo, clube: temp.clube });
-        const edicao = edicoes.find(e => e.competicaoId === camp.competicaoId && e.categoria === camp.categoria);
+        const edicao = edicoes.find(e => e.competicaoId === camp.competicaoId
+          && e.categoria === camp.categoria && e.campeao === temp.clube);
         if (edicao) edicao.clientes!.push({ playerId: p.id, nome: p.nome, clube: temp.clube, posicao });
       }
       return { ...camp, posicao, campeao };
