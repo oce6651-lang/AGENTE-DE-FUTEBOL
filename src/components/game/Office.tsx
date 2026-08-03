@@ -56,6 +56,8 @@ export function Office({ state, setState, onExit }: {
   const [inscreverEm, setInscreverEm] = useState<string | null>(null);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminOk, setAdminOk] = useState(false);
+  const [arquivoAberto, setArquivoAberto] = useState<string | null>(null);
+  const [compFiltro, setCompFiltro] = useState<string>("");
 
   const selected = selectedId
     ? state.jogadores.find(p => p.id === selectedId) ?? state.radar.find(p => p.id === selectedId) ?? null
@@ -162,6 +164,10 @@ export function Office({ state, setState, onExit }: {
               <MenuTile icon={<Megaphone className="h-6 w-6" />} label="Peneiras abertas" badge={peneirasAbertas.length} onClick={() => setView("openTryouts")} />
               <MenuTile icon={<Handshake className="h-6 w-6" />} label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
               <MenuTile icon={<Newspaper className="h-6 w-6" />} label="Notícias" onClick={() => setView("news")} />
+              <MenuTile icon={<Archive className="h-6 w-6" />} label="Arquivo de clientes"
+                badge={state.jogadores.length + (state.historicoAgencia?.length ?? 0)} onClick={() => setView("arquivo")} />
+              <MenuTile icon={<Trophy className="h-6 w-6" />} label="Competições"
+                badge={state.historicoCompeticoes?.length ?? 0} onClick={() => setView("competicoes")} />
               <MenuTile icon={<Briefcase className="h-6 w-6" />} label="Agência" onClick={() => setView("agency")} />
               <MenuTile icon={<ClubCrest cores={["#1f8ecd", "#0b1d2e"]} abrev="CLB" size={26} />} label="Clubes" onClick={() => setView("clubs")} />
               <MenuTile icon={<ShieldCheck className="h-6 w-6" />} label="ADM" onClick={() => setView("admin")} />
@@ -372,6 +378,14 @@ export function Office({ state, setState, onExit }: {
         {view === "clubs" && (
           <div className="p-4 space-y-3">
             <SubHeader title="Clubes" onBack={() => setView("home")} />
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+              <img src={heroCompeticoes} alt="Estádio lotado" loading="lazy" width={1280} height={720}
+                className="h-28 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+              <div className="absolute bottom-2 left-3 text-xs text-muted-foreground">
+                {state.clubes.length} clubes no mundo do jogo
+              </div>
+            </div>
             {state.clubes.map(c => (
               <Card key={c.id} className="p-4 flex items-center gap-3 hover:bg-secondary/40 transition-colors">
                 <ClubCrest cores={c.cores} abrev={c.abrev} size={44} />
