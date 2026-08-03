@@ -164,6 +164,7 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
 
 /** Envelhecimento e aposentadoria dos seus atletas (virada de ano). */
 export function viradaDeAno(state: GameState): GameState {
+  const aposentados: Player[] = [];
   const jogadores: Player[] = state.jogadores.map(p => {
     const idade = p.idade + 1;
     if (idade >= 34 && Math.random() < (idade - 32) * 0.18) {
@@ -171,11 +172,23 @@ export function viradaDeAno(state: GameState): GameState {
         ano: state.ano, mes: 1, semana: 1, tipo: "aposentadoria",
         texto: `Encerrou a carreira aos ${idade} anos.`,
       };
-      return { ...p, idade, status: "Aposentado", clube: null, timeline: [...p.timeline, evt] };
+      const fim: Player = {
+        ...p, idade, status: "Aposentado", clube: null,
+        saiuEm: `Janeiro/${state.ano}`,
+        timeline: [...p.timeline, evt],
+      };
+      aposentados.push(fim);
+      return fim;
     }
     return { ...p, idade };
   });
-  return { ...state, jogadores, radar: state.radar.map(p => ({ ...p, idade: p.idade + 1 })) };
+  return {
+    ...state,
+    jogadores: jogadores.filter(p => p.status !== "Aposentado"),
+    // ex-clientes seguem para o arquivo permanente da agência
+    historicoAgencia: [...aposentados, ...(state.historicoAgencia ?? [])],
+    radar: state.radar.map(p => ({ ...p, idade: p.idade + 1 })),
+  };
 }
 
 export { ORDEM as DIVISOES };

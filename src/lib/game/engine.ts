@@ -504,6 +504,21 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   // clubes sondam seus atletas conforme personalidade e necessidade
   s = sondagensDeClubes(s, eventos);
 
+  // rodadas das competições disputadas pelos seus atletas
+  const esportiva = semanaEsportiva(s);
+  s = esportiva.state;
+  eventos.push(...esportiva.manchetes);
+
+  // fim de temporada: campeões, colocações e histórico das competições
+  if (s.mes === 12 && s.semana === 4) {
+    const fim = encerrarTemporada(s);
+    s = fim.state;
+    if (fim.noticias.length) {
+      s = { ...s, noticias: [...fim.noticias, ...s.noticias].slice(0, 150) };
+      eventos.push(fim.noticias[0].titulo);
+    }
+  }
+
   // mundo vivo
   const mundo = mundoSemanal(s);
   s = mundo.state;
