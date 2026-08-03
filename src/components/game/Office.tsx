@@ -854,3 +854,42 @@ function SubHeader({ title, onBack }: { title: string; onBack: () => void }) {
     </div>
   );
 }
+
+/** Ficha resumida de um cliente (ou ex-cliente) com carreira expansível. */
+function ArquivoItem({ p, aberto, onToggle, antigo = false }: {
+  p: Player; aberto: boolean; onToggle: () => void; antigo?: boolean;
+}) {
+  const totais = (p.temporadas ?? []).reduce(
+    (acc, t) => ({
+      jogos: acc.jogos + t.jogos, gols: acc.gols + t.gols,
+      assist: acc.assist + t.assistencias, titulos: acc.titulos + t.titulos.length,
+    }),
+    { jogos: 0, gols: 0, assist: 0, titulos: 0 },
+  );
+  return (
+    <Card className={"overflow-hidden " + (antigo ? "opacity-90" : "")}>
+      <button onClick={onToggle} className="w-full p-3 text-left hover:bg-secondary/40 transition-colors">
+        <div className="flex items-center gap-3">
+          <PlayerAvatar seed={p.visual} size={40} ring={!antigo} />
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-sm truncate">{p.nome}</div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {p.id} • {p.idade} anos • {p.posicao} • {p.clube ?? (antigo ? "Carreira encerrada" : "Sem clube")}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {totais.jogos} jogos • {totais.gols} gols • {totais.assist} assistências • {totais.titulos} título(s)
+            </div>
+          </div>
+          <Badge variant={antigo ? "secondary" : "default"} className="text-[10px]">
+            {antigo ? "Ex-cliente" : `OVR ${p.atual}`}
+          </Badge>
+        </div>
+      </button>
+      {aberto && (
+        <div className="border-t border-border p-3">
+          <CareerHistory player={p} />
+        </div>
+      )}
+    </Card>
+  );
+}
