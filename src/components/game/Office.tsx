@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { StatusBar } from "./StatusBar";
 import { PlayerCard } from "./PlayerCard";
 import { PlayerDetail } from "./PlayerDetail";
+import { CareerHistory } from "./CareerHistory";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { Button } from "@/components/ui/button";
@@ -23,14 +24,18 @@ import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
+import heroArquivo from "@/assets/hero-arquivo.jpg";
+import heroCompeticoes from "@/assets/hero-competicoes.jpg";
+import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
-  Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock,
+  Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
-  | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin";
+  | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
+  | "arquivo" | "competicoes";
 
 /** Único e-mail autorizado a abrir o painel administrativo. */
 const ADMIN_EMAIL = "OCE6651@GMAIL.COM";
