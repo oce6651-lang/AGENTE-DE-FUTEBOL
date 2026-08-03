@@ -4,6 +4,7 @@ import { StatusBar } from "./StatusBar";
 import { PlayerCard } from "./PlayerCard";
 import { PlayerDetail } from "./PlayerDetail";
 import { CareerHistory } from "./CareerHistory";
+import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { Button } from "@/components/ui/button";
