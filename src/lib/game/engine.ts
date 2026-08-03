@@ -271,6 +271,18 @@ export function potencialEstimado(p: Player, precisao = 0): { min: number; max: 
 // NEGOCIAÇÃO COM ATLETAS — difícil por padrão
 // ============================================================
 
+/**
+ * Atletas do futebol amador (várzea, quadra, escola, campo municipal) não têm
+ * contrato nem empresário estruturado — assinar com eles é muito mais simples.
+ */
+export function bonusOrigemAmadora(player: Player): number {
+  const origem = (player.local ?? "").toLowerCase();
+  const amador = ["várzea", "varzea", "quadra", "escola", "campo municipal", "pelada"]
+    .some(t => origem.includes(t));
+  if (!amador) return 0;
+  return player.clube ? 12 : 30;
+}
+
 export function conversar(state: GameState, player: Player): { state: GameState; sucesso: boolean; mensagem: string } {
   if (state.energia <= 0) return { state, sucesso: false, mensagem: "Sem energia nesta semana." };
   if (state.dinheiro < CUSTOS.conversa) return { state, sucesso: false, mensagem: `Sem caixa (R$ ${CUSTOS.conversa}).` };
