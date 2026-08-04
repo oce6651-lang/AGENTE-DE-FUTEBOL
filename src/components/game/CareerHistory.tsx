@@ -17,7 +17,7 @@ export function CareerHistory({ player, compacto = false }: { player: Player; co
   }
   return (
     <div className="space-y-4">
-      {temporadas.map(t => <SeasonBlock key={t.ano} t={t} compacto={compacto} />)}
+      {temporadas.map((t, i) => <SeasonBlock key={t.id ?? `${t.ano}-${i}`} t={t} compacto={compacto} />)}
     </div>
   );
 }
@@ -30,10 +30,20 @@ function SeasonBlock({ t, compacto }: { t: SeasonRecord; compacto: boolean }) {
         <span className="text-sm font-black">{t.ano}</span>
         <span className="text-sm font-bold truncate">{t.clube}</span>
         <Badge variant="secondary" className="text-[10px]">{t.categoria}</Badge>
+        {t.divisao && <Badge variant="outline" className="text-[10px]">{t.divisao}</Badge>}
         <span className="ml-auto text-[11px] text-muted-foreground">
           {t.jogos}J • {t.gols}G • {t.assistencias}A • OVR {t.overall}
         </span>
       </div>
+
+      {t.transferencia && (
+        <div className="border-b border-border bg-background/40 px-3 py-1.5 text-[10px] text-muted-foreground">
+          {t.transferencia.tipo} • {t.transferencia.de ?? "Sem clube"} → {t.transferencia.para}
+          {t.transferencia.valor > 0 && ` • ${t.transferencia.moeda} ${t.transferencia.valor.toLocaleString("pt-BR")}`}
+          {t.transferencia.salario ? ` • salário ${t.transferencia.moeda} ${t.transferencia.salario.toLocaleString("pt-BR")}/mês` : ""}
+          {t.transferencia.duracaoAnos ? ` • contrato de ${t.transferencia.duracaoAnos} ano(s)` : ""}
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full text-[11px]">

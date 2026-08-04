@@ -1,4 +1,5 @@
 import { rnd } from "./generators";
+import { categoriaDoAtleta } from "./season";
 import type { Club, ClubResponse, GameState, Negotiation, NewsItem, Player } from "./types";
 
 function uid(prefix: string) {
@@ -17,35 +18,42 @@ const PORTA_DE_ENTRADA: Record<Club["categoria"], number> = {
 
 export const CUSTO_OFERTA = 220;
 
-/** Clubes que fazem sentido receber a oferta: mesma região e porte compatível. */
+/**
+ * O empresário pode oferecer qualquer atleta a qualquer clube — o filtro é a
+ * resposta, não a lista. Clubes muito acima do nível simplesmente recusam.
+ */
 export function clubesAlvo(state: GameState, player: Player): Club[] {
   return state.clubes
     .filter(c => c.nome !== player.clube)
-    .filter(c => {
-      const nivel = NIVEL_DIVISAO[c.categoria];
-      // grandes clubes só olham para quem já é diferenciado
-      if (nivel - player.atual > 22) return false;
-      // clubes de fora do país exigem reputação internacional
-      if (c.pais !== player.pais && state.reputacao < 55) return false;
-      return true;
-    })
     .sort((a, b) => {
       const regiaoA = a.estado === player.estado ? 0 : 1;
       const regiaoB = b.estado === player.estado ? 0 : 1;
-      return regiaoA - regiaoB || NIVEL_DIVISAO[a.categoria] - NIVEL_DIVISAO[b.categoria];
+      const gapA = Math.abs(NIVEL_DIVISAO[a.categoria] - player.atual);
+      const gapB = Math.abs(NIVEL_DIVISAO[b.categoria] - player.atual);
+      return regiaoA - regiaoB || gapA - gapB;
     });
 }
 
-function responder(state: GameState, clube: Club, player: Player): ClubResponse {
+/** Avaliação completa do clube: nível, idade, potencial, caixa e filosofia. */
+export function responder(state: GameState, clube: Club, player: Player): ClubResponse {
   const base = { clubId: clube.id, clube: clube.nome };
+  const exigido = NIVEL_DIVISAO[clube.categoria];
+
+  // clubes muito acima do nível do atleta nem abrem conversa
+  if (exigido - player.atual > 20) {
+    return { ...base, resultado: "abaixo_do_nivel", texto: `${clube.nome} nem avaliou o material: o atleta está muito distante do nível da ${clube.categoria}.` };
+  }
+  if (clube.pais !== player.pais && (state.reputacao < 45 || player.atual < 62)) {
+    return { ...base, resultado: "ignorou", texto: "Clube do exterior: não negocia com agências sem projeção internacional." };
+  }
+
   const acesso = clube.confiancaEmVoce + state.reputacao * 0.5
     + (state.upgrades.includes("sede") ? 10 : 0);
   if (acesso < PORTA_DE_ENTRADA[clube.categoria]) {
     return { ...base, resultado: "ignorou", texto: "Não retornou seus contatos. Sua agência ainda não é conhecida aqui." };
   }
 
-  const exigido = NIVEL_DIVISAO[clube.categoria];
-  if (player.atual < exigido - 6) {
+  if (player.atual < exigido - 6 && !(clube.personalidade === "Formador" && player.idade <= 19 && player.potencial >= exigido + 8)) {
     return { ...base, resultado: "abaixo_do_nivel", texto: `Avaliação: nível técnico abaixo do exigido pela ${clube.categoria}.` };
   }
 
@@ -60,15 +68,17 @@ function responder(state: GameState, clube: Club, player: Player): ClubResponse 
   }
 
   const jovem = player.idade <= 20;
-  let peso = 20 + (player.atual - exigido) * 2.2 + clube.confiancaEmVoce * 0.35 + state.reputacao * 0.2;
+  let peso = 18 + (player.atual - exigido) * 2.2 + clube.confiancaEmVoce * 0.35 + state.reputacao * 0.2;
   if (precisa) peso += 22;
   if (clube.personalidade === "Formador" && jovem) peso += 18;
   if (clube.personalidade === "Formador" && !jovem) peso -= 25;
   if (clube.personalidade === "Imediatista" && jovem) peso -= 22;
   if (clube.personalidade === "Vitrine" && player.potencial - player.atual > 18) peso += 16;
   if (clube.personalidade === "Pechincha") peso -= 10;
+  if (clube.personalidade === "Tradicional") peso -= 6;
   if (!player.clube) peso -= 8;
   if (player.observado < 2) peso -= 10;
+  if (player.idade >= 30) peso -= 12;
 
   const roll = rnd(0, 100);
   if (roll > peso + 25) {
@@ -80,19 +90,53 @@ function responder(state: GameState, clube: Club, player: Player): ClubResponse 
   return { ...base, resultado: "interessado", texto: `${clube.nome} quer abrir negociação imediatamente.` };
 }
 
+/** Monta uma proposta coerente com o porte do clube e o valor do atleta. */
+export function montarProposta(state: GameState, clube: Club, player: Player): Negotiation {
+  const mult = clube.personalidade === "Pechincha" ? 0.55 : clube.personalidade === "Imediatista" ? 1.35 : 1;
+  const semContrato = !player.clube;
+  const valor = semContrato
+    ? 0
+    : Math.max(500, Math.round(player.valorMercado * mult * (0.7 + Math.random() * 0.6)));
+  const emprestimo = !semContrato && player.idade <= 21 && Math.random() < 0.25;
+  const salarioBase: Record<Club["categoria"], number> = {
+    Amador: 0, "Serie D": 1_400, "Serie C": 3_000, "Serie B": 8_000, "Serie A": 22_000, Elite: 90_000,
+  };
+  const salario = Math.round(
+    (salarioBase[clube.categoria] * (0.6 + player.atual / 70) * (0.8 + Math.random() * 0.5)) / 100) * 100;
+  return {
+    id: uid("NEG"), playerId: player.id, clubId: clube.id,
+    valorProposta: emprestimo ? 0 : valor,
+    comissao: 0.05 + Math.min(0.06, state.reputacao / 1000) + (state.upgrades.includes("juridico") ? 0.03 : 0),
+    salario,
+    status: "aberta",
+    expiraEm: rnd(2, 4),
+    criadaEm: `${state.mes}/${state.ano} • semana ${state.semana}`,
+    tipo: emprestimo ? "Empréstimo" : semContrato ? "Livre" : "Compra definitiva",
+    duracaoAnos: emprestimo ? 1 : player.idade <= 20 ? rnd(3, 5) : rnd(1, 3),
+    categoria: categoriaDoAtleta(player),
+    etapas: [
+      { data: `${state.mes}/${state.ano}`, texto: `${state.agent.agencia} ofereceu ${player.nome} ao ${clube.nome}.` },
+      { data: `${state.mes}/${state.ano}`, texto: `${clube.tecnico} aprovou o perfil e a diretoria apresentou proposta.` },
+    ],
+  };
+}
+
 /**
  * Oferece um atleta ao mercado. Cada clube responde de um jeito e apenas
  * os realmente interessados abrem uma negociação.
  */
-export function oferecerParaClubes(state: GameState, playerId: string): { state: GameState; respostas: ClubResponse[]; mensagem: string } {
+export function oferecerParaClubes(
+  state: GameState, playerId: string, clubIds?: string[],
+): { state: GameState; respostas: ClubResponse[]; mensagem: string } {
   const player = state.jogadores.find(p => p.id === playerId);
   if (!player) return { state, respostas: [], mensagem: "Atleta não encontrado." };
   if (state.energia <= 0) return { state, respostas: [], mensagem: "Sem energia nesta semana." };
   if (state.dinheiro < CUSTO_OFERTA) return { state, respostas: [], mensagem: `Sem caixa (R$ ${CUSTO_OFERTA}).` };
 
-  // quanto maior a reputação, mais portas você consegue bater na mesma semana
   const limite = 4 + Math.floor(state.reputacao / 12);
-  const alvos = clubesAlvo(state, player).slice(0, limite);
+  const alvos = clubIds?.length
+    ? state.clubes.filter(c => clubIds.includes(c.id)).slice(0, limite)
+    : clubesAlvo(state, player).slice(0, limite);
   if (!alvos.length) {
     return { state, respostas: [], mensagem: `Nenhum clube compatível com o perfil de ${player.nome} no momento.` };
   }
@@ -115,17 +159,7 @@ export function oferecerParaClubes(state: GameState, playerId: string): { state:
   for (const r of respostas) {
     const clube = state.clubes.find(c => c.id === r.clubId)!;
     if (r.resultado === "interessado") {
-      const mult = clube.personalidade === "Pechincha" ? 0.55 : clube.personalidade === "Imediatista" ? 1.35 : 1;
-      const valor = Math.max(2000, Math.round(player.valorMercado * mult * (0.7 + Math.random() * 0.6)));
-      novasNegociacoes.push({
-        id: uid("NEG"), playerId: player.id, clubId: clube.id,
-        valorProposta: valor,
-        comissao: 0.05 + Math.min(0.06, state.reputacao / 1000) + (state.upgrades.includes("juridico") ? 0.03 : 0),
-        salario: Math.max(1200, Math.round(valor * 0.004)),
-        status: "aberta",
-        expiraEm: rnd(2, 4),
-        criadaEm: `${state.mes}/${state.ano} • semana ${state.semana}`,
-      });
+      novasNegociacoes.push(montarProposta(state, clube, player));
       noticias.push({
         id: uid("NEW"), semana: state.semana, mes: state.mes, ano: state.ano,
         titulo: `${clube.nome} abre negociação por ${player.nome}`,

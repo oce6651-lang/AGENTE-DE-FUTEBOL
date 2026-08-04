@@ -1,4 +1,7 @@
-import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, sortearSonhos } from "./generators";
+import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, calcularSalario, sortearSonhos } from "./generators";
+import { calcularOverall, evoluirAtributos } from "./attributes";
+import { categoriaDoAtleta, categoriaPorIdade, registrarPassagem } from "./season";
+import { montarProposta } from "./offers";
 import { mundoSemanal, viradaDeAno } from "./world";
 import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
@@ -8,7 +11,7 @@ import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
 import type {
   Agent, GameState, NewsItem, Player, FinanceEntry, Negotiation, Tryout, TimelineEvent, Club,
-  MatchPlayer, Fixture, ScoutNote,
+  MatchPlayer, Fixture, ScoutNote, AgeCategory,
 } from "./types";
 import { MESES } from "./types";
 
@@ -146,6 +149,9 @@ function contatosIniciais(s: GameState): Player[] {
   return [
     prep(gustavo, {
       nome: "Gustavo Oliveira",
+      nascimento: "15/09/2009",
+      idade: s.ano - 2009 - (s.mes < 9 ? 1 : 0),
+      pe: "Canhoto",
       personalidade: "Humilde",
       tracos: ["Humilde", "Generoso", "Esforçado", "Talentoso", "Tímido"],
       clubeCoracao: gremio,
@@ -456,13 +462,24 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   s = { ...s, energiaMax: energiaMaxima(s) };
   s = { ...s, energia: s.energiaMax };
 
-  // evolução dos representados
+  // evolução dos representados: a ficha completa evolui e o Overall é recalculado
   s.jogadores = s.jogadores.map(p => {
-    if (p.status === "Aposentado" || p.atual >= p.potencial) return p;
-    const emClube = !!p.clube;
-    const jovem = p.idade < 21;
-    const chance = (jovem ? 0.14 : 0.05) * (emClube ? 1.4 : 0.5);
-    return Math.random() < chance ? { ...p, atual: Math.min(p.potencial, p.atual + 1) } : p;
+    if (p.status === "Aposentado") return p;
+    let q = p;
+    if (p.atual < p.potencial) {
+      const emClube = !!p.clube;
+      const jovem = p.idade < 21;
+      const chance = (jovem ? 0.14 : 0.05) * (emClube ? 1.4 : 0.5);
+      if (Math.random() < chance) {
+        const atributos = evoluirAtributos(p.atributos, 1, p.posicao);
+        const atual = Math.min(p.potencial, Math.max(p.atual + 1, calcularOverall(atributos, p.posicao)));
+        q = {
+          ...p, atributos, atual,
+          valorMercado: calcularValorMercado(atual, p.potencial, p.idade, !!p.clube),
+        };
+      }
+    }
+    return promoverCategoria(s, q, eventos);
   });
 
   // peneiras
@@ -528,6 +545,38 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
 }
 
 function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
+  return sondagem(state, eventos);
+}
+
+/**
+ * Atletas muito acima da média da idade podem ser promovidos de categoria —
+ * do Sub-17 direto para o profissional, por exemplo. Acontece raramente.
+ */
+function promoverCategoria(s: GameState, p: Player, eventos: string[]): Player {
+  if (!p.clube || p.status === "Aposentado") return p;
+  const natural = categoriaPorIdade(p.idade);
+  const atualCat = categoriaDoAtleta(p);
+  const escada: AgeCategory[] = ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"];
+  const idx = escada.indexOf(atualCat);
+  if (idx < 0 || idx >= escada.length - 1) return p;
+  // precisa estar muito acima do nível esperado da própria categoria
+  const exigencia = [14, 22, 32, 42, 54, 70][idx];
+  if (p.atual < exigencia + 14) return p;
+  if (Math.random() > 0.05) return p;
+  const nova = escada[idx + 1];
+  eventos.push(`${p.nome} foi promovido ao ${nova === "Livre" ? "time profissional" : nova}.`);
+  return {
+    ...p,
+    categoriaForcada: nova === natural ? undefined : nova,
+    confianca: Math.min(100, p.confianca + 6),
+    timeline: [...p.timeline, {
+      ano: s.ano, mes: s.mes, semana: s.semana, tipo: "nota" as const,
+      texto: `Promovido para ${nova === "Livre" ? "o elenco profissional" : nova} do ${p.clube}.`,
+    }],
+  };
+}
+
+function sondagem(state: GameState, eventos: string[]): GameState {
   let s = state;
   const elegiveis = s.jogadores.filter(j => j.empresario === s.agent.id && j.status !== "Aposentado");
   if (!elegiveis.length) return s;
@@ -545,21 +594,11 @@ function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
 
   if (rnd(0, 100) > interesse) return s;
 
-  const mult = clube.personalidade === "Pechincha" ? 0.4 : clube.personalidade === "Imediatista" ? 1.3 : 1;
-  const valor = Math.max(3000, Math.floor(clube.orcamento * 0.0009 * (jogador.atual / 55) * mult * (0.6 + Math.random())));
-  const neg: Negotiation = {
-    id: nextNegId(), playerId: jogador.id, clubId: clube.id,
-    valorProposta: valor,
-    comissao: 0.06 + Math.min(0.06, s.reputacao / 1000) + (s.upgrades.includes("juridico") ? 0.03 : 0),
-    salario: Math.max(1200, Math.floor(valor * 0.004)),
-    status: "aberta",
-    expiraEm: rnd(2, 4),
-    criadaEm: dataLabel(s),
-  };
+  const neg: Negotiation = { ...montarProposta(s, clube, jogador), id: nextNegId() };
   const not: NewsItem = {
     id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
     titulo: `${clube.nome} sonda ${jogador.nome}`,
-    texto: `Proposta de R$ ${valor.toLocaleString("pt-BR")} chegou à sua mesa. ${clube.tecnico} pediu um ${jogador.posicao}.`,
+    texto: `Proposta de R$ ${neg.valorProposta.toLocaleString("pt-BR")} chegou à sua mesa. ${clube.tecnico} pediu um ${jogador.posicao}.`,
     tipo: "mercado",
   };
   eventos.push(not.titulo);
@@ -615,6 +654,36 @@ export function responderNegociacao(
   }
 
   const receita = Math.floor(neg.valorProposta * neg.comissao);
+  const salario = neg.salario;
+  const tipo = neg.tipo ?? "Compra definitiva";
+  const categoria = neg.categoria ?? categoriaDoAtleta(player);
+  const transferencia = {
+    de: player.clube ?? "Sem clube",
+    para: clube.nome,
+    tipo,
+    valor: neg.valorProposta,
+    moeda: (clube.pais === "Brasil" ? "R$" : "€") as "R$" | "€",
+    ano: state.ano,
+    mes: state.mes,
+    salario,
+    duracaoAnos: neg.duracaoAnos ?? 2,
+    data: dataLabel(state),
+  };
+  const atualizado: Player = {
+    ...player,
+    clube: clube.nome,
+    status: `No ${clube.nome}`,
+    salario,
+    categoriaForcada: categoria === categoriaPorIdade(player.idade) ? undefined : categoria,
+    valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true),
+    temporadas: registrarPassagem(player, clube, categoria, state.ano, transferencia),
+    historico: [...player.historico, `${tipo} para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
+    timeline: [...player.timeline, {
+      ano: state.ano, mes: state.mes, semana: state.semana,
+      tipo: "transferencia" as const,
+      texto: `${tipo} para ${clube.nome} (R$ ${neg.valorProposta.toLocaleString("pt-BR")} • salário R$ ${salario.toLocaleString("pt-BR")}/mês).`,
+    }],
+  };
   const fin: FinanceEntry = {
     id: nextFinId(), data: dataLabel(state),
     descricao: `Comissão: ${player.nome} → ${clube.nome}`,
@@ -636,17 +705,13 @@ export function responderNegociacao(
         ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 10), necessidades: c.necessidades.filter(p => p !== player.posicao) } : c),
       financas: [fin, ...state.financas],
       noticias: [not, ...state.noticias],
-      negociacoes: state.negociacoes.map(n => n.id === negId ? { ...n, status: "aceita" as const } : n),
-      jogadores: state.jogadores.map(p => p.id === player.id ? {
-        ...p, clube: clube.nome, status: `No ${clube.nome}`,
-        historico: [...p.historico, `Transferido para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
-        timeline: [...p.timeline, {
-          ano: state.ano, mes: state.mes, semana: state.semana,
-          tipo: "transferencia" as const,
-          texto: `Transferido para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`,
-        }],
-      } : p),
+      // ao fechar com um clube, todas as outras conversas pelo atleta caem
+      negociacoes: state.negociacoes.map(n =>
+        n.id === negId ? { ...n, status: "aceita" as const }
+          : n.playerId === player.id && n.status === "aberta"
+            ? { ...n, status: "cancelada" as const } : n),
+      jogadores: state.jogadores.map(p => p.id === player.id ? atualizado : p),
     },
-    mensagem: `Comissão de R$ ${receita.toLocaleString("pt-BR")} recebida!`,
+    mensagem: `${player.nome} → ${clube.nome}. Comissão de R$ ${receita.toLocaleString("pt-BR")} recebida!`,
   };
 }
