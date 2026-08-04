@@ -238,7 +238,21 @@ export const LIGAS: Record<Division, string> = {
 };
 
 export function gerarClubes(): Club[] {
-  return CLUB_SEEDS.map((c, i) => ({
+  return CLUB_SEEDS.map((c, i) => {
+    // Investimento na base define o quão fortes são as categorias do clube.
+    const investimentoBase = Math.max(5, Math.min(100,
+      { Amador: 12, "Serie D": 22, "Serie C": 34, "Serie B": 48, "Serie A": 66, Elite: 78 }[c.categoria]
+      + (c.personalidade === "Formador" ? 22 : c.personalidade === "Vitrine" ? 14 : c.personalidade === "Imediatista" ? -18 : 0)
+      + rnd(-14, 14)));
+    // Cada categoria tem sua própria geração: nenhum clube domina tudo.
+    const cats: AgeCategory[] = ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-18", "Sub-20", "Livre"];
+    const forcaCategorias: Partial<Record<AgeCategory, number>> = {};
+    for (const cat of cats) {
+      forcaCategorias[cat] = cat === "Livre"
+        ? Math.max(5, Math.min(100, investimentoBase * 0.4 + 40 + rnd(-10, 10)))
+        : Math.max(5, Math.min(100, investimentoBase + rnd(-28, 28)));
+    }
+    return {
     id: rid("CLB", i + 1),
     nome: c.nome,
     abrev: c.abrev,
@@ -258,9 +272,12 @@ export function gerarClubes(): Club[] {
     elenco: rnd(22, 30),
     necessidades: [pick(POSICOES), pick(POSICOES)],
     interesse: [] as string[],
+    investimentoBase,
+    forcaCategorias,
     // Clubes pequenos da região são os únicos que atendem um empresário iniciante.
     confiancaEmVoce: c.categoria === "Amador" ? rnd(6, 18) : c.categoria === "Serie D" ? rnd(0, 6) : 0,
-  }));
+    };
+  });
 }
 
 
