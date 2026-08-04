@@ -1,11 +1,48 @@
 export type Position = "GOL" | "ZAG" | "LD" | "LE" | "VOL" | "MC" | "MEI" | "PD" | "PE" | "SA" | "ATA";
 export type Foot = "Destro" | "Canhoto" | "Ambidestro";
 
+/** Ficha completa de atributos (1-100), no nível de profundidade do Football Manager. */
 export interface Attributes {
-  tecnica: number;
-  velocidade: number;
+  // ---- Técnicos ----
   finalizacao: number;
-  passe: number;
+  passeCurto: number;
+  passeLongo: number;
+  cruzamento: number;
+  drible: number;
+  controleBola: number;
+  cabeceio: number;
+  marcacao: number;
+  desarme: number;
+  tecnica: number;
+  bolaParada: number;
+  penaltis: number;
+  // ---- Físicos ----
+  velocidade: number;
+  aceleracao: number;
+  agilidade: number;
+  resistencia: number;
+  forca: number;
+  impulsao: number;
+  equilibrio: number;
+  // ---- Mentais ----
+  determinacao: number;
+  lideranca: number;
+  posicionamento: number;
+  antecipacao: number;
+  concentracao: number;
+  decisao: number;
+  compostura: number;
+  visaoJogo: number;
+  trabalhoEquipe: number;
+  coragem: number;
+  inteligenciaTatica: number;
+  // ---- Específicos de goleiro ----
+  reflexos: number;
+  saidaGol: number;
+  jogoAereo: number;
+  reposicao: number;
+  maoAmao: number;
+  // ---- Resumos calculados ----
   fisico: number;
   mental: number;
 }
@@ -21,6 +58,8 @@ export interface Player {
   posicao: Position;
   pe: Foot;
   altura: number; // cm
+  /** Data de nascimento no formato DD/MM/AAAA. */
+  nascimento?: string;
   cidade: string;
   /** Estado e país de nascimento — definem o clube do coração e o mercado natural. */
   estado: string;
@@ -60,20 +99,28 @@ export interface Player {
   titulos?: { ano: number; competicao: string; clube: string }[];
   /** Data de saída da agência, quando arquivado. */
   saiuEm?: string;
+  /** Categoria em que atua, quando promovido/rebaixado fora da faixa etária. */
+  categoriaForcada?: AgeCategory;
 }
 
 /** Uma temporada completa na carreira do atleta. */
 export interface SeasonRecord {
+  /** Identificador da passagem — permite várias passagens no mesmo ano. */
+  id: string;
   ano: number;
   clube: string;
   categoria: string;
   liga: string;
+  /** Divisão do clube na passagem (Série A, D, Elite...). */
+  divisao?: string;
   jogos: number;
   gols: number;
   assistencias: number;
   overall: number;
   valorMercado: number;
   salario: number;
+  /** Como o atleta chegou a este clube. */
+  transferencia?: TransferRecord;
   titulos: string[];
   premios: string[];
   lesoes: string[];
@@ -100,6 +147,17 @@ export interface SeasonCompetition {
   /** Colocação final na competição (1 = campeão). */
   posicao?: number;
   campeao?: boolean;
+}
+
+/** Registro permanente de uma movimentação de mercado. */
+export interface TransferRecord {
+  tipo: "Livre" | "Empréstimo" | "Compra definitiva" | "Promoção interna" | "Base";
+  valor: number;
+  moeda: "R$" | "€";
+  de: string | null;
+  para: string;
+  ano: number;
+  mes: number;
 }
 
 /** Registro histórico de uma edição de competição. */
