@@ -6,7 +6,6 @@ import type { GameState, Player, TimelineEvent } from "@/lib/game/types";
 import { MESES } from "@/lib/game/types";
 import { potencialEstimado, CUSTOS, custoObservacao } from "@/lib/game/engine";
 import { GRUPOS_ATRIBUTOS, ATRIBUTOS_GOLEIRO } from "@/lib/game/attributes";
-import type { AttrKey } from "@/lib/game/attributes";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { CareerHistory } from "./CareerHistory";
 import { Trophy } from "lucide-react";
