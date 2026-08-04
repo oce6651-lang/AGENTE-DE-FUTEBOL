@@ -149,6 +149,9 @@ function contatosIniciais(s: GameState): Player[] {
   return [
     prep(gustavo, {
       nome: "Gustavo Oliveira",
+      nascimento: "15/09/2009",
+      idade: s.ano - 2009 - (s.mes < 9 ? 1 : 0),
+      pe: "Canhoto",
       personalidade: "Humilde",
       tracos: ["Humilde", "Generoso", "Esforçado", "Talentoso", "Tímido"],
       clubeCoracao: gremio,
