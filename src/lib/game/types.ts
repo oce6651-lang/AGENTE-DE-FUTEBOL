@@ -158,6 +158,10 @@ export interface TransferRecord {
   para: string;
   ano: number;
   mes: number;
+  /** Detalhes contratuais da operação. */
+  salario?: number;
+  duracaoAnos?: number;
+  data?: string;
 }
 
 /** Registro histórico de uma edição de competição. */
