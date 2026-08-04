@@ -462,13 +462,24 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   s = { ...s, energiaMax: energiaMaxima(s) };
   s = { ...s, energia: s.energiaMax };
 
-  // evolução dos representados
+  // evolução dos representados: a ficha completa evolui e o Overall é recalculado
   s.jogadores = s.jogadores.map(p => {
-    if (p.status === "Aposentado" || p.atual >= p.potencial) return p;
-    const emClube = !!p.clube;
-    const jovem = p.idade < 21;
-    const chance = (jovem ? 0.14 : 0.05) * (emClube ? 1.4 : 0.5);
-    return Math.random() < chance ? { ...p, atual: Math.min(p.potencial, p.atual + 1) } : p;
+    if (p.status === "Aposentado") return p;
+    let q = p;
+    if (p.atual < p.potencial) {
+      const emClube = !!p.clube;
+      const jovem = p.idade < 21;
+      const chance = (jovem ? 0.14 : 0.05) * (emClube ? 1.4 : 0.5);
+      if (Math.random() < chance) {
+        const atributos = evoluirAtributos(p.atributos, 1, p.posicao);
+        const atual = Math.min(p.potencial, Math.max(p.atual + 1, calcularOverall(atributos, p.posicao)));
+        q = {
+          ...p, atributos, atual,
+          valorMercado: calcularValorMercado(atual, p.potencial, p.idade, !!p.clube),
+        };
+      }
+    }
+    return promoverCategoria(s, q, eventos);
   });
 
   // peneiras
@@ -551,17 +562,7 @@ function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
 
   if (rnd(0, 100) > interesse) return s;
 
-  const mult = clube.personalidade === "Pechincha" ? 0.4 : clube.personalidade === "Imediatista" ? 1.3 : 1;
-  const valor = Math.max(3000, Math.floor(clube.orcamento * 0.0009 * (jogador.atual / 55) * mult * (0.6 + Math.random())));
-  const neg: Negotiation = {
-    id: nextNegId(), playerId: jogador.id, clubId: clube.id,
-    valorProposta: valor,
-    comissao: 0.06 + Math.min(0.06, s.reputacao / 1000) + (s.upgrades.includes("juridico") ? 0.03 : 0),
-    salario: Math.max(1200, Math.floor(valor * 0.004)),
-    status: "aberta",
-    expiraEm: rnd(2, 4),
-    criadaEm: dataLabel(s),
-  };
+  const neg: Negotiation = { ...montarProposta(s, clube, jogador), id: nextNegId() };
   const not: NewsItem = {
     id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
     titulo: `${clube.nome} sonda ${jogador.nome}`,
