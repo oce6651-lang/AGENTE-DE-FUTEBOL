@@ -180,6 +180,8 @@ export function gerarJogador(opts: GerarPlayerOpts): Player {
     : Math.max(10, Math.min(potencial, rnd(potencial - gap - 5, potencial - gap + 5)));
   const nome = `${pick(NOMES)} ${pick(SOBRENOMES)}`;
   const clubeCoracao = pick(clubesDaRegiao(estado)).nome;
+  const atributos = gerarAtributos(atual, pos);
+  const overall = calcularOverall(atributos, pos);
   const timeline: TimelineEvent[] = [
     { ano, mes, semana, tipo: "descoberta", texto: `Avistado em ${local} (${cidade}).` },
   ];
@@ -190,20 +192,21 @@ export function gerarJogador(opts: GerarPlayerOpts): Player {
     posicao: pos,
     pe: pick(PES),
     altura: rolarAltura(pos, idade),
+    nascimento: gerarNascimento(idade, ano),
     cidade,
     estado,
     pais,
     nacionalidade: getPais(pais).nacionalidade,
     clube: null,
     empresario: null,
-    atributos: gerarAtributos(atual, pos),
-    atual,
-    potencial,
+    atributos,
+    atual: overall,
+    potencial: Math.max(overall, potencial),
     personalidade: pick(PERSONALIDADES),
     tracos: sortearTracos(),
     sonhos: sortearSonhos(clubeCoracao, potencial),
     clubeCoracao,
-    valorMercado: calcularValorMercado(atual, potencial, idade, false),
+    valorMercado: calcularValorMercado(overall, potencial, idade, false),
     salario: 0,
     temporadas: [],
     local,
@@ -215,6 +218,13 @@ export function gerarJogador(opts: GerarPlayerOpts): Player {
     relatorios: [],
     visual: rnd(0, 9999),
   };
+}
+
+/** Data de nascimento coerente com a idade e o ano corrente do jogo. */
+export function gerarNascimento(idade: number, ano: number): string {
+  const dia = rnd(1, 28);
+  const mes = rnd(1, 12);
+  return `${String(dia).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${ano - idade}`;
 }
 
 /** Liga principal por divisão (compatibilidade com o mundo). */
