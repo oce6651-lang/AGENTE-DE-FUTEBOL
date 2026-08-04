@@ -1,7 +1,8 @@
 import type {
-  Attributes, Club, ClubPersonality, Division, Player, Position, Foot,
+  Club, Division, Player, Position, Foot,
   TimelineEvent, AgeCategory, RivalAgent,
 } from "./types";
+import { gerarAtributos, calcularOverall } from "./attributes";
 import { CLUB_SEEDS, clubesDaRegiao } from "./data/clubs";
 import { competicoesDoClube, ligaPrincipal } from "./data/leagues";
 import { SONHOS, TRACOS } from "./data/dreams";
@@ -43,20 +44,7 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function gerarAtributos(base: number, posicao: Position): Attributes {
-  const jitter = (bonus = 0) => Math.max(1, Math.min(100, base + bonus + rnd(-8, 8)));
-  const atk = posicao === "ATA" || posicao === "SA" || posicao === "PD" || posicao === "PE";
-  const meio = posicao === "MEI" || posicao === "MC" || posicao === "VOL";
-  const def = posicao === "ZAG" || posicao === "LD" || posicao === "LE" || posicao === "GOL";
-  return {
-    tecnica: jitter(meio ? 4 : 0),
-    velocidade: jitter(atk ? 5 : def ? -2 : 0),
-    finalizacao: jitter(atk ? 8 : def ? -12 : 0),
-    passe: jitter(meio ? 7 : 0),
-    fisico: jitter(def ? 5 : 0),
-    mental: jitter(0),
-  };
-}
+export { gerarAtributos };
 
 /** Curva de potencial extremamente enviesada para baixo. Craques são raríssimos. */
 function sortearPotencial(): number {
@@ -120,18 +108,40 @@ export interface GerarPlayerOpts {
   forcarIdade?: number;
 }
 
-/** Valor de mercado inicial: baixíssimo para quem ainda não jogou nada. */
-export function calcularValorMercado(atual: number, potencial: number, idade: number, temClube: boolean): number {
-  const base = Math.pow(Math.max(1, atual - 8), 2.35) * 7;
-  const fatorPot = 1 + Math.max(0, potencial - atual) / 55;
-  const fatorIdade = idade <= 18 ? 1.5 : idade <= 22 ? 1.25 : idade <= 27 ? 1 : idade <= 31 ? 0.6 : 0.25;
-  const fatorClube = temClube ? 1 : 0.25;
-  return Math.max(0, Math.round((base * fatorPot * fatorIdade * fatorClube) / 100) * 100);
+/**
+ * Valor de mercado em reais, calibrado com o futebol real: garotos de várzea
+ * valem centenas de reais, e apenas atletas de altíssimo nível chegam aos milhões.
+ */
+export function calcularValorMercado(
+  atual: number, potencial: number, idade: number, temClube: boolean, divisao?: Division,
+): number {
+  const base = Math.pow(Math.max(1, atual) / 100, 6.2) * 90_000_000;
+  const fatorPot = 1 + Math.max(0, potencial - atual) / 45;
+  const fatorIdade = idade <= 16 ? 0.7 : idade <= 18 ? 1.15 : idade <= 23 ? 1.35 : idade <= 27 ? 1 : idade <= 31 ? 0.55 : 0.18;
+  const fatorDivisao: Record<Division, number> = {
+    Amador: 0.12, "Serie D": 0.35, "Serie C": 0.6, "Serie B": 0.85, "Serie A": 1.15, Elite: 1.8,
+  };
+  const fatorClube = temClube ? (divisao ? fatorDivisao[divisao] : 0.6) : 0.12;
+  const bruto = base * fatorPot * fatorIdade * fatorClube;
+  if (bruto < 1000) return Math.max(0, Math.round(bruto / 50) * 50);
+  if (bruto < 100_000) return Math.round(bruto / 500) * 500;
+  if (bruto < 1_000_000) return Math.round(bruto / 10_000) * 10_000;
+  return Math.round(bruto / 100_000) * 100_000;
 }
 
-export function calcularSalario(atual: number, temClube: boolean): number {
+/** Salário mensal realista conforme nível técnico e divisão do clube. */
+export function calcularSalario(atual: number, temClube: boolean, divisao?: Division): number {
   if (!temClube) return 0;
-  return Math.max(1200, Math.round((Math.pow(atual, 2.1) * 0.9) / 100) * 100);
+  const piso: Record<Division, number> = {
+    Amador: 0, "Serie D": 1_200, "Serie C": 2_500, "Serie B": 6_000, "Serie A": 15_000, Elite: 60_000,
+  };
+  const teto: Record<Division, number> = {
+    Amador: 1_500, "Serie D": 8_000, "Serie C": 25_000, "Serie B": 90_000, "Serie A": 600_000, Elite: 4_000_000,
+  };
+  const d = divisao ?? "Serie D";
+  const t = Math.max(0, Math.min(1, (atual - 20) / 70));
+  const bruto = piso[d] + (teto[d] - piso[d]) * Math.pow(t, 2.6);
+  return Math.round(bruto / 100) * 100;
 }
 
 /** Sorteia sonhos coerentes com o perfil do atleta. */
