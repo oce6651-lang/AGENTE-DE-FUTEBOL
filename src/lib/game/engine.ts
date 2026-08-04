@@ -566,7 +566,7 @@ function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
   const not: NewsItem = {
     id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
     titulo: `${clube.nome} sonda ${jogador.nome}`,
-    texto: `Proposta de R$ ${valor.toLocaleString("pt-BR")} chegou à sua mesa. ${clube.tecnico} pediu um ${jogador.posicao}.`,
+    texto: `Proposta de R$ ${neg.valorProposta.toLocaleString("pt-BR")} chegou à sua mesa. ${clube.tecnico} pediu um ${jogador.posicao}.`,
     tipo: "mercado",
   };
   eventos.push(not.titulo);
