@@ -654,6 +654,33 @@ export function responderNegociacao(
   }
 
   const receita = Math.floor(neg.valorProposta * neg.comissao);
+  const salario = neg.salario;
+  const tipo = neg.tipo ?? "Compra definitiva";
+  const categoria = neg.categoria ?? categoriaDoAtleta(player);
+  const transferencia = {
+    de: player.clube ?? "Sem clube",
+    para: clube.nome,
+    tipo,
+    valor: neg.valorProposta,
+    salario,
+    duracaoAnos: neg.duracaoAnos ?? 2,
+    data: dataLabel(state),
+  };
+  const atualizado: Player = {
+    ...player,
+    clube: clube.nome,
+    status: `No ${clube.nome}`,
+    salario,
+    categoriaForcada: categoria === categoriaPorIdade(player.idade) ? undefined : categoria,
+    valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true),
+    temporadas: registrarPassagem(player, clube, categoria, state.ano, transferencia),
+    historico: [...player.historico, `${tipo} para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
+    timeline: [...player.timeline, {
+      ano: state.ano, mes: state.mes, semana: state.semana,
+      tipo: "transferencia" as const,
+      texto: `${tipo} para ${clube.nome} (R$ ${neg.valorProposta.toLocaleString("pt-BR")} • salário R$ ${salario.toLocaleString("pt-BR")}/mês).`,
+    }],
+  };
   const fin: FinanceEntry = {
     id: nextFinId(), data: dataLabel(state),
     descricao: `Comissão: ${player.nome} → ${clube.nome}`,
@@ -675,17 +702,13 @@ export function responderNegociacao(
         ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 10), necessidades: c.necessidades.filter(p => p !== player.posicao) } : c),
       financas: [fin, ...state.financas],
       noticias: [not, ...state.noticias],
-      negociacoes: state.negociacoes.map(n => n.id === negId ? { ...n, status: "aceita" as const } : n),
-      jogadores: state.jogadores.map(p => p.id === player.id ? {
-        ...p, clube: clube.nome, status: `No ${clube.nome}`,
-        historico: [...p.historico, `Transferido para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
-        timeline: [...p.timeline, {
-          ano: state.ano, mes: state.mes, semana: state.semana,
-          tipo: "transferencia" as const,
-          texto: `Transferido para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`,
-        }],
-      } : p),
+      // ao fechar com um clube, todas as outras conversas pelo atleta caem
+      negociacoes: state.negociacoes.map(n =>
+        n.id === negId ? { ...n, status: "aceita" as const }
+          : n.playerId === player.id && n.status === "aberta"
+            ? { ...n, status: "cancelada" as const } : n),
+      jogadores: state.jogadores.map(p => p.id === player.id ? atualizado : p),
     },
-    mensagem: `Comissão de R$ ${receita.toLocaleString("pt-BR")} recebida!`,
+    mensagem: `${player.nome} → ${clube.nome}. Comissão de R$ ${receita.toLocaleString("pt-BR")} recebida!`,
   };
 }
