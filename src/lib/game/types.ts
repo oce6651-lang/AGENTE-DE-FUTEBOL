@@ -275,6 +275,10 @@ export interface Club {
   necessidades: Position[];
   interesse: string[]; // ids de jogadores
   confiancaEmVoce: number; // 0-100
+  /** Qualidade específica de cada categoria de base (0-100). Define campeões diferentes por categoria. */
+  forcaCategorias?: Partial<Record<AgeCategory, number>>;
+  /** Investimento do clube na formação (0-100). */
+  investimentoBase?: number;
 }
 
 export interface Negotiation {
@@ -284,9 +288,19 @@ export interface Negotiation {
   valorProposta: number;
   comissao: number;
   salario: number;
-  status: "aberta" | "aceita" | "recusada" | "expirada";
+  status: "aberta" | "aceita" | "recusada" | "expirada" | "cancelada";
   expiraEm: number; // semanas restantes
   criadaEm: string;
+  /** Natureza do negócio proposto. */
+  tipo?: "Compra definitiva" | "Empréstimo" | "Livre";
+  /** Duração do contrato oferecido, em anos. */
+  duracaoAnos?: number;
+  /** Categoria em que o clube pretende utilizar o atleta. */
+  categoria?: AgeCategory;
+  /** Motivo do encerramento, quando cancelada. */
+  motivo?: string;
+  /** Linha do tempo da negociação. */
+  etapas?: { data: string; texto: string }[];
 }
 
 export interface RivalAgent {
