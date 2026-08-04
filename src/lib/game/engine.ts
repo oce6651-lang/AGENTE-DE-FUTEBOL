@@ -11,7 +11,7 @@ import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
 import type {
   Agent, GameState, NewsItem, Player, FinanceEntry, Negotiation, Tryout, TimelineEvent, Club,
-  MatchPlayer, Fixture, ScoutNote,
+  MatchPlayer, Fixture, ScoutNote, AgeCategory,
 } from "./types";
 import { MESES } from "./types";
 
