@@ -4,11 +4,15 @@ import { pick, rnd } from "./generators";
 import { ganharReputacao, REP_XP } from "./reputation";
 import type {
   AgeCategory, Club, CompetitionSeason, GameState, NewsItem, Player,
-  SeasonCompetition, SeasonRecord,
+  SeasonCompetition, SeasonRecord, TransferRecord,
 } from "./types";
 
+function uid(prefix: string) {
+  return `${prefix}${Math.random().toString(36).slice(2, 10)}`;
+}
+
 // ============================================================
-// CATEGORIA DE BASE — definida pela idade do atleta
+// CATEGORIA DE BASE — definida pela idade (ou por promoção)
 // ============================================================
 export function categoriaPorIdade(idade: number): AgeCategory {
   if (idade <= 13) return "Sub-13";
@@ -19,23 +23,51 @@ export function categoriaPorIdade(idade: number): AgeCategory {
   return "Veterano";
 }
 
+/** Categoria em que o atleta realmente atua, considerando promoções raras. */
+export function categoriaDoAtleta(p: Player): AgeCategory {
+  return p.categoriaForcada ?? categoriaPorIdade(p.idade);
+}
+
 /** Competições que o atleta realmente disputa neste momento do calendário. */
-export function competicoesDoAtleta(clube: Club, idade: number, mes: number): Competition[] {
-  const cat = categoriaPorIdade(idade);
+export function competicoesDoAtleta(clube: Club, p: Player, mes: number): Competition[] {
+  const cat = categoriaDoAtleta(p);
   return competicoesDoClube(clube.categoria, clube.pais, clube.estado)
     .filter(c => c.categorias.includes(cat))
     .filter(c => competicaoAtiva(c, mes));
 }
 
-function temporadaVazia(ano: number, clube: string, categoria: string, liga: string): SeasonRecord {
+function temporadaVazia(
+  ano: number, clube: string, categoria: string, liga: string, divisao?: string,
+): SeasonRecord {
   return {
-    ano, clube, categoria, liga,
+    id: uid("SEA"),
+    ano, clube, categoria, liga, divisao,
     jogos: 0, gols: 0, assistencias: 0, overall: 0,
     valorMercado: 0, salario: 0,
     titulos: [], premios: [], lesoes: [],
     amarelos: 0, vermelhos: 0, notaMedia: 0,
     competicoes: [],
   };
+}
+
+/**
+ * Abre uma nova passagem no histórico. O mesmo ano pode ter várias linhas,
+ * uma para cada clube/categoria pelo qual o atleta passou.
+ */
+export function registrarPassagem(
+  p: Player, clube: Club, categoria: AgeCategory, ano: number, transferencia?: TransferRecord,
+): SeasonRecord[] {
+  const nova = temporadaVazia(ano, clube.nome, categoria, clube.liga, clube.categoria);
+  nova.transferencia = transferencia;
+  nova.overall = p.atual;
+  nova.valorMercado = p.valorMercado;
+  nova.salario = p.salario;
+  return [nova, ...(p.temporadas ?? [])];
+}
+
+/** Localiza a passagem corrente (mesmo ano, clube e categoria). */
+function indicePassagem(temporadas: SeasonRecord[], ano: number, clube: string, categoria: string): number {
+  return temporadas.findIndex(t => t.ano === ano && t.clube === clube && t.categoria === categoria);
 }
 
 function campanhaVazia(c: Competition, categoria: string): SeasonCompetition {
@@ -50,8 +82,10 @@ function chanceDeJogar(p: Player, clube: Club): number {
   const exigencia: Record<Club["categoria"], number> = {
     Amador: 12, "Serie D": 26, "Serie C": 38, "Serie B": 50, "Serie A": 64, Elite: 78,
   };
-  const delta = p.atual - exigencia[clube.categoria];
-  return Math.max(0.08, Math.min(0.92, 0.5 + delta / 40));
+  const cat = categoriaDoAtleta(p);
+  const desconto = cat === "Livre" ? 0 : 10; // na base o nível exigido é menor
+  const delta = p.atual - (exigencia[clube.categoria] - desconto);
+  return Math.max(0.05, Math.min(0.92, 0.5 + delta / 40));
 }
 
 /**
@@ -65,22 +99,20 @@ export function semanaEsportiva(state: GameState): { state: GameState; manchetes
     const clube = state.clubes.find(c => c.nome === p.clube);
     if (!clube) return p;
 
-    const comps = competicoesDoAtleta(clube, p.idade, state.mes);
+    const comps = competicoesDoAtleta(clube, p, state.mes);
     if (!comps.length) return p;
 
-    const categoria = categoriaPorIdade(p.idade);
-    const temporadas = [...(p.temporadas ?? [])];
-    let atualIdx = temporadas.findIndex(t => t.ano === state.ano);
+    const categoria = categoriaDoAtleta(p);
+    let temporadas = [...(p.temporadas ?? [])];
+    let atualIdx = indicePassagem(temporadas, state.ano, clube.nome, categoria);
     if (atualIdx < 0) {
-      temporadas.unshift(temporadaVazia(state.ano, clube.nome, categoria, clube.liga));
+      temporadas = registrarPassagem(p, clube, categoria, state.ano);
       atualIdx = 0;
     }
     const temp: SeasonRecord = { ...temporadas[atualIdx], competicoes: [...(temporadas[atualIdx].competicoes ?? [])] };
-    temp.clube = clube.nome;
-    temp.categoria = categoria;
     temp.liga = clube.liga;
+    temp.divisao = clube.categoria;
 
-    // uma ou duas partidas por semana, conforme quantidade de competições ativas
     const rodadas = comps.length > 2 && Math.random() < 0.4 ? 2 : 1;
     let jogouAlgo = false;
 
@@ -122,12 +154,11 @@ export function semanaEsportiva(state: GameState): { state: GameState; manchetes
       }
     }
 
-    if (!jogouAlgo) return { ...p, temporadas: temporadas.map((t, i) => i === atualIdx ? temp : t) };
-
     temp.overall = p.atual;
     temp.valorMercado = p.valorMercado;
     temp.salario = p.salario;
     temporadas[atualIdx] = temp;
+    if (!jogouAlgo) return { ...p, temporadas };
     return { ...p, temporadas };
   });
 
@@ -138,25 +169,35 @@ export function semanaEsportiva(state: GameState): { state: GameState; manchetes
 // FIM DE TEMPORADA — campeões, colocações e histórico
 // ============================================================
 
-function forcaClube(c: Club): number {
+/**
+ * Força do clube em uma categoria específica. Times profissionais fortes nem
+ * sempre têm boas categorias de base — cada geração é diferente.
+ */
+function forcaNaCategoria(c: Club, cat: AgeCategory, ano: number): number {
   const base: Record<Club["categoria"], number> = {
     Amador: 10, "Serie D": 25, "Serie C": 40, "Serie B": 55, "Serie A": 72, Elite: 88,
   };
-  return base[c.categoria] + Math.log10(Math.max(10, c.orcamento)) * 3 + c.pontos * 0.4;
+  if (cat === "Livre" || cat === "Veterano") {
+    return base[c.categoria] + Math.log10(Math.max(10, c.orcamento)) * 3 + c.pontos * 0.4;
+  }
+  const especifica = c.forcaCategorias?.[cat] ?? 40;
+  // geração da categoria naquele ano: oscila muito de temporada para temporada
+  const geracao = ((c.id.charCodeAt(3) * 31 + ano * 17 + cat.length * 7) % 41) - 20;
+  return base[c.categoria] * 0.45 + especifica * 0.55 + geracao;
 }
 
 /** Define campeão, vice e colocações de todas as competições da temporada. */
 export function encerrarTemporada(state: GameState): { state: GameState; noticias: NewsItem[] } {
   const edicoes: CompetitionSeason[] = [];
   const noticias: NewsItem[] = [];
-  const colocacoes = new Map<string, Map<string, number>>(); // compId -> clubeNome -> posicao
+  // compId + categoria -> clubeNome -> posição
+  const colocacoes = new Map<string, Map<string, number>>();
 
   for (const comp of COMPETICOES) {
     const participantes = state.clubes.filter(c =>
       competicoesDoClube(c.categoria, c.pais, c.estado).some(x => x.id === comp.id));
     if (participantes.length < 2) continue;
 
-    // Competições estaduais, amadoras e regionais têm um campeão por estado.
     const porEstado = ["estadual", "amadora", "regional"].includes(comp.tipo) || comp.id === "estadual-base";
     const grupos: Club[][] = porEstado
       ? Array.from(participantes.reduce((m, c) => {
@@ -165,15 +206,16 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
       }, new Map<string, Club[]>()).values())
       : [participantes];
 
-    const mapa = new Map<string, number>();
-    for (const grupo of grupos) {
-      if (grupo.length < 2) continue;
-      const rank = grupo
-        .map(c => ({ c, score: forcaClube(c) + rnd(-25, 25) }))
-        .sort((a, b) => b.score - a.score);
-      rank.forEach((r, i) => mapa.set(r.c.nome, i + 1));
-      const sufixo = porEstado ? ` (${rank[0].c.estado})` : "";
-      for (const cat of comp.categorias) {
+    // cada categoria tem sua própria disputa e seu próprio campeão
+    for (const cat of comp.categorias) {
+      const mapa = new Map<string, number>();
+      for (const grupo of grupos) {
+        if (grupo.length < 2) continue;
+        const rank = grupo
+          .map(c => ({ c, score: forcaNaCategoria(c, cat, state.ano) + rnd(-22, 22) }))
+          .sort((a, b) => b.score - a.score);
+        rank.forEach((r, i) => mapa.set(r.c.nome, i + 1));
+        const sufixo = porEstado ? ` (${rank[0].c.estado})` : "";
         edicoes.push({
           ano: state.ano,
           competicaoId: comp.id,
@@ -184,60 +226,63 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
           clientes: [],
         });
       }
+      colocacoes.set(`${comp.id}|${cat}`, mapa);
     }
-    colocacoes.set(comp.id, mapa);
   }
 
   // ---- consolidação individual dos atletas da agência ----
   let s: GameState = state;
   const jogadores = s.jogadores.map(p => {
     const temporadas = [...(p.temporadas ?? [])];
-    const idx = temporadas.findIndex(t => t.ano === s.ano);
-    if (idx < 0) return p;
-    const temp: SeasonRecord = { ...temporadas[idx] };
-    const titulos: string[] = [...temp.titulos];
-    const premios: string[] = [...temp.premios];
+    const doAno = temporadas.map((t, i) => ({ t, i })).filter(x => x.t.ano === s.ano);
+    if (!doAno.length) return p;
     const novosTitulos = [...(p.titulos ?? [])];
 
-    temp.competicoes = (temp.competicoes ?? []).map(camp => {
-      const mapa = colocacoes.get(camp.competicaoId);
-      const posClube = mapa?.get(temp.clube) ?? rnd(3, 12);
-      // desempenho individual pesa na campanha das categorias de base
-      const ajuste = camp.notaMedia >= 7.4 ? -1 : camp.notaMedia <= 6 ? 1 : 0;
-      const posicao = Math.max(1, posClube + ajuste);
-      const campeao = posicao === 1;
-      if (campeao) {
-        const rotulo = `${camp.competicao} ${camp.categoria !== "Livre" ? camp.categoria : ""}`.trim();
-        titulos.push(rotulo);
-        novosTitulos.push({ ano: s.ano, competicao: rotulo, clube: temp.clube });
-        const edicao = edicoes.find(e => e.competicaoId === camp.competicaoId
-          && e.categoria === camp.categoria && e.campeao === temp.clube);
-        if (edicao) edicao.clientes!.push({ playerId: p.id, nome: p.nome, clube: temp.clube, posicao });
-      }
-      return { ...camp, posicao, campeao };
-    });
+    for (const { t, i } of doAno) {
+      const temp: SeasonRecord = { ...t };
+      const titulos: string[] = [...temp.titulos];
+      const premios: string[] = [...temp.premios];
 
-    if (temp.jogos >= 15 && (temp.notaMedia ?? 0) >= 7.5) premios.push("Seleção da competição");
-    if (temp.gols >= 15) premios.push("Artilheiro da temporada");
+      temp.competicoes = (temp.competicoes ?? []).map(camp => {
+        const mapa = colocacoes.get(`${camp.competicaoId}|${camp.categoria}`);
+        const posClube = mapa?.get(temp.clube) ?? rnd(3, 12);
+        const ajuste = camp.notaMedia >= 7.4 ? -1 : camp.notaMedia <= 6 ? 1 : 0;
+        const posicao = Math.max(1, posClube + ajuste);
+        const campeao = posicao === 1 && camp.jogos >= 3;
+        if (campeao) {
+          const rotulo = `${camp.competicao} ${camp.categoria !== "Livre" ? camp.categoria : ""}`.trim();
+          titulos.push(rotulo);
+          novosTitulos.push({ ano: s.ano, competicao: rotulo, clube: temp.clube });
+          const edicao = edicoes.find(e => e.competicaoId === camp.competicaoId
+            && e.categoria === camp.categoria && e.campeao === temp.clube);
+          if (edicao) edicao.clientes!.push({ playerId: p.id, nome: p.nome, clube: temp.clube, posicao });
+        }
+        return { ...camp, posicao, campeao };
+      });
 
-    temp.titulos = titulos;
-    temp.premios = premios;
-    temp.overall = p.atual;
-    temp.valorMercado = p.valorMercado;
-    temp.salario = p.salario;
-    temporadas[idx] = temp;
+      if (temp.jogos >= 15 && (temp.notaMedia ?? 0) >= 7.5) premios.push("Seleção da competição");
+      if (temp.gols >= 15) premios.push("Artilheiro da temporada");
+
+      temp.titulos = titulos;
+      temp.premios = premios;
+      temp.overall = p.atual;
+      temp.valorMercado = p.valorMercado;
+      temp.salario = p.salario;
+      temporadas[i] = temp;
+    }
 
     return { ...p, temporadas, titulos: novosTitulos };
   });
   s = { ...s, jogadores };
 
   // ---- benefícios de carreira por títulos conquistados ----
-  const campeoes = jogadores.filter(p => (p.temporadas?.[0]?.titulos?.length ?? 0) > 0
-    && p.temporadas?.[0]?.ano === state.ano);
+  const titulosDoAno = (p: Player) => (p.temporadas ?? [])
+    .filter(t => t.ano === state.ano).flatMap(t => t.titulos);
+  const campeoes = jogadores.filter(p => titulosDoAno(p).length > 0);
   if (campeoes.length) {
     let bonusTotal = 0;
     for (const p of campeoes) {
-      const qtd = p.temporadas[0].titulos.length;
+      const qtd = titulosDoAno(p).length;
       bonusTotal += 4000 * qtd;
       s = ganharReputacao(s, REP_XP.transferenciaPequena * qtd);
     }
@@ -245,7 +290,7 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
       ...s,
       dinheiro: s.dinheiro + bonusTotal,
       financas: [{
-        id: `FIN${Math.random().toString(36).slice(2, 10)}`,
+        id: uid("FIN"),
         data: `12/${state.ano}`,
         descricao: `Bônus por títulos de ${campeoes.length} cliente(s)`,
         valor: bonusTotal, tipo: "receita" as const,
@@ -257,28 +302,28 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
           valorMercado: Math.round(p.valorMercado * 1.15),
           timeline: [...p.timeline, {
             ano: state.ano, mes: 12, semana: 4, tipo: "nota" as const,
-            texto: `Campeão: ${p.temporadas[0].titulos.join(", ")}.`,
+            texto: `Campeão: ${titulosDoAno(p).join(", ")}.`,
           }],
         }
         : p),
     };
     noticias.push({
-      id: `NEW${Math.random().toString(36).slice(2, 10)}`,
+      id: uid("NEW"),
       semana: 4, mes: 12, ano: state.ano,
       titulo: `${campeoes.length} cliente(s) da ${state.agent.agencia} são campeões em ${state.ano}`,
-      texto: campeoes.map(p => `${p.nome}: ${p.temporadas[0].titulos.join(", ")}`).join(" • "),
+      texto: campeoes.map(p => `${p.nome}: ${titulosDoAno(p).join(", ")}`).join(" • "),
       tipo: "mundo",
     });
   }
 
   s = {
     ...s,
-    historicoCompeticoes: [...edicoes, ...(s.historicoCompeticoes ?? [])].slice(0, 2000),
+    historicoCompeticoes: [...edicoes, ...(s.historicoCompeticoes ?? [])].slice(0, 4000),
     titulosMundo: [
       ...edicoes.filter(e => e.categoria === "Livre" || e.categoria === "Sub-20")
         .map(e => ({ ano: e.ano, competicao: `${e.competicao} ${e.categoria === "Livre" ? "" : e.categoria}`.trim(), campeao: e.campeao })),
       ...(s.titulosMundo ?? []),
-    ].slice(0, 600),
+    ].slice(0, 1200),
   };
 
   return { state: s, noticias };
