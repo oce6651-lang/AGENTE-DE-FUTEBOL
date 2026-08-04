@@ -80,7 +80,7 @@ export function PlayerDetail({
                 <div className="mb-2 text-[10px] font-black uppercase tracking-wide text-primary">{g.titulo}</div>
                 <div className="space-y-1.5">
                   {g.itens.map(([chave, rotulo]) => {
-                    const v = (player.atributos as Record<string, number>)[chave as AttrKey] ?? 1;
+                    const v = (player.atributos as unknown as Record<string, number>)[chave] ?? 1;
                     return (
                       <div key={chave} className="flex items-center gap-2">
                         <span className="w-28 shrink-0 truncate text-[11px] text-muted-foreground">{rotulo}</span>
