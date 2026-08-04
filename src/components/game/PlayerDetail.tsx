@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import type { GameState, Player, TimelineEvent } from "@/lib/game/types";
 import { MESES } from "@/lib/game/types";
 import { potencialEstimado, CUSTOS, custoObservacao } from "@/lib/game/engine";
+import { GRUPOS_ATRIBUTOS, ATRIBUTOS_GOLEIRO } from "@/lib/game/attributes";
+import type { AttrKey } from "@/lib/game/attributes";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { CareerHistory } from "./CareerHistory";
 import { Trophy } from "lucide-react";
@@ -37,14 +39,10 @@ export function PlayerDetail({
   const revelaPotencial = nivel >= 4 || contratado;
   const est = potencialEstimado(player, state.upgrades?.includes("analista") ? 6 : 0);
 
-  const attrs: [string, number][] = [
-    ["Técnica", player.atributos.tecnica],
-    ["Velocidade", player.atributos.velocidade],
-    ["Finalização", player.atributos.finalizacao],
-    ["Passe", player.atributos.passe],
-    ["Físico", player.atributos.fisico],
-    ["Mental", player.atributos.mental],
-  ];
+  // Goleiros exibem o grupo específico da posição.
+  const grupos = player.posicao === "GOL"
+    ? [...GRUPOS_ATRIBUTOS, { titulo: "Goleiro", itens: ATRIBUTOS_GOLEIRO }]
+    : GRUPOS_ATRIBUTOS;
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -76,14 +74,22 @@ export function PlayerDetail({
         </div>
 
         {revelaAtributos ? (
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            {attrs.map(([nome, v]) => (
-              <div key={nome}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">{nome}</span>
-                  <span className="font-bold">{v}</span>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {grupos.map(g => (
+              <div key={g.titulo} className="rounded-xl border border-border bg-secondary/30 p-3">
+                <div className="mb-2 text-[10px] font-black uppercase tracking-wide text-primary">{g.titulo}</div>
+                <div className="space-y-1.5">
+                  {g.itens.map(([chave, rotulo]) => {
+                    const v = (player.atributos as Record<string, number>)[chave as AttrKey] ?? 1;
+                    return (
+                      <div key={chave} className="flex items-center gap-2">
+                        <span className="w-28 shrink-0 truncate text-[11px] text-muted-foreground">{rotulo}</span>
+                        <Progress value={v} className="h-1.5 flex-1" />
+                        <span className={`w-6 text-right text-[11px] font-black ${v >= 75 ? "text-primary" : v <= 30 ? "text-destructive" : ""}`}>{v}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <Progress value={v} className="h-2" />
               </div>
             ))}
           </div>
@@ -97,7 +103,10 @@ export function PlayerDetail({
         )}
 
         <div className="mt-5 text-xs text-muted-foreground space-y-1">
-          <div>Clube: {player.clube ?? "Sem clube"}</div>
+            <div>Clube: {player.clube ?? "Sem clube"}</div>
+            {player.nascimento && <div>Nascimento: {player.nascimento}</div>}
+            {player.salario > 0 && <div>Salário: R$ {player.salario.toLocaleString("pt-BR")}/mês</div>}
+            <div>Valor de mercado: R$ {player.valorMercado.toLocaleString("pt-BR")}</div>
           <div>Nascido em: {player.cidade}/{player.estado} • {player.pais} ({player.nacionalidade})</div>
           <div>Clube do coração: {player.clubeCoracao}</div>
           <div>Empresário: {player.empresario ? (contratado ? state.agent.agencia : "Outro empresário") : "Nenhum"}</div>
