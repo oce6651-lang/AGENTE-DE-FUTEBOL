@@ -1,4 +1,7 @@
-import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, sortearSonhos } from "./generators";
+import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, calcularSalario, sortearSonhos } from "./generators";
+import { calcularOverall, evoluirAtributos } from "./attributes";
+import { categoriaDoAtleta, categoriaPorIdade, registrarPassagem } from "./season";
+import { montarProposta } from "./offers";
 import { mundoSemanal, viradaDeAno } from "./world";
 import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
