@@ -545,6 +545,38 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
 }
 
 function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
+  return sondagem(state, eventos);
+}
+
+/**
+ * Atletas muito acima da média da idade podem ser promovidos de categoria —
+ * do Sub-17 direto para o profissional, por exemplo. Acontece raramente.
+ */
+function promoverCategoria(s: GameState, p: Player, eventos: string[]): Player {
+  if (!p.clube || p.status === "Aposentado") return p;
+  const natural = categoriaPorIdade(p.idade);
+  const atualCat = categoriaDoAtleta(p);
+  const escada: AgeCategory[] = ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"];
+  const idx = escada.indexOf(atualCat);
+  if (idx < 0 || idx >= escada.length - 1) return p;
+  // precisa estar muito acima do nível esperado da própria categoria
+  const exigencia = [14, 22, 32, 42, 54, 70][idx];
+  if (p.atual < exigencia + 14) return p;
+  if (Math.random() > 0.05) return p;
+  const nova = escada[idx + 1];
+  eventos.push(`${p.nome} foi promovido ao ${nova === "Livre" ? "time profissional" : nova}.`);
+  return {
+    ...p,
+    categoriaForcada: nova === natural ? undefined : nova,
+    confianca: Math.min(100, p.confianca + 6),
+    timeline: [...p.timeline, {
+      ano: s.ano, mes: s.mes, semana: s.semana, tipo: "nota" as const,
+      texto: `Promovido para ${nova === "Livre" ? "o elenco profissional" : nova} do ${p.clube}.`,
+    }],
+  };
+}
+
+function sondagem(state: GameState, eventos: string[]): GameState {
   let s = state;
   const elegiveis = s.jogadores.filter(j => j.empresario === s.agent.id && j.status !== "Aposentado");
   if (!elegiveis.length) return s;
