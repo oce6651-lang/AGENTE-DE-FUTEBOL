@@ -345,15 +345,15 @@ export function Office({ state, setState, onExit }: {
             {!adminOk ? (
               <Card className="p-4 space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Área restrita ao administrador do jogo. Informe o e-mail autorizado.
+                  Área restrita ao administrador do jogo. Informe o código de acesso.
                 </p>
                 <div>
-                  <Label>E-mail</Label>
-                  <Input value={adminEmail} onChange={e => setAdminEmail(e.target.value)} placeholder="email@exemplo.com" />
+                  <Label>Código</Label>
+                  <Input value={adminCode} onChange={e => setAdminCode(e.target.value)} placeholder="XXX-000-000" />
                 </div>
                 <Button className="w-full" onClick={() => {
-                  if (adminEmail.trim().toUpperCase() === ADMIN_EMAIL) { setAdminOk(true); toast("Acesso liberado."); }
-                  else toast("E-mail não autorizado.");
+                  if (adminCode.trim().toUpperCase() === ADMIN_CODE) { setAdminOk(true); toast("Acesso liberado."); }
+                  else toast("Código inválido.");
                 }}>Entrar</Button>
               </Card>
             ) : (
