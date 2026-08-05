@@ -17,6 +17,8 @@ const PORTA_DE_ENTRADA: Record<Club["categoria"], number> = {
 };
 
 export const CUSTO_OFERTA = 220;
+/** Abordagem direta a um clube específico: viagem, reunião e apresentação. */
+export const CUSTO_ABORDAGEM = 480;
 
 /**
  * O empresário pode oferecer qualquer atleta a qualquer clube — o filtro é a
@@ -186,4 +188,58 @@ export function oferecerParaClubes(
       ? `${interessados} clube(s) abriram negociação por ${player.nome}.`
       : `Nenhuma proposta imediata por ${player.nome}.`,
   };
+}
+
+/**
+ * Abordagem direta: o empresário escolhe um clube específico e tenta encaixar
+ * o atleta. Pode terminar em proposta, em convite para teste ou em porta fechada.
+ */
+export function negociarComClube(
+  state: GameState, playerId: string, clubId: string,
+): { state: GameState; resposta: ClubResponse | null; mensagem: string } {
+  const player = state.jogadores.find(p => p.id === playerId);
+  const clube = state.clubes.find(c => c.id === clubId);
+  if (!player || !clube) return { state, resposta: null, mensagem: "Dados inválidos." };
+  if (player.clube === clube.nome) return { state, resposta: null, mensagem: `${player.nome} já está no ${clube.nome}.` };
+  if (state.energia <= 0) return { state, resposta: null, mensagem: "Sem energia nesta semana." };
+  if (state.dinheiro < CUSTO_ABORDAGEM) {
+    return { state, resposta: null, mensagem: `Sem caixa para a reunião (R$ ${CUSTO_ABORDAGEM}).` };
+  }
+
+  const resposta = responder(state, clube, player);
+  let s: GameState = {
+    ...state,
+    energia: Math.max(0, state.energia - 1),
+    dinheiro: state.dinheiro - CUSTO_ABORDAGEM,
+    financas: [{
+      id: uid("FIN"), data: `${state.mes}/${state.ano} • semana ${state.semana}`,
+      descricao: `Reunião no ${clube.nome} por ${player.nome}`,
+      valor: -CUSTO_ABORDAGEM, tipo: "despesa" as const,
+    }, ...state.financas],
+  };
+
+  if (resposta.resultado === "interessado") {
+    const neg = montarProposta(s, clube, player);
+    const not: NewsItem = {
+      id: uid("NEW"), semana: s.semana, mes: s.mes, ano: s.ano,
+      titulo: `${clube.nome} abre negociação por ${player.nome}`,
+      texto: `Reunião presencial de ${s.agent.agencia} destravou a conversa.`,
+      tipo: "mercado",
+    };
+    s = {
+      ...s,
+      negociacoes: [neg, ...s.negociacoes],
+      noticias: [not, ...s.noticias].slice(0, 150),
+      clubes: s.clubes.map(c => c.id === clube.id
+        ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 5) } : c),
+    };
+  } else if (resposta.resultado === "pede_teste" || resposta.resultado === "pede_informacoes") {
+    s = {
+      ...s,
+      clubes: s.clubes.map(c => c.id === clube.id
+        ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 6) } : c),
+    };
+  }
+
+  return { state: s, resposta, mensagem: resposta.texto };
 }

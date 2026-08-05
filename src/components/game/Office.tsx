@@ -20,7 +20,7 @@ import {
   enviarPeneira, custoPeneira, podeAssistir, pagarPartida, adicionarAoRadar, CUSTOS,
   UPGRADES, comprarUpgrade, temUpgrade, custoViagem, custoObservacao,
 } from "@/lib/game/engine";
-import { oferecerParaClubes, CUSTO_OFERTA } from "@/lib/game/offers";
+import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
 import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
@@ -38,8 +38,8 @@ type View =
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
   | "arquivo" | "competicoes";
 
-/** Único e-mail autorizado a abrir o painel administrativo. */
-const ADMIN_EMAIL = "OCE6651@GMAIL.COM";
+/** Único código autorizado a abrir o painel administrativo. */
+const ADMIN_CODE = "GGG-209-213";
 
 export function Office({ state, setState, onExit }: {
   state: GameState;
@@ -55,8 +55,11 @@ export function Office({ state, setState, onExit }: {
   const [respostas, setRespostas] = useState<ClubResponse[]>([]);
   const [abertaFor, setAbertaFor] = useState<Player | null>(null);
   const [inscreverEm, setInscreverEm] = useState<string | null>(null);
-  const [adminEmail, setAdminEmail] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [adminOk, setAdminOk] = useState(false);
+  const [negociarFor, setNegociarFor] = useState<Player | null>(null);
+  const [clubeFiltro, setClubeFiltro] = useState("");
+  const [compAberta, setCompAberta] = useState<string | null>(null);
   const [arquivoAberto, setArquivoAberto] = useState<string | null>(null);
   const [compFiltro, setCompFiltro] = useState<string>("");
 
@@ -127,6 +130,14 @@ export function Office({ state, setState, onExit }: {
     const r = inscreverPeneiraAberta(state, playerId, openId);
     setState(r.state); toast(r.mensagem);
     setInscreverEm(null); setAbertaFor(null);
+  };
+
+  const handleNegociarClube = (clube: Club) => {
+    if (!negociarFor) return;
+    const r = negociarComClube(state, negociarFor.id, clube.id);
+    setState(r.state);
+    toast(`${clube.nome}`, { description: r.mensagem });
+    if (r.resposta?.resultado === "interessado") { setNegociarFor(null); setView("negotiations"); }
   };
 
   const abertas = state.negociacoes.filter(n => n.status === "aberta").length;
