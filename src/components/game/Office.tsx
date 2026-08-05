@@ -654,34 +654,69 @@ export function Office({ state, setState, onExit }: {
                 Nenhuma temporada encerrada ainda. Avance até dezembro para conhecer os campeões.
               </div>
             )}
-            {(state.historicoCompeticoes ?? [])
-              .filter(e => {
-                const q = compFiltro.trim().toLowerCase();
-                if (!q) return true;
-                return `${e.competicao} ${e.categoria} ${e.campeao} ${e.ano}`.toLowerCase().includes(q);
-              })
-              .slice(0, 120)
-              .map((e, i) => {
-                const c = state.clubes.find(x => x.nome === e.campeao);
-                return (
-                  <Card key={`${e.ano}-${e.competicaoId}-${e.categoria}-${i}`} className="p-3 flex items-center gap-3">
-                    {c ? <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
-                      : <Trophy className="h-7 w-7 text-primary" />}
+
+            {/* Lista de competições — clique para abrir o histórico completo */}
+            {!compAberta && (() => {
+              const q = compFiltro.trim().toLowerCase();
+              const grupos = new Map<string, { nome: string; anos: Set<number>; edicoes: number }>();
+              for (const e of state.historicoCompeticoes ?? []) {
+                if (q && !`${e.competicao} ${e.categoria} ${e.campeao} ${e.ano}`.toLowerCase().includes(q)) continue;
+                const g = grupos.get(e.competicao) ?? { nome: e.competicao, anos: new Set<number>(), edicoes: 0 };
+                g.anos.add(e.ano); g.edicoes += 1;
+                grupos.set(e.competicao, g);
+              }
+              return Array.from(grupos.values())
+                .sort((a, b) => a.nome.localeCompare(b.nome))
+                .map(g => (
+                  <button key={g.nome} onClick={() => setCompAberta(g.nome)}
+                    className="w-full text-left rounded-2xl border border-border bg-card p-3 flex items-center gap-3 hover:border-primary hover:bg-secondary/50 transition-colors">
+                    <Trophy className="h-6 w-6 text-primary shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold truncate">{e.competicao} <span className="text-muted-foreground font-normal">{e.categoria}</span></div>
-                      <div className="text-[11px] text-muted-foreground truncate">
-                        {e.ano} • Campeão: <span className="text-primary font-bold">{e.campeao}</span> • Vice: {e.vice}
+                      <div className="text-sm font-bold truncate">{g.nome}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {g.anos.size} temporada(s) • {g.edicoes} título(s) registrados
                       </div>
-                      {!!e.clientes?.length && (
-                        <div className="text-[10px] text-primary mt-0.5 truncate">
-                          Seus clientes campeões: {e.clientes.map(x => x.nome).join(", ")}
-                        </div>
-                      )}
                     </div>
-                    <Badge variant="secondary" className="text-[10px]">{e.ano}</Badge>
-                  </Card>
-                );
-              })}
+                    <ChevronRight className="h-4 w-4 text-primary" />
+                  </button>
+                ));
+            })()}
+
+            {/* Histórico ano a ano de uma competição */}
+            {compAberta && (
+              <div className="space-y-3">
+                <Button variant="secondary" size="sm" onClick={() => setCompAberta(null)}>
+                  <ArrowLeft className="h-4 w-4" /> Todas as competições
+                </Button>
+                <div className="text-lg font-black">{compAberta}</div>
+                {(state.historicoCompeticoes ?? [])
+                  .filter(e => e.competicao === compAberta)
+                  .sort((a, b) => b.ano - a.ano || a.categoria.localeCompare(b.categoria))
+                  .map((e, i) => {
+                    const c = state.clubes.find(x => x.nome === e.campeao);
+                    return (
+                      <Card key={`${e.ano}-${e.categoria}-${i}`} className="p-3 flex items-center gap-3">
+                        {c ? <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
+                          : <Trophy className="h-7 w-7 text-primary" />}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold truncate">
+                            {e.ano} <span className="text-muted-foreground font-normal">• {e.categoria}</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            Campeão: <span className="text-primary font-bold">{e.campeao}</span> • Vice: {e.vice}
+                          </div>
+                          {!!e.clientes?.length && (
+                            <div className="text-[10px] text-primary mt-0.5 truncate">
+                              Seus clientes campeões: {e.clientes.map(x => x.nome).join(", ")}
+                            </div>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="text-[10px]">{e.categoria}</Badge>
+                      </Card>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         )}
 
