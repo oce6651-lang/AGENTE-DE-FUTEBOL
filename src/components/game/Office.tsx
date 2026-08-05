@@ -323,6 +323,17 @@ export function Office({ state, setState, onExit }: {
                     </Button>
                   )}
                 </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1"
+                    onClick={() => { setNegociarFor(p); setClubeFiltro(""); }}>
+                    Procurar clube (R$ {CUSTO_ABORDAGEM})
+                  </Button>
+                  {!p.clube && (
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setPeneiraFor(p)}>
+                      Pedir teste em clube
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
