@@ -368,6 +368,55 @@ export function Office({ state, setState, onExit }: {
                   </div>
                 </Card>
                 <Card className="p-4 space-y-3">
+                  <div className="text-xs uppercase font-bold text-muted-foreground">Agência e acesso</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" onClick={() => setState({ ...state, prestigio: Math.min(5, state.prestigio + 1) })}>+1 prestígio</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, prestigio: Math.max(1, state.prestigio - 1) })}>-1 prestígio</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, reputacao: 100, prestigio: 5 })}>Liberar todos os locais</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, upgrades: UPGRADES.map(u => u.id), energiaMax: state.energiaMax + 2 })}>
+                      Liberar estruturas
+                    </Button>
+                    <Button variant="secondary" onClick={() => setState({
+                      ...state,
+                      clubes: state.clubes.map(c => ({ ...c, confiancaEmVoce: 100 })),
+                    })}>Clubes confiam 100%</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, energia: 99, energiaMax: Math.max(state.energiaMax, 99) })}>
+                      Energia infinita
+                    </Button>
+                  </div>
+                </Card>
+                <Card className="p-4 space-y-3">
+                  <div className="text-xs uppercase font-bold text-muted-foreground">Tempo e mundo</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" onClick={() => avancarVarias(4)}>Avançar 1 mês</Button>
+                    <Button variant="secondary" onClick={() => avancarVarias(48)}>Avançar 1 ano</Button>
+                    <Button variant="secondary" onClick={() => setState({
+                      ...state,
+                      jogadores: state.jogadores.map(p => ({ ...p, lesaoSemanas: 0 })),
+                    })}>Curar lesões</Button>
+                    <Button variant="secondary" onClick={() => setState({
+                      ...state,
+                      negociacoes: state.negociacoes.filter(n => n.status === "aberta"),
+                    })}>Limpar histórico de propostas</Button>
+                  </div>
+                </Card>
+                <Card className="p-4 space-y-3">
+                  <div className="text-xs uppercase font-bold text-muted-foreground">Radar e contratos</div>
+                  <Button variant="secondary" className="w-full" onClick={gerarTalentoAdmin}>
+                    Gerar talento no radar
+                  </Button>
+                  {state.radar.length === 0 && <div className="text-xs text-muted-foreground">Radar vazio.</div>}
+                  {state.radar.slice(0, 12).map(p => (
+                    <div key={p.id} className="flex items-center gap-2 rounded-xl border border-border bg-secondary/30 p-2">
+                      <div className="min-w-0 flex-1 text-xs">
+                        <div className="font-bold truncate">{p.nome}</div>
+                        <div className="text-muted-foreground">{p.idade}a • {p.posicao} • OVR {p.atual} / POT {p.potencial}</div>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => assinarAdmin(p)}>Assinar</Button>
+                    </div>
+                  ))}
+                </Card>
+                <Card className="p-4 space-y-3">
                   <div className="text-xs uppercase font-bold text-muted-foreground">Editar atletas</div>
                   {state.jogadores.length === 0 && <div className="text-xs text-muted-foreground">Nenhum atleta representado.</div>}
                   {state.jogadores.map(p => (
@@ -378,6 +427,10 @@ export function Office({ state, setState, onExit }: {
                         <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { atual: Math.max(1, p.atual - 5) })}>OVR -5</Button>
                         <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { potencial: Math.min(100, p.potencial + 5) })}>POT +5</Button>
                         <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { confianca: 100, observado: Math.max(4, p.observado) })}>Revelar</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { potencial: Math.max(p.atual, p.potencial - 5) })}>POT -5</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { lesaoSemanas: 0, status: p.clube ? `No ${p.clube}` : "Sem clube" })}>Curar</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { idade: Math.max(9, p.idade - 1) })}>Idade -1</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { idade: p.idade + 1 })}>Idade +1</Button>
                       </div>
                     </div>
                   ))}
