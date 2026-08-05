@@ -22,6 +22,7 @@ import {
 } from "@/lib/game/engine";
 import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
 import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
+import { gerarJogador } from "@/lib/game/generators";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
@@ -138,6 +139,35 @@ export function Office({ state, setState, onExit }: {
     setState(r.state);
     toast(`${clube.nome}`, { description: r.mensagem });
     if (r.resposta?.resultado === "interessado") { setNegociarFor(null); setView("negotiations"); }
+  };
+
+  // ---------- ações administrativas ----------
+  const avancarVarias = (semanas: number) => {
+    let s = state;
+    for (let i = 0; i < semanas; i++) s = avancarSemana(s).state;
+    setState(s);
+    toast(`${semanas} semana(s) simuladas.`);
+  };
+
+  const gerarTalentoAdmin = () => {
+    const p = gerarJogador({
+      cidade: state.agent.cidade, local: "Convocação administrativa",
+      nextId: Math.floor(Math.random() * 900000) + 90000,
+      ano: state.ano, mes: state.mes, semana: state.semana,
+      estado: state.agent.estado, pais: state.agent.pais,
+      forcarIdade: 16, forcarAtual: [40, 60], forcarPotencial: [88, 99],
+    });
+    setState({ ...state, radar: [{ ...p, confianca: 100, familiaConfia: true, observado: 4 }, ...state.radar] });
+    toast(`${p.nome} adicionado ao radar.`);
+  };
+
+  const assinarAdmin = (p: Player) => {
+    setState({
+      ...state,
+      radar: state.radar.filter(x => x.id !== p.id),
+      jogadores: [{ ...p, empresario: state.agent.id, confianca: 100, status: "Sem clube" }, ...state.jogadores],
+    });
+    toast(`${p.nome} assinou com a agência.`);
   };
 
   const abertas = state.negociacoes.filter(n => n.status === "aberta").length;
