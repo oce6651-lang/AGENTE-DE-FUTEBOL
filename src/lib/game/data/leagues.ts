@@ -89,6 +89,24 @@ export const COMPETICOES: Competition[] = [
   { id: "varzeano", nome: "Copa Várzea", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Livre", "Veterano"], mesInicio: 1, mesFim: 12 },
   { id: "copa-interior", nome: "Copa do Interior", pais: "Brasil", tipo: "regional", divisoes: ["Amador", "Serie D", "Serie C"], categorias: ["Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 4, mesFim: 8 },
   { id: "torneio-integracao", nome: "Torneio de Integração Municipal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Livre"], mesInicio: 2, mesFim: 6 },
+
+  // ---------- Novas competições nacionais e internacionais ----------
+  { id: "la-liga", nome: "La Liga", pais: "Espanha", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "premier-league", nome: "Premier League", pais: "Inglaterra", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "serie-a-ita", nome: "Serie A (ITA)", pais: "Itália", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "primeira-liga", nome: "Primeira Liga", pais: "Portugal", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "liga-argentina", nome: "Liga Profesional Argentina", pais: "Argentina", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 1, mesFim: 12 },
+  { id: "liga-uruguaia", nome: "Primera División (URU)", pais: "Uruguai", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 2, mesFim: 12 },
+  { id: "copa-libertadores-fem", nome: "CONMEBOL Copa Sudamericana Sub-17", pais: "América do Sul", tipo: "base", divisoes: ["Serie A", "Elite"], categorias: ["Sub-17"], mesInicio: 3, mesFim: 4 },
+  { id: "supercopa-rei", nome: "Supercopa Rei da Base", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B"], categorias: ["Sub-17", "Sub-20"], mesInicio: 2, mesFim: 3 },
+  { id: "copa-brasil-sub13", nome: "Copa do Brasil Sub-13", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C"], categorias: ["Sub-13"], mesInicio: 4, mesFim: 8 },
+  { id: "bra-sub13", nome: "Brasileirão Sub-13", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B"], categorias: ["Sub-13"], mesInicio: 5, mesFim: 10 },
+  { id: "copa-atlantico", nome: "Copa Atlântico de Base", pais: "Brasil", tipo: "base", divisoes: ["Serie B", "Serie C", "Serie D"], categorias: ["Sub-15", "Sub-17"], mesInicio: 6, mesFim: 9, estados: ["RJ", "ES", "BA", "SE", "AL", "PE", "PB", "RN", "CE"] },
+  { id: "copa-sul", nome: "Copa Sul de Base", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-15", "Sub-17", "Sub-20"], mesInicio: 7, mesFim: 10, estados: ["RS", "SC", "PR"] },
+  { id: "copa-centro-oeste", nome: "Copa Centro-Oeste", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-17", "Sub-20", "Livre"], mesInicio: 5, mesFim: 8, estados: ["GO", "DF", "MT", "MS", "TO"] },
+  { id: "copa-norte", nome: "Copa Norte", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-17", "Sub-20", "Livre"], mesInicio: 5, mesFim: 8, estados: ["PA", "AM", "AC", "RO", "RR", "AP", "TO"] },
+  { id: "torneio-verao", nome: "Torneio de Verão da Várzea", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 12, mesFim: 2 },
+  { id: "copa-escolar", nome: "Copa Escolar Estadual", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17"], mesInicio: 8, mesFim: 11 },
 ];
 
 /** Liga principal de um clube, conforme divisão e país. */
@@ -117,6 +135,8 @@ export function competicoesDoClube(divisao: Division, pais: string, estado: stri
     if (!c.divisoes.includes(divisao)) return false;
     if (c.estados && !c.estados.includes(estado)) return false;
     if (c.pais === "Brasil" && pais !== "Brasil") return false;
+    // ligas nacionais estrangeiras: só clubes daquele país
+    if (c.tipo === "nacional" && c.pais !== "Brasil" && c.pais !== pais) return false;
     if (c.tipo === "continental") {
       if (c.id === "champions" || c.id === "europa-league") return pais !== "Brasil";
       return pais === "Brasil" || pais === "Argentina" || pais === "Uruguai";

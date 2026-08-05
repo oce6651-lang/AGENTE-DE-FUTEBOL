@@ -101,6 +101,8 @@ export interface Player {
   saiuEm?: string;
   /** Categoria em que atua, quando promovido/rebaixado fora da faixa etária. */
   categoriaForcada?: AgeCategory;
+  /** Contato pessoal do início de carreira: aparece como destaque na primeira várzea. */
+  contatoInicial?: boolean;
 }
 
 /** Uma temporada completa na carreira do atleta. */
@@ -376,6 +378,8 @@ export interface GameState {
   upgrades: string[];
   /** Locais de scouting já desbloqueados manualmente (além dos liberados por reputação). */
   locaisVisitados: string[];
+  /** Contatos pessoais ainda não avistados em campo (aparecem na primeira várzea). */
+  contatosPendentes?: Player[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;

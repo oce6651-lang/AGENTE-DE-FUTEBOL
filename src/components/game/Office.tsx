@@ -20,8 +20,9 @@ import {
   enviarPeneira, custoPeneira, podeAssistir, pagarPartida, adicionarAoRadar, CUSTOS,
   UPGRADES, comprarUpgrade, temUpgrade, custoViagem, custoObservacao,
 } from "@/lib/game/engine";
-import { oferecerParaClubes, CUSTO_OFERTA } from "@/lib/game/offers";
+import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
 import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
+import { gerarJogador } from "@/lib/game/generators";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
@@ -38,8 +39,8 @@ type View =
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
   | "arquivo" | "competicoes";
 
-/** Único e-mail autorizado a abrir o painel administrativo. */
-const ADMIN_EMAIL = "OCE6651@GMAIL.COM";
+/** Único código autorizado a abrir o painel administrativo. */
+const ADMIN_CODE = "GGG-209-213";
 
 export function Office({ state, setState, onExit }: {
   state: GameState;
@@ -55,8 +56,11 @@ export function Office({ state, setState, onExit }: {
   const [respostas, setRespostas] = useState<ClubResponse[]>([]);
   const [abertaFor, setAbertaFor] = useState<Player | null>(null);
   const [inscreverEm, setInscreverEm] = useState<string | null>(null);
-  const [adminEmail, setAdminEmail] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [adminOk, setAdminOk] = useState(false);
+  const [negociarFor, setNegociarFor] = useState<Player | null>(null);
+  const [clubeFiltro, setClubeFiltro] = useState("");
+  const [compAberta, setCompAberta] = useState<string | null>(null);
   const [arquivoAberto, setArquivoAberto] = useState<string | null>(null);
   const [compFiltro, setCompFiltro] = useState<string>("");
 
@@ -127,6 +131,43 @@ export function Office({ state, setState, onExit }: {
     const r = inscreverPeneiraAberta(state, playerId, openId);
     setState(r.state); toast(r.mensagem);
     setInscreverEm(null); setAbertaFor(null);
+  };
+
+  const handleNegociarClube = (clube: Club) => {
+    if (!negociarFor) return;
+    const r = negociarComClube(state, negociarFor.id, clube.id);
+    setState(r.state);
+    toast(`${clube.nome}`, { description: r.mensagem });
+    if (r.resposta?.resultado === "interessado") { setNegociarFor(null); setView("negotiations"); }
+  };
+
+  // ---------- ações administrativas ----------
+  const avancarVarias = (semanas: number) => {
+    let s = state;
+    for (let i = 0; i < semanas; i++) s = avancarSemana(s).state;
+    setState(s);
+    toast(`${semanas} semana(s) simuladas.`);
+  };
+
+  const gerarTalentoAdmin = () => {
+    const p = gerarJogador({
+      cidade: state.agent.cidade, local: "Convocação administrativa",
+      nextId: Math.floor(Math.random() * 900000) + 90000,
+      ano: state.ano, mes: state.mes, semana: state.semana,
+      estado: state.agent.estado, pais: state.agent.pais,
+      forcarIdade: 16, forcarAtual: [40, 60], forcarPotencial: [88, 99],
+    });
+    setState({ ...state, radar: [{ ...p, confianca: 100, familiaConfia: true, observado: 4 }, ...state.radar] });
+    toast(`${p.nome} adicionado ao radar.`);
+  };
+
+  const assinarAdmin = (p: Player) => {
+    setState({
+      ...state,
+      radar: state.radar.filter(x => x.id !== p.id),
+      jogadores: [{ ...p, empresario: state.agent.id, confianca: 100, status: "Sem clube" }, ...state.jogadores],
+    });
+    toast(`${p.nome} assinou com a agência.`);
   };
 
   const abertas = state.negociacoes.filter(n => n.status === "aberta").length;
@@ -282,6 +323,17 @@ export function Office({ state, setState, onExit }: {
                     </Button>
                   )}
                 </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1"
+                    onClick={() => { setNegociarFor(p); setClubeFiltro(""); }}>
+                    Procurar clube (R$ {CUSTO_ABORDAGEM})
+                  </Button>
+                  {!p.clube && (
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setPeneiraFor(p)}>
+                      Pedir teste em clube
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -334,15 +386,15 @@ export function Office({ state, setState, onExit }: {
             {!adminOk ? (
               <Card className="p-4 space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Área restrita ao administrador do jogo. Informe o e-mail autorizado.
+                  Área restrita ao administrador do jogo. Informe o código de acesso.
                 </p>
                 <div>
-                  <Label>E-mail</Label>
-                  <Input value={adminEmail} onChange={e => setAdminEmail(e.target.value)} placeholder="email@exemplo.com" />
+                  <Label>Código</Label>
+                  <Input value={adminCode} onChange={e => setAdminCode(e.target.value)} placeholder="XXX-000-000" />
                 </div>
                 <Button className="w-full" onClick={() => {
-                  if (adminEmail.trim().toUpperCase() === ADMIN_EMAIL) { setAdminOk(true); toast("Acesso liberado."); }
-                  else toast("E-mail não autorizado.");
+                  if (adminCode.trim().toUpperCase() === ADMIN_CODE) { setAdminOk(true); toast("Acesso liberado."); }
+                  else toast("Código inválido.");
                 }}>Entrar</Button>
               </Card>
             ) : (
@@ -357,6 +409,55 @@ export function Office({ state, setState, onExit }: {
                   </div>
                 </Card>
                 <Card className="p-4 space-y-3">
+                  <div className="text-xs uppercase font-bold text-muted-foreground">Agência e acesso</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" onClick={() => setState({ ...state, prestigio: Math.min(5, state.prestigio + 1) })}>+1 prestígio</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, prestigio: Math.max(1, state.prestigio - 1) })}>-1 prestígio</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, reputacao: 100, prestigio: 5 })}>Liberar todos os locais</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, upgrades: UPGRADES.map(u => u.id), energiaMax: state.energiaMax + 2 })}>
+                      Liberar estruturas
+                    </Button>
+                    <Button variant="secondary" onClick={() => setState({
+                      ...state,
+                      clubes: state.clubes.map(c => ({ ...c, confiancaEmVoce: 100 })),
+                    })}>Clubes confiam 100%</Button>
+                    <Button variant="secondary" onClick={() => setState({ ...state, energia: 99, energiaMax: Math.max(state.energiaMax, 99) })}>
+                      Energia infinita
+                    </Button>
+                  </div>
+                </Card>
+                <Card className="p-4 space-y-3">
+                  <div className="text-xs uppercase font-bold text-muted-foreground">Tempo e mundo</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" onClick={() => avancarVarias(4)}>Avançar 1 mês</Button>
+                    <Button variant="secondary" onClick={() => avancarVarias(48)}>Avançar 1 ano</Button>
+                    <Button variant="secondary" onClick={() => setState({
+                      ...state,
+                      jogadores: state.jogadores.map(p => ({ ...p, lesaoSemanas: 0 })),
+                    })}>Curar lesões</Button>
+                    <Button variant="secondary" onClick={() => setState({
+                      ...state,
+                      negociacoes: state.negociacoes.filter(n => n.status === "aberta"),
+                    })}>Limpar histórico de propostas</Button>
+                  </div>
+                </Card>
+                <Card className="p-4 space-y-3">
+                  <div className="text-xs uppercase font-bold text-muted-foreground">Radar e contratos</div>
+                  <Button variant="secondary" className="w-full" onClick={gerarTalentoAdmin}>
+                    Gerar talento no radar
+                  </Button>
+                  {state.radar.length === 0 && <div className="text-xs text-muted-foreground">Radar vazio.</div>}
+                  {state.radar.slice(0, 12).map(p => (
+                    <div key={p.id} className="flex items-center gap-2 rounded-xl border border-border bg-secondary/30 p-2">
+                      <div className="min-w-0 flex-1 text-xs">
+                        <div className="font-bold truncate">{p.nome}</div>
+                        <div className="text-muted-foreground">{p.idade}a • {p.posicao} • OVR {p.atual} / POT {p.potencial}</div>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => assinarAdmin(p)}>Assinar</Button>
+                    </div>
+                  ))}
+                </Card>
+                <Card className="p-4 space-y-3">
                   <div className="text-xs uppercase font-bold text-muted-foreground">Editar atletas</div>
                   {state.jogadores.length === 0 && <div className="text-xs text-muted-foreground">Nenhum atleta representado.</div>}
                   {state.jogadores.map(p => (
@@ -367,6 +468,10 @@ export function Office({ state, setState, onExit }: {
                         <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { atual: Math.max(1, p.atual - 5) })}>OVR -5</Button>
                         <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { potencial: Math.min(100, p.potencial + 5) })}>POT +5</Button>
                         <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { confianca: 100, observado: Math.max(4, p.observado) })}>Revelar</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { potencial: Math.max(p.atual, p.potencial - 5) })}>POT -5</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { lesaoSemanas: 0, status: p.clube ? `No ${p.clube}` : "Sem clube" })}>Curar</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { idade: Math.max(9, p.idade - 1) })}>Idade -1</Button>
+                        <Button size="sm" variant="outline" onClick={() => editarAtleta(state, setState, p.id, { idade: p.idade + 1 })}>Idade +1</Button>
                       </div>
                     </div>
                   ))}
@@ -560,34 +665,69 @@ export function Office({ state, setState, onExit }: {
                 Nenhuma temporada encerrada ainda. Avance até dezembro para conhecer os campeões.
               </div>
             )}
-            {(state.historicoCompeticoes ?? [])
-              .filter(e => {
-                const q = compFiltro.trim().toLowerCase();
-                if (!q) return true;
-                return `${e.competicao} ${e.categoria} ${e.campeao} ${e.ano}`.toLowerCase().includes(q);
-              })
-              .slice(0, 120)
-              .map((e, i) => {
-                const c = state.clubes.find(x => x.nome === e.campeao);
-                return (
-                  <Card key={`${e.ano}-${e.competicaoId}-${e.categoria}-${i}`} className="p-3 flex items-center gap-3">
-                    {c ? <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
-                      : <Trophy className="h-7 w-7 text-primary" />}
+
+            {/* Lista de competições — clique para abrir o histórico completo */}
+            {!compAberta && (() => {
+              const q = compFiltro.trim().toLowerCase();
+              const grupos = new Map<string, { nome: string; anos: Set<number>; edicoes: number }>();
+              for (const e of state.historicoCompeticoes ?? []) {
+                if (q && !`${e.competicao} ${e.categoria} ${e.campeao} ${e.ano}`.toLowerCase().includes(q)) continue;
+                const g = grupos.get(e.competicao) ?? { nome: e.competicao, anos: new Set<number>(), edicoes: 0 };
+                g.anos.add(e.ano); g.edicoes += 1;
+                grupos.set(e.competicao, g);
+              }
+              return Array.from(grupos.values())
+                .sort((a, b) => a.nome.localeCompare(b.nome))
+                .map(g => (
+                  <button key={g.nome} onClick={() => setCompAberta(g.nome)}
+                    className="w-full text-left rounded-2xl border border-border bg-card p-3 flex items-center gap-3 hover:border-primary hover:bg-secondary/50 transition-colors">
+                    <Trophy className="h-6 w-6 text-primary shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold truncate">{e.competicao} <span className="text-muted-foreground font-normal">{e.categoria}</span></div>
-                      <div className="text-[11px] text-muted-foreground truncate">
-                        {e.ano} • Campeão: <span className="text-primary font-bold">{e.campeao}</span> • Vice: {e.vice}
+                      <div className="text-sm font-bold truncate">{g.nome}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {g.anos.size} temporada(s) • {g.edicoes} título(s) registrados
                       </div>
-                      {!!e.clientes?.length && (
-                        <div className="text-[10px] text-primary mt-0.5 truncate">
-                          Seus clientes campeões: {e.clientes.map(x => x.nome).join(", ")}
-                        </div>
-                      )}
                     </div>
-                    <Badge variant="secondary" className="text-[10px]">{e.ano}</Badge>
-                  </Card>
-                );
-              })}
+                    <ChevronRight className="h-4 w-4 text-primary" />
+                  </button>
+                ));
+            })()}
+
+            {/* Histórico ano a ano de uma competição */}
+            {compAberta && (
+              <div className="space-y-3">
+                <Button variant="secondary" size="sm" onClick={() => setCompAberta(null)}>
+                  <ArrowLeft className="h-4 w-4" /> Todas as competições
+                </Button>
+                <div className="text-lg font-black">{compAberta}</div>
+                {(state.historicoCompeticoes ?? [])
+                  .filter(e => e.competicao === compAberta)
+                  .sort((a, b) => b.ano - a.ano || a.categoria.localeCompare(b.categoria))
+                  .map((e, i) => {
+                    const c = state.clubes.find(x => x.nome === e.campeao);
+                    return (
+                      <Card key={`${e.ano}-${e.categoria}-${i}`} className="p-3 flex items-center gap-3">
+                        {c ? <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
+                          : <Trophy className="h-7 w-7 text-primary" />}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold truncate">
+                            {e.ano} <span className="text-muted-foreground font-normal">• {e.categoria}</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            Campeão: <span className="text-primary font-bold">{e.campeao}</span> • Vice: {e.vice}
+                          </div>
+                          {!!e.clientes?.length && (
+                            <div className="text-[10px] text-primary mt-0.5 truncate">
+                              Seus clientes campeões: {e.clientes.map(x => x.nome).join(", ")}
+                            </div>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="text-[10px]">{e.categoria}</Badge>
+                      </Card>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         )}
 
@@ -799,6 +939,42 @@ export function Office({ state, setState, onExit }: {
                 </button>
               );
             })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Abordagem direta a um clube específico */}
+      <Dialog open={!!negociarFor} onOpenChange={(o) => !o && setNegociarFor(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Procurar clube para {negociarFor?.nome}</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Você marca uma reunião presencial. O clube analisa nível, posição, idade e filosofia antes de responder.
+          </p>
+          <Input placeholder="Buscar clube, cidade ou divisão"
+            value={clubeFiltro} onChange={e => setClubeFiltro(e.target.value)} />
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {state.clubes
+              .filter(c => {
+                const q = clubeFiltro.trim().toLowerCase();
+                return !q || `${c.nome} ${c.cidade} ${c.estado} ${c.categoria} ${c.liga}`.toLowerCase().includes(q);
+              })
+              .slice(0, 60)
+              .map(c => (
+                <button key={c.id} disabled={state.dinheiro < CUSTO_ABORDAGEM}
+                  onClick={() => handleNegociarClube(c)}
+                  className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors disabled:opacity-40">
+                  <div className="flex items-center gap-3">
+                    <ClubCrest cores={c.cores} abrev={c.abrev} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold truncate">{c.nome}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {c.categoria} • {c.personalidade} • {c.cidade}/{c.estado}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Confiança em você: {c.confiancaEmVoce}%</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
           </div>
         </DialogContent>
       </Dialog>

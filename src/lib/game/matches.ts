@@ -64,12 +64,63 @@ function gerarTime(state: GameState, local: string, categoria: AgeCategory, idBa
   };
 }
 
+/**
+ * Partida especial da várzea onde os contatos pessoais do início de carreira
+ * finalmente entram em campo: Sítio Canela x Bananeiras, categoria Livre.
+ */
+function partidaDosContatos(state: GameState, loc: ScoutLocation, idBase: number): Fixture | null {
+  const pendentes = state.contatosPendentes ?? [];
+  if (loc.id !== "varzea" || pendentes.length === 0) return null;
+
+  let n = idBase;
+  const montar = (nome: string, cores: [string, string]) => {
+    const criar = (pos: Position, numero: number, titular: boolean): MatchPlayer => ({
+      player: gerarJogador({
+        cidade: state.agent.cidade, local: loc.nome, nextId: n++, ano: state.ano,
+        mes: state.mes, semana: state.semana, categoria: "Livre", posicao: pos, nivel: 1,
+      }),
+      numero, nota: 6, titular, minutos: 0, gols: 0, destaque: false,
+    });
+    return {
+      nome, abrev: abrev(nome), cores, tecnico: pick(TECNICOS), formacao: pick(FORMACOES),
+      titulares: ESCALACAO_BASE.map((p, i) => criar(p, i + 1, true)),
+      reservas: BANCO_BASE.map((p, i) => criar(p, 12 + i, false)),
+      gols: 0,
+    } as MatchTeam;
+  };
+
+  const casa = montar("Sítio Canela", ["#1c8a4a", "#e4b400"]);
+  const fora = montar("Bananeiras", ["#e4b400", "#1a1a1a"]);
+
+  // cada contato entra como titular, um em cada time, na sua própria posição
+  pendentes.forEach((p, i) => {
+    const time = i % 2 === 0 ? casa : fora;
+    const alvo = time.titulares.find(m => m.player.posicao === p.posicao)
+      ?? time.titulares[10 - i];
+    alvo.player = p;
+    alvo.destaque = true;
+  });
+
+  return {
+    id: rid("FIX", 1),
+    local: loc.nome,
+    categoria: "Livre",
+    casa, fora,
+    arbitro: pick(ARBITROS),
+    horario: "15:30",
+    publico: rnd(40, 140),
+    custoIngresso: loc.custoIngresso,
+  };
+}
+
 /** Gera a rodada do dia em um local: uma partida por categoria disponível. */
 export function gerarRodada(state: GameState, loc: ScoutLocation, idBase: number): Fixture[] {
   let n = idBase;
   const fixtures: Fixture[] = [];
   const cats = loc.categorias.filter(() => Math.random() < 0.75);
-  const lista = cats.length ? cats : [pick(loc.categorias)];
+  const especial = partidaDosContatos(state, loc, idBase + 900);
+  const lista = (cats.length ? cats : [pick(loc.categorias)])
+    .filter(c => !(especial && c === "Livre"));
   lista.forEach((cat, i) => {
     const casa = gerarTime(state, loc.nome, cat, n, loc.nivel); n += casa.usados;
     const fora = gerarTime(state, loc.nome, cat, n, loc.nivel); n += fora.usados;
@@ -87,6 +138,7 @@ export function gerarRodada(state: GameState, loc: ScoutLocation, idBase: number
       custoIngresso: loc.custoIngresso,
     });
   });
+  if (especial) fixtures.push(especial);
   return fixtures.sort((a, b) => a.horario.localeCompare(b.horario));
 }
 
@@ -214,7 +266,10 @@ export function destaquesDaPartida(casa: MatchTeam, fora: MatchTeam): MatchPlaye
   const todos = [...casa.titulares, ...fora.titulares, ...casa.reservas.filter(r => r.minutos > 0), ...fora.reservas.filter(r => r.minutos > 0)];
   const ordenados = [...todos].sort((a, b) => b.nota - a.nota);
   const qtd = Math.random() < 0.35 ? 2 : Math.random() < 0.8 ? 3 : 4;
-  const selecionados = ordenados.slice(0, qtd).filter(m => m.nota >= 6.8);
+  const naturais = ordenados.slice(0, qtd).filter(m => m.nota >= 6.8);
+  // contatos pessoais sempre chamam atenção — foi por isso que você foi até lá
+  const contatos = todos.filter(m => m.player.contatoInicial);
+  const selecionados = [...contatos, ...naturais.filter(m => !m.player.contatoInicial)];
   selecionados.forEach(m => { m.destaque = true; });
   return selecionados;
 }

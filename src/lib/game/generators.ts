@@ -174,10 +174,13 @@ export function gerarJogador(opts: GerarPlayerOpts): Player {
   const potencial = forcarPotencial ? rnd(forcarPotencial[0], forcarPotencial[1]) : rolarPotencial(nivel);
   // Quanto mais jovem, maior a distância entre o nível atual e o potencial.
   // Palcos de elite já entregam atletas mais desenvolvidos para a idade.
-  const gap = Math.max(4, 52 - idade * 2 - nivel);
+  const gap = Math.max(6, 58 - idade * 2 - nivel);
+  // Teto de nível por palco: na várzea ninguém é profissional pronto.
+  // Uma pequena fração de atletas fura o teto (as joias escondidas).
+  const teto = 16 + nivel * 6 + (Math.random() < 0.04 ? rnd(6, 20) : 0);
   const atual = forcarAtual
     ? Math.min(potencial, rnd(forcarAtual[0], forcarAtual[1]))
-    : Math.max(10, Math.min(potencial, rnd(potencial - gap - 5, potencial - gap + 5)));
+    : Math.max(5, Math.min(potencial, teto, rnd(potencial - gap - 5, potencial - gap + 5)));
   const nome = `${pick(NOMES)} ${pick(SOBRENOMES)}`;
   const clubeCoracao = pick(clubesDaRegiao(estado)).nome;
   const atributos = gerarAtributos(atual, pos);

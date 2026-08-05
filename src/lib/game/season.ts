@@ -192,6 +192,10 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
   const noticias: NewsItem[] = [];
   // compId + categoria -> clubeNome -> posição
   const colocacoes = new Map<string, Map<string, number>>();
+  // Quantos títulos cada clube já levantou neste ano — evita domínio absoluto.
+  const titulosNoAno = new Map<string, number>();
+  // Quantos títulos o clube já levantou em cada categoria neste ano.
+  const titulosPorCategoria = new Map<string, number>();
 
   for (const comp of COMPETICOES) {
     const participantes = state.clubes.filter(c =>
@@ -212,9 +216,17 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
       for (const grupo of grupos) {
         if (grupo.length < 2) continue;
         const rank = grupo
-          .map(c => ({ c, score: forcaNaCategoria(c, cat, state.ano) + rnd(-22, 22) }))
+          .map(c => ({
+            c,
+            score: forcaNaCategoria(c, cat, state.ano) + rnd(-22, 22)
+              // cada troféu já conquistado no ano pesa contra: campeonatos se distribuem
+              - (titulosNoAno.get(c.nome) ?? 0) * 14
+              - (titulosPorCategoria.get(`${c.nome}|${cat}`) ?? 0) * 22,
+          }))
           .sort((a, b) => b.score - a.score);
         rank.forEach((r, i) => mapa.set(r.c.nome, i + 1));
+        titulosNoAno.set(rank[0].c.nome, (titulosNoAno.get(rank[0].c.nome) ?? 0) + 1);
+        titulosPorCategoria.set(`${rank[0].c.nome}|${cat}`, (titulosPorCategoria.get(`${rank[0].c.nome}|${cat}`) ?? 0) + 1);
         const sufixo = porEstado ? ` (${rank[0].c.estado})` : "";
         edicoes.push({
           ano: state.ano,

@@ -108,7 +108,7 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
         id: rid("NEW", 1),
         semana: 1, mes: 3, ano: 2026,
         titulo: `${agentWithId.agencia} foi fundada em ${agentWithId.cidade}`,
-        texto: `${agentWithId.nome} ${agentWithId.sobrenome} começa do zero com R$ 6.000 no caixa e dois contatos dispostos a assinar. Vá aos campos, assista partidas e construa uma reputação.`,
+        texto: `${agentWithId.nome} ${agentWithId.sobrenome} começa do zero com R$ 6.000 no caixa. Dois garotos indicados por conhecidos vão jogar em ${agentWithId.cidade}: vá à várzea, assista à partida da categoria Livre e veja com os próprios olhos.`,
         tipo: "info",
       },
     ],
@@ -117,10 +117,14 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
   };
-  return { ...base, radar: contatosIniciais(base) };
+  return { ...base, radar: [], contatosPendentes: contatosIniciais(base) };
 }
 
-/** Dois atletas de contato inicial, 100% dispostos a assinar com a agência. */
+/**
+ * Dois atletas de contato inicial, 100% dispostos a assinar com a agência.
+ * Eles não entram direto no radar: aparecem como destaques na primeira
+ * observação da várzea (categoria Livre), na partida Sítio Canela x Bananeiras.
+ */
 function contatosIniciais(s: GameState): Player[] {
   const comum = gerarJogador({
     cidade: s.agent.cidade, local: "Contato pessoal", nextId: 1,
@@ -143,7 +147,8 @@ function contatosIniciais(s: GameState): Player[] {
     status: "Quer assinar com você",
     familiaConfia: true,
     valorMercado: calcularValorMercado(p.atual, p.potencial, p.idade, false),
-    observado: 1,
+    observado: 0,
+    contatoInicial: true,
     ...extra,
   });
   return [
@@ -231,7 +236,16 @@ export function adicionarAoRadar(state: GameState, destaques: MatchPlayer[], fx:
     });
   }
   if (!adicionados.length) return { state, adicionados };
-  return { state: { ...state, radar: [...adicionados, ...state.radar].slice(0, 80) }, adicionados };
+  const ids = new Set(adicionados.map(p => p.id));
+  return {
+    state: {
+      ...state,
+      radar: [...adicionados, ...state.radar].slice(0, 80),
+      // contatos pessoais que finalmente foram vistos em campo saem da fila
+      contatosPendentes: (state.contatosPendentes ?? []).filter(p => !ids.has(p.id)),
+    },
+    adicionados,
+  };
 }
 
 /** Observação técnica dedicada: revela gradualmente atributos e potencial. */
