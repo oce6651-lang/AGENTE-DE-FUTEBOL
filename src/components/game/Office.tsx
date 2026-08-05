@@ -942,6 +942,42 @@ export function Office({ state, setState, onExit }: {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Abordagem direta a um clube específico */}
+      <Dialog open={!!negociarFor} onOpenChange={(o) => !o && setNegociarFor(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Procurar clube para {negociarFor?.nome}</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Você marca uma reunião presencial. O clube analisa nível, posição, idade e filosofia antes de responder.
+          </p>
+          <Input placeholder="Buscar clube, cidade ou divisão"
+            value={clubeFiltro} onChange={e => setClubeFiltro(e.target.value)} />
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {state.clubes
+              .filter(c => {
+                const q = clubeFiltro.trim().toLowerCase();
+                return !q || `${c.nome} ${c.cidade} ${c.estado} ${c.categoria} ${c.liga}`.toLowerCase().includes(q);
+              })
+              .slice(0, 60)
+              .map(c => (
+                <button key={c.id} disabled={state.dinheiro < CUSTO_ABORDAGEM}
+                  onClick={() => handleNegociarClube(c)}
+                  className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors disabled:opacity-40">
+                  <div className="flex items-center gap-3">
+                    <ClubCrest cores={c.cores} abrev={c.abrev} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold truncate">{c.nome}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {c.categoria} • {c.personalidade} • {c.cidade}/{c.estado}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Confiança em você: {c.confiancaEmVoce}%</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
