@@ -103,6 +103,8 @@ export interface Player {
   categoriaForcada?: AgeCategory;
   /** Contato pessoal do início de carreira: aparece como destaque na primeira várzea. */
   contatoInicial?: boolean;
+  /** Convocações para seleções de base e principal. */
+  convocacoes?: { ano: number; selecao: string; categoria: AgeCategory; jogos: number }[];
 }
 
 /** Uma temporada completa na carreira do atleta. */
