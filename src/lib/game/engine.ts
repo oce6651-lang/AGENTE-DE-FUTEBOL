@@ -659,7 +659,8 @@ export function responderNegociacao(
       state: {
         ...state,
         clubes: state.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 4) } : c),
-        negociacoes: state.negociacoes.map(n => n.id === negId ? { ...n, status: "recusada" as const } : n),
+        // conversa encerrada sai da mesa imediatamente
+        negociacoes: state.negociacoes.filter(n => n.id !== negId),
       },
       mensagem: `Proposta recusada. ${clube.nome} não gostou.`,
     };
@@ -673,7 +674,7 @@ export function responderNegociacao(
         state: {
           ...state,
           clubes: state.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 6) } : c),
-          negociacoes: state.negociacoes.map(n => n.id === negId ? { ...n, status: "recusada" as const } : n),
+          negociacoes: state.negociacoes.filter(n => n.id !== negId),
         },
         mensagem: `${clube.nome} encerrou a conversa: "não trabalhamos assim".`,
       };
@@ -742,10 +743,8 @@ export function responderNegociacao(
       financas: [fin, ...state.financas],
       noticias: [not, ...state.noticias],
       // ao fechar com um clube, todas as outras conversas pelo atleta caem
-      negociacoes: state.negociacoes.map(n =>
-        n.id === negId ? { ...n, status: "aceita" as const }
-          : n.playerId === player.id && n.status === "aberta"
-            ? { ...n, status: "cancelada" as const } : n),
+      negociacoes: state.negociacoes
+        .filter(n => n.id !== negId && n.playerId !== player.id),
       jogadores: state.jogadores.map(p => p.id === player.id ? atualizado : p),
     },
     mensagem: `${player.nome} → ${clube.nome}. Comissão de R$ ${receita.toLocaleString("pt-BR")} recebida!`,
