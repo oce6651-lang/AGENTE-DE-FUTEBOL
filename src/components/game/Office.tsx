@@ -563,12 +563,15 @@ export function Office({ state, setState, onExit }: {
         {view === "negotiations" && (
           <div className="p-4 space-y-3">
             <SubHeader title="Negociações" onBack={() => setView("home")} />
-            {state.negociacoes.length === 0 && (
+            <div className={`rounded-xl border px-3 py-2 text-xs font-bold ${janelaAberta(state.mes) ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}>
+              {statusJanela(state)}
+            </div>
+            {state.negociacoes.filter(n => n.status === "aberta").length === 0 && (
               <div className="text-center text-sm text-muted-foreground py-10">
-                Nenhuma proposta. Clubes só procuram empresários com reputação.
+                Nenhuma proposta em aberto. A maioria das ofertas chega durante as janelas de transferência.
               </div>
             )}
-            {state.negociacoes.map(n => {
+            {state.negociacoes.filter(n => n.status === "aberta").map(n => {
               const p = state.jogadores.find(j => j.id === n.playerId);
               const c = state.clubes.find(cl => cl.id === n.clubId);
               if (!p || !c) return null;
