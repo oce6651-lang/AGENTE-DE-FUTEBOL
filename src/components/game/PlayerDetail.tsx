@@ -144,10 +144,6 @@ export function PlayerDetail({
           </div>
         )}
 
-        {(player.temporadas?.length ?? 0) > 0 && (
-          null
-        )}
-
         {(player.convocacoes?.length ?? 0) > 0 && (
           <div className="mt-5">
             <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Convocações</div>
