@@ -117,7 +117,12 @@ export function calcularValorMercado(
 ): number {
   const base = Math.pow(Math.max(1, atual) / 100, 6.2) * 90_000_000;
   const fatorPot = 1 + Math.max(0, potencial - atual) / 45;
-  const fatorIdade = idade <= 16 ? 0.7 : idade <= 18 ? 1.15 : idade <= 23 ? 1.35 : idade <= 27 ? 1 : idade <= 31 ? 0.55 : 0.18;
+  // Abaixo do Sub-15 o mercado praticamente não precifica o atleta: são crianças.
+  const fatorIdade = idade <= 12 ? 0.03
+    : idade <= 14 ? 0.08
+      : idade <= 16 ? 0.45
+        : idade <= 18 ? 1.15
+          : idade <= 23 ? 1.35 : idade <= 27 ? 1 : idade <= 31 ? 0.55 : 0.18;
   const fatorDivisao: Record<Division, number> = {
     Amador: 0.12, "Serie D": 0.35, "Serie C": 0.6, "Serie B": 0.85, "Serie A": 1.15, Elite: 1.8,
   };
