@@ -511,11 +511,13 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     }
   }
 
-  // propostas expiram
+  // propostas expiram — e conversas encerradas somem da mesa para não poluir a aba
   s = {
     ...s,
-    negociacoes: s.negociacoes.map(n => n.status !== "aberta" ? n
-      : n.expiraEm <= 1 ? { ...n, status: "expirada" as const } : { ...n, expiraEm: n.expiraEm - 1 }),
+    negociacoes: s.negociacoes
+      .filter(n => n.status === "aberta")
+      .filter(n => n.expiraEm > 1)
+      .map(n => ({ ...n, expiraEm: n.expiraEm - 1 })),
   };
 
   // recuperação de lesões
@@ -536,6 +538,11 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
 
   // clubes sondam seus atletas conforme personalidade e necessidade
   s = sondagensDeClubes(s, eventos);
+
+  // convocações para seleções de base e principal
+  const convocacoes = convocacoesSemanais(s);
+  s = convocacoes.state;
+  eventos.push(...convocacoes.manchetes);
 
   // rodadas das competições disputadas pelos seus atletas
   const esportiva = semanaEsportiva(s);
@@ -575,11 +582,15 @@ function promoverCategoria(s: GameState, p: Player, eventos: string[]): Player {
   const escada: AgeCategory[] = ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"];
   const idx = escada.indexOf(atualCat);
   if (idx < 0 || idx >= escada.length - 1) return p;
-  // precisa estar muito acima do nível esperado da própria categoria
+  // precisa estar MUITO acima do nível esperado da própria categoria
   const exigencia = [14, 22, 32, 42, 54, 70][idx];
-  if (p.atual < exigencia + 14) return p;
-  if (Math.random() > 0.05) return p;
-  const nova = escada[idx + 1];
+  const margem = p.atual - exigencia;
+  if (margem < 16) return p;
+  // fenômenos absolutos podem pular duas categorias de uma vez
+  const saltos = margem >= 34 && idx + 2 <= escada.length - 1 && Math.random() < 0.35 ? 2 : 1;
+  const chance = 0.03 + Math.min(0.12, (margem - 16) * 0.006);
+  if (Math.random() > chance) return p;
+  const nova = escada[Math.min(escada.length - 1, idx + saltos)];
   eventos.push(`${p.nome} foi promovido ao ${nova === "Livre" ? "time profissional" : nova}.`);
   return {
     ...p,
