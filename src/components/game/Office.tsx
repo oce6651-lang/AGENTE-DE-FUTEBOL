@@ -7,6 +7,7 @@ import { CareerHistory } from "./CareerHistory";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
+import { janelaAberta, statusJanela } from "@/lib/game/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
