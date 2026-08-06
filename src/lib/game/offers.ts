@@ -240,6 +240,7 @@ export function oferecerParaClubes(
     }
     if (r.resultado === "pede_teste" || r.resultado === "pede_informacoes") {
       s = { ...s, clubes: s.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 3) } : c) };
+      s = agendarAvaliacaoAutomatica(s, player, clube, r.texto);
     }
   }
 
@@ -250,12 +251,15 @@ export function oferecerParaClubes(
   };
 
   const interessados = respostas.filter(r => r.resultado === "interessado").length;
+  const testes = respostas.filter(r => r.resultado === "pede_teste" || r.resultado === "pede_informacoes").length;
   return {
     state: s,
     respostas,
     mensagem: interessados
       ? `${interessados} clube(s) abriram negociação por ${player.nome}.`
-      : `Nenhuma proposta imediata por ${player.nome}.`,
+      : testes
+        ? `Nenhuma proposta, mas ${player.nome} foi chamado para avaliação.`
+        : `Nenhuma proposta imediata por ${player.nome}.`,
   };
 }
 
@@ -308,7 +312,10 @@ export function negociarComClube(
       clubes: s.clubes.map(c => c.id === clube.id
         ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 6) } : c),
     };
+    s = agendarAvaliacaoAutomatica(s, player, clube, resposta.texto);
   }
 
-  return { state: s, resposta, mensagem: resposta.texto };
+  const extra = (resposta.resultado === "pede_teste" || resposta.resultado === "pede_informacoes")
+    ? ` ${player.nome} foi enviado para avaliação no ${clube.nome}.` : "";
+  return { state: s, resposta, mensagem: resposta.texto + extra };
 }
