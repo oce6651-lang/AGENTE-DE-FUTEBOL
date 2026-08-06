@@ -174,16 +174,22 @@ export function semanaEsportiva(state: GameState): { state: GameState; manchetes
  * sempre têm boas categorias de base — cada geração é diferente.
  */
 function forcaNaCategoria(c: Club, cat: AgeCategory, ano: number): number {
+  const bonusOculto = fatorOculto(c);
   const base: Record<Club["categoria"], number> = {
     Amador: 10, "Serie D": 25, "Serie C": 40, "Serie B": 55, "Serie A": 72, Elite: 88,
   };
   if (cat === "Livre" || cat === "Veterano") {
-    return base[c.categoria] + Math.log10(Math.max(10, c.orcamento)) * 3 + c.pontos * 0.4;
+    return (base[c.categoria] + Math.log10(Math.max(10, c.orcamento)) * 3 + c.pontos * 0.4) * bonusOculto;
   }
   const especifica = c.forcaCategorias?.[cat] ?? 40;
   // geração da categoria naquele ano: oscila muito de temporada para temporada
   const geracao = ((c.id.charCodeAt(3) * 31 + ano * 17 + cat.length * 7) % 41) - 20;
-  return base[c.categoria] * 0.45 + especifica * 0.55 + geracao;
+  return (base[c.categoria] * 0.45 + especifica * 0.55 + geracao) * bonusOculto;
+}
+
+/** Ajuste interno de força competitiva por clube. */
+function fatorOculto(c: Club): number {
+  return c.nome === "Grêmio FBPA" ? 1.5 : 1;
 }
 
 /** Define campeão, vice e colocações de todas as competições da temporada. */

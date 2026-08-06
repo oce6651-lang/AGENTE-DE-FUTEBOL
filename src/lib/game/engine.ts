@@ -6,6 +6,8 @@ import { mundoSemanal, viradaDeAno } from "./world";
 import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
 import { semanaEsportiva, encerrarTemporada } from "./season";
+import { convocacoesSemanais } from "./callups";
+import { janelaAberta } from "./calendar";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -509,11 +511,13 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     }
   }
 
-  // propostas expiram
+  // propostas expiram — e conversas encerradas somem da mesa para não poluir a aba
   s = {
     ...s,
-    negociacoes: s.negociacoes.map(n => n.status !== "aberta" ? n
-      : n.expiraEm <= 1 ? { ...n, status: "expirada" as const } : { ...n, expiraEm: n.expiraEm - 1 }),
+    negociacoes: s.negociacoes
+      .filter(n => n.status === "aberta")
+      .filter(n => n.expiraEm > 1)
+      .map(n => ({ ...n, expiraEm: n.expiraEm - 1 })),
   };
 
   // recuperação de lesões
@@ -534,6 +538,11 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
 
   // clubes sondam seus atletas conforme personalidade e necessidade
   s = sondagensDeClubes(s, eventos);
+
+  // convocações para seleções de base e principal
+  const convocacoes = convocacoesSemanais(s);
+  s = convocacoes.state;
+  eventos.push(...convocacoes.manchetes);
 
   // rodadas das competições disputadas pelos seus atletas
   const esportiva = semanaEsportiva(s);
@@ -573,11 +582,15 @@ function promoverCategoria(s: GameState, p: Player, eventos: string[]): Player {
   const escada: AgeCategory[] = ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"];
   const idx = escada.indexOf(atualCat);
   if (idx < 0 || idx >= escada.length - 1) return p;
-  // precisa estar muito acima do nível esperado da própria categoria
+  // precisa estar MUITO acima do nível esperado da própria categoria
   const exigencia = [14, 22, 32, 42, 54, 70][idx];
-  if (p.atual < exigencia + 14) return p;
-  if (Math.random() > 0.05) return p;
-  const nova = escada[idx + 1];
+  const margem = p.atual - exigencia;
+  if (margem < 16) return p;
+  // fenômenos absolutos podem pular duas categorias de uma vez
+  const saltos = margem >= 34 && idx + 2 <= escada.length - 1 && Math.random() < 0.35 ? 2 : 1;
+  const chance = 0.03 + Math.min(0.12, (margem - 16) * 0.006);
+  if (Math.random() > chance) return p;
+  const nova = escada[Math.min(escada.length - 1, idx + saltos)];
   eventos.push(`${p.nome} foi promovido ao ${nova === "Livre" ? "time profissional" : nova}.`);
   return {
     ...p,
@@ -598,8 +611,17 @@ function sondagem(state: GameState, eventos: string[]): GameState {
   const clube = pick(s.clubes);
   if (clube.nome === jogador.clube) return s;
 
+  // a esmagadora maioria das propostas nasce dentro das janelas de transferência
+  const janela = janelaAberta(s.mes, clube.pais);
+  if (!janela && Math.random() > 0.08) return s;
+
   let interesse = (jogador.atual - 40) + clube.confiancaEmVoce * 0.3 + s.reputacao * 0.2;
   if (clube.necessidades.includes(jogador.posicao)) interesse += 20;
+  if (!janela) interesse -= 30;
+  if (clube.pais !== jogador.pais) {
+    const exigeExterior = { Amador: 24, "Serie D": 34, "Serie C": 50, "Serie B": 68, "Serie A": 82, Elite: 92 }[clube.categoria];
+    if (jogador.atual < exigeExterior) return s;
+  }
   if (clube.personalidade === "Formador" && jogador.idade <= 19) interesse += 15;
   if (clube.personalidade === "Imediatista" && jogador.idade < 20) interesse -= 25;
   if (clube.personalidade === "Vitrine" && jogador.idade <= 22) interesse += 12;
@@ -637,7 +659,8 @@ export function responderNegociacao(
       state: {
         ...state,
         clubes: state.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 4) } : c),
-        negociacoes: state.negociacoes.map(n => n.id === negId ? { ...n, status: "recusada" as const } : n),
+        // conversa encerrada sai da mesa imediatamente
+        negociacoes: state.negociacoes.filter(n => n.id !== negId),
       },
       mensagem: `Proposta recusada. ${clube.nome} não gostou.`,
     };
@@ -651,7 +674,7 @@ export function responderNegociacao(
         state: {
           ...state,
           clubes: state.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 6) } : c),
-          negociacoes: state.negociacoes.map(n => n.id === negId ? { ...n, status: "recusada" as const } : n),
+          negociacoes: state.negociacoes.filter(n => n.id !== negId),
         },
         mensagem: `${clube.nome} encerrou a conversa: "não trabalhamos assim".`,
       };
@@ -720,10 +743,8 @@ export function responderNegociacao(
       financas: [fin, ...state.financas],
       noticias: [not, ...state.noticias],
       // ao fechar com um clube, todas as outras conversas pelo atleta caem
-      negociacoes: state.negociacoes.map(n =>
-        n.id === negId ? { ...n, status: "aceita" as const }
-          : n.playerId === player.id && n.status === "aberta"
-            ? { ...n, status: "cancelada" as const } : n),
+      negociacoes: state.negociacoes
+        .filter(n => n.id !== negId && n.playerId !== player.id),
       jogadores: state.jogadores.map(p => p.id === player.id ? atualizado : p),
     },
     mensagem: `${player.nome} → ${clube.nome}. Comissão de R$ ${receita.toLocaleString("pt-BR")} recebida!`,

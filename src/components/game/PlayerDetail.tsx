@@ -8,7 +8,7 @@ import { potencialEstimado, CUSTOS, custoObservacao } from "@/lib/game/engine";
 import { GRUPOS_ATRIBUTOS, ATRIBUTOS_GOLEIRO } from "@/lib/game/attributes";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { CareerHistory } from "./CareerHistory";
-import { Trophy } from "lucide-react";
+import { Trophy, Flag } from "lucide-react";
 
 export function PlayerDetail({
   player,
@@ -138,6 +138,19 @@ export function PlayerDetail({
               {player.titulos!.map((t, i) => (
                 <Badge key={i} className="gap-1 text-[10px]">
                   <Trophy className="h-3 w-3" /> {t.ano} • {t.competicao} ({t.clube})
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(player.convocacoes?.length ?? 0) > 0 && (
+          <div className="mt-5">
+            <div className="text-xs font-bold mb-2 text-muted-foreground uppercase">Convocações</div>
+            <div className="flex flex-wrap gap-1">
+              {player.convocacoes!.map((c, i) => (
+                <Badge key={i} variant="secondary" className="gap-1 text-[10px]">
+                  <Flag className="h-3 w-3" /> {c.ano} • {c.selecao} ({c.jogos} jogos)
                 </Badge>
               ))}
             </div>

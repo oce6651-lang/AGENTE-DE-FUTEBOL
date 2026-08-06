@@ -1,24 +1,73 @@
 import { rnd } from "./generators";
 import { categoriaDoAtleta } from "./season";
-import type { Club, ClubResponse, GameState, Negotiation, NewsItem, Player } from "./types";
+import { janelaAberta, statusJanela } from "./calendar";
+import type {
+  Club, ClubResponse, GameState, Negotiation, NewsItem, Player, TimelineEvent, Tryout,
+} from "./types";
 
 function uid(prefix: string) {
   return `${prefix}${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Nível mínimo que cada divisão espera de um reforço. */
+/**
+ * Nível mínimo que cada divisão espera de um reforço.
+ * A escada é dura de propósito: a maioria dos atletas circula entre a Série D
+ * e a Série C, poucos alcançam a B ou a A e quase ninguém chega à elite.
+ */
 const NIVEL_DIVISAO: Record<Club["categoria"], number> = {
-  Amador: 18, "Serie D": 30, "Serie C": 42, "Serie B": 55, "Serie A": 68, Elite: 82,
+  Amador: 16, "Serie D": 30, "Serie C": 46, "Serie B": 64, "Serie A": 78, Elite: 90,
 };
 
 /** Confiança mínima para o clube sequer atender o telefone. */
 const PORTA_DE_ENTRADA: Record<Club["categoria"], number> = {
-  Amador: 0, "Serie D": 8, "Serie C": 20, "Serie B": 36, "Serie A": 55, Elite: 75,
+  Amador: 0, "Serie D": 8, "Serie C": 22, "Serie B": 42, "Serie A": 62, Elite: 82,
+};
+
+/**
+ * Nível técnico mínimo para o atleta sair do país. Só os melhores vão para
+ * clubes grandes lá fora; os demais só interessam a clubes pequenos de
+ * divisões inferiores mundo afora.
+ */
+const EXIGENCIA_EXTERIOR: Record<Club["categoria"], number> = {
+  Amador: 24, "Serie D": 34, "Serie C": 50, "Serie B": 68, "Serie A": 82, Elite: 92,
 };
 
 export const CUSTO_OFERTA = 220;
 /** Abordagem direta a um clube específico: viagem, reunião e apresentação. */
 export const CUSTO_ABORDAGEM = 480;
+
+/**
+ * Quando o clube pede um teste ou vídeos, o atleta segue automaticamente para
+ * uma avaliação presencial naquele clube — nada de burocracia extra.
+ */
+export function agendarAvaliacaoAutomatica(
+  state: GameState, player: Player, clube: Club, motivo: string,
+): GameState {
+  const emAvaliacao = state.peneiras.some(t => t.playerId === player.id
+    && (t.status === "em_andamento" || t.status === "mais_tempo"));
+  if (emAvaliacao || !state.jogadores.some(p => p.id === player.id)) return state;
+
+  const duracao = clube.categoria === "Serie A" || clube.categoria === "Elite" ? 3 : 2;
+  const peneira: Tryout = {
+    id: uid("TRY"), playerId: player.id, clubId: clube.id,
+    enviadaAno: state.ano, enviadaMes: state.mes, enviadaSemana: state.semana,
+    duracaoSemanas: duracao, restanteSemanas: duracao,
+    status: "em_andamento",
+    gratuita: true,
+    categoria: categoriaDoAtleta(player),
+    notas: [`${motivo} — avaliação marcada no CT do ${clube.nome} (${duracao} semanas).`],
+  };
+  const evt: TimelineEvent = {
+    ano: state.ano, mes: state.mes, semana: state.semana, tipo: "peneira",
+    texto: `Convidado para avaliação no ${clube.nome} após oferta da agência.`,
+  };
+  return {
+    ...state,
+    peneiras: [peneira, ...state.peneiras],
+    jogadores: state.jogadores.map(p => p.id === player.id
+      ? { ...p, timeline: [...p.timeline, evt], status: `Em avaliação (${clube.abrev})` } : p),
+  };
+}
 
 /**
  * O empresário pode oferecer qualquer atleta a qualquer clube — o filtro é a
@@ -40,13 +89,24 @@ export function clubesAlvo(state: GameState, player: Player): Club[] {
 export function responder(state: GameState, clube: Club, player: Player): ClubResponse {
   const base = { clubId: clube.id, clube: clube.nome };
   const exigido = NIVEL_DIVISAO[clube.categoria];
+  const exterior = clube.pais !== player.pais;
 
   // clubes muito acima do nível do atleta nem abrem conversa
-  if (exigido - player.atual > 20) {
+  if (exigido - player.atual > 12) {
     return { ...base, resultado: "abaixo_do_nivel", texto: `${clube.nome} nem avaliou o material: o atleta está muito distante do nível da ${clube.categoria}.` };
   }
-  if (clube.pais !== player.pais && (state.reputacao < 45 || player.atual < 62)) {
-    return { ...base, resultado: "ignorou", texto: "Clube do exterior: não negocia com agências sem projeção internacional." };
+  if (exterior) {
+    const exige = EXIGENCIA_EXTERIOR[clube.categoria];
+    if (player.atual < exige) {
+      return {
+        ...base, resultado: "abaixo_do_nivel",
+        texto: `Sair do país é para poucos: ${clube.nome} só analisa atletas a partir de ${exige} de nível técnico.`,
+      };
+    }
+    const repMin = { Amador: 10, "Serie D": 14, "Serie C": 22, "Serie B": 35, "Serie A": 50, Elite: 70 }[clube.categoria];
+    if (state.reputacao < repMin && !state.upgrades.includes("filial")) {
+      return { ...base, resultado: "ignorou", texto: "Clube do exterior: não negocia com agências sem projeção internacional." };
+    }
   }
 
   const acesso = clube.confiancaEmVoce + state.reputacao * 0.5
@@ -55,7 +115,7 @@ export function responder(state: GameState, clube: Club, player: Player): ClubRe
     return { ...base, resultado: "ignorou", texto: "Não retornou seus contatos. Sua agência ainda não é conhecida aqui." };
   }
 
-  if (player.atual < exigido - 6 && !(clube.personalidade === "Formador" && player.idade <= 19 && player.potencial >= exigido + 8)) {
+  if (player.atual < exigido - 4 && !(clube.personalidade === "Formador" && player.idade <= 19 && player.potencial >= exigido + 8)) {
     return { ...base, resultado: "abaixo_do_nivel", texto: `Avaliação: nível técnico abaixo do exigido pela ${clube.categoria}.` };
   }
 
@@ -81,8 +141,17 @@ export function responder(state: GameState, clube: Club, player: Player): ClubRe
   if (!player.clube) peso -= 8;
   if (player.observado < 2) peso -= 10;
   if (player.idade >= 30) peso -= 12;
+  // fora da janela de transferências o mercado quase congela
+  const janela = janelaAberta(state.mes, clube.pais);
+  if (!janela) peso -= 45;
 
   const roll = rnd(0, 100);
+  if (!janela && roll > peso + 12) {
+    return {
+      ...base, resultado: "pede_informacoes",
+      texto: `${statusJanela(state, clube.pais)}. O clube pediu relatórios e quer ver o atleta de perto antes da próxima janela.`,
+    };
+  }
   if (roll > peso + 25) {
     return { ...base, resultado: "pede_informacoes", texto: "Pediu relatórios completos e vídeos antes de qualquer decisão." };
   }
@@ -171,6 +240,7 @@ export function oferecerParaClubes(
     }
     if (r.resultado === "pede_teste" || r.resultado === "pede_informacoes") {
       s = { ...s, clubes: s.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 3) } : c) };
+      s = agendarAvaliacaoAutomatica(s, player, clube, r.texto);
     }
   }
 
@@ -181,12 +251,15 @@ export function oferecerParaClubes(
   };
 
   const interessados = respostas.filter(r => r.resultado === "interessado").length;
+  const testes = respostas.filter(r => r.resultado === "pede_teste" || r.resultado === "pede_informacoes").length;
   return {
     state: s,
     respostas,
     mensagem: interessados
       ? `${interessados} clube(s) abriram negociação por ${player.nome}.`
-      : `Nenhuma proposta imediata por ${player.nome}.`,
+      : testes
+        ? `Nenhuma proposta, mas ${player.nome} foi chamado para avaliação.`
+        : `Nenhuma proposta imediata por ${player.nome}.`,
   };
 }
 
@@ -239,7 +312,10 @@ export function negociarComClube(
       clubes: s.clubes.map(c => c.id === clube.id
         ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 6) } : c),
     };
+    s = agendarAvaliacaoAutomatica(s, player, clube, resposta.texto);
   }
 
-  return { state: s, resposta, mensagem: resposta.texto };
+  const extra = (resposta.resultado === "pede_teste" || resposta.resultado === "pede_informacoes")
+    ? ` ${player.nome} foi enviado para avaliação no ${clube.nome}.` : "";
+  return { state: s, resposta, mensagem: resposta.texto + extra };
 }
