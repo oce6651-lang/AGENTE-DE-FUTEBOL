@@ -611,8 +611,17 @@ function sondagem(state: GameState, eventos: string[]): GameState {
   const clube = pick(s.clubes);
   if (clube.nome === jogador.clube) return s;
 
+  // a esmagadora maioria das propostas nasce dentro das janelas de transferência
+  const janela = janelaAberta(s.mes, clube.pais);
+  if (!janela && Math.random() > 0.08) return s;
+
   let interesse = (jogador.atual - 40) + clube.confiancaEmVoce * 0.3 + s.reputacao * 0.2;
   if (clube.necessidades.includes(jogador.posicao)) interesse += 20;
+  if (!janela) interesse -= 30;
+  if (clube.pais !== jogador.pais) {
+    const exigeExterior = { Amador: 24, "Serie D": 34, "Serie C": 50, "Serie B": 68, "Serie A": 82, Elite: 92 }[clube.categoria];
+    if (jogador.atual < exigeExterior) return s;
+  }
   if (clube.personalidade === "Formador" && jogador.idade <= 19) interesse += 15;
   if (clube.personalidade === "Imediatista" && jogador.idade < 20) interesse -= 25;
   if (clube.personalidade === "Vitrine" && jogador.idade <= 22) interesse += 12;
