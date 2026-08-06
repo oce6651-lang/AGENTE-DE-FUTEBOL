@@ -6,6 +6,8 @@ import { mundoSemanal, viradaDeAno } from "./world";
 import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
 import { semanaEsportiva, encerrarTemporada } from "./season";
+import { convocacoesSemanais } from "./callups";
+import { janelaAberta } from "./calendar";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
