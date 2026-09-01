@@ -107,6 +107,43 @@ export const COMPETICOES: Competition[] = [
   { id: "copa-norte", nome: "Copa Norte", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-17", "Sub-20", "Livre"], mesInicio: 5, mesFim: 8, estados: ["PA", "AM", "AC", "RO", "RR", "AP", "TO"] },
   { id: "torneio-verao", nome: "Torneio de Verão da Várzea", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 12, mesFim: 2 },
   { id: "copa-escolar", nome: "Copa Escolar Estadual", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17"], mesInicio: 8, mesFim: 11 },
+
+  // ---------- Ligas nacionais estrangeiras ----------
+  { id: "laliga", nome: "La Liga", pais: "Espanha", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "laliga2", nome: "La Liga 2", pais: "Espanha", tipo: "nacional", divisoes: ["Serie A", "Serie B"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "premier", nome: "Premier League", pais: "Inglaterra", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "serie-a-ita", nome: "Serie A (ITA)", pais: "Itália", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "serie-b-ita", nome: "Serie B (ITA)", pais: "Itália", tipo: "nacional", divisoes: ["Serie A", "Serie B", "Serie C"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "primeira-liga", nome: "Primeira Liga", pais: "Portugal", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "liga-portugal-2", nome: "Liga Portugal 2", pais: "Portugal", tipo: "nacional", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "ligue1", nome: "Ligue 1", pais: "França", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "bundesliga", nome: "Bundesliga", pais: "Alemanha", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "eredivisie", nome: "Eredivisie", pais: "Holanda", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "pro-league", nome: "Jupiler Pro League", pais: "Bélgica", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "liga-argentina", nome: "Liga Profesional", pais: "Argentina", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 2, mesFim: 11 },
+  { id: "primera-b-arg", nome: "Primera Nacional (ARG)", pais: "Argentina", tipo: "nacional", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 2, mesFim: 11 },
+  { id: "primera-uru", nome: "Primera División (URU)", pais: "Uruguai", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 2, mesFim: 11 },
+  { id: "segunda-uru", nome: "Segunda División (URU)", pais: "Uruguai", tipo: "nacional", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 3, mesFim: 11 },
+  { id: "liga-mx", nome: "Liga MX", pais: "México", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 1, mesFim: 12 },
+  { id: "expansion-mx", nome: "Liga de Expansión MX", pais: "México", tipo: "nacional", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 1, mesFim: 12 },
+  { id: "primera-chile", nome: "Primera División (CHI)", pais: "Chile", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 2, mesFim: 11 },
+  { id: "primera-b-chile", nome: "Primera B (CHI)", pais: "Chile", tipo: "nacional", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 3, mesFim: 11 },
+  { id: "liga-colombia", nome: "Liga BetPlay", pais: "Colômbia", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 1, mesFim: 12 },
+  { id: "torneo-colombia", nome: "Torneo BetPlay", pais: "Colômbia", tipo: "nacional", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 2, mesFim: 11 },
+  { id: "liga-paraguai", nome: "Primera División (PAR)", pais: "Paraguai", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 1, mesFim: 12 },
+  { id: "mls", nome: "Major League Soccer", pais: "EUA", tipo: "nacional", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 2, mesFim: 11 },
+  { id: "j1", nome: "J1 League", pais: "Japão", tipo: "nacional", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 2, mesFim: 12 },
+
+  // ---------- Copas nacionais estrangeiras ----------
+  { id: "copa-del-rey", nome: "Copa del Rey", pais: "Espanha", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 10, mesFim: 4 },
+  { id: "fa-cup", nome: "FA Cup", pais: "Inglaterra", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 11, mesFim: 5 },
+  { id: "coppa-italia", nome: "Coppa Italia", pais: "Itália", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 9, mesFim: 5 },
+  { id: "taca-portugal", nome: "Taça de Portugal", pais: "Portugal", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: PRO, mesInicio: 9, mesFim: 5 },
+  { id: "dfb-pokal", nome: "DFB-Pokal", pais: "Alemanha", tipo: "copa", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 8, mesFim: 5 },
+  { id: "coupe-france", nome: "Coupe de France", pais: "França", tipo: "copa", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 11, mesFim: 5 },
+  { id: "knvb-beker", nome: "KNVB Beker", pais: "Holanda", tipo: "copa", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 9, mesFim: 4 },
+  { id: "copa-argentina", nome: "Copa Argentina", pais: "Argentina", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 3, mesFim: 11 },
+  { id: "copa-mx", nome: "Copa MX", pais: "México", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 3, mesFim: 10 },
 ];
 
 /** Liga principal de um clube, conforme divisão e país. */
@@ -115,7 +152,16 @@ export function ligaPrincipal(divisao: Division, pais: string): string {
     const mapa: Record<string, string> = {
       Espanha: "La Liga", Inglaterra: "Premier League", Itália: "Serie A (ITA)",
       Portugal: "Primeira Liga", Argentina: "Liga Profesional", Uruguai: "Primera División (URU)",
+      França: "Ligue 1", Alemanha: "Bundesliga", Holanda: "Eredivisie", Bélgica: "Jupiler Pro League",
+      México: "Liga MX", Chile: "Primera División (CHI)", Colômbia: "Liga BetPlay",
+      Paraguai: "Primera División (PAR)", EUA: "Major League Soccer", Japão: "J1 League",
     };
+    const segunda: Record<string, string> = {
+      Espanha: "La Liga 2", Itália: "Serie B (ITA)", Portugal: "Liga Portugal 2",
+      Argentina: "Primera Nacional (ARG)", Uruguai: "Segunda División (URU)",
+      México: "Liga de Expansión MX", Chile: "Primera B (CHI)", Colômbia: "Torneo BetPlay",
+    };
+    if ((divisao === "Serie B" || divisao === "Serie C") && segunda[pais]) return segunda[pais];
     return mapa[pais] ?? "Liga Internacional";
   }
   const mapa: Record<Division, string> = {
