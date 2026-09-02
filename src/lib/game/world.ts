@@ -136,7 +136,7 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
     const campeoes: string[] = [];
     for (const div of ORDEM) {
       const daDivisao = s.clubes
-        .filter(c => c.categoria === div)
+        .filter(c => c.categoria === div && (c.modalidade ?? "campo") === "campo")
         .sort((a, b) => (b.pontos / Math.max(1, b.jogos)) - (a.pontos / Math.max(1, a.jogos)));
       if (daDivisao.length < 2) continue;
       campeoes.push(`${daDivisao[0].nome} (${LIGAS[div]})`);

@@ -1,4 +1,4 @@
-import type { ClubPersonality, Division } from "../types";
+import type { ClubPersonality, Division, Modalidade } from "../types";
 
 /** Semente de clube: dados fixos usados para montar o mundo. */
 export interface ClubSeed {
@@ -12,6 +12,8 @@ export interface ClubSeed {
   /** Orçamento em milhares de reais. */
   orcamentoK: number;
   cores: [string, string];
+  /** Futebol de campo (padrão) ou futsal. */
+  modalidade?: Modalidade;
 }
 
 type Tupla = [string, string, string, string, string, Division, ClubPersonality, number, string, string];
@@ -410,13 +412,62 @@ const T: Tupla[] = [
   ["Altos-PI", "ALT", "Brasil", "PI", "Altos", "Serie D", "Pechincha", 720, "#e4b400", "#1f4fa0"],
 ];
 
-export const CLUB_SEEDS: ClubSeed[] = T.map(t => ({
-  nome: t[0], abrev: t[1], pais: t[2], estado: t[3], cidade: t[4],
-  categoria: t[5], personalidade: t[6], orcamentoK: t[7], cores: [t[8], t[9]],
-}));
+
+/** ================= FUTSAL BRASILEIRO ================= */
+const F: Tupla[] = [
+  ["Magnus Futsal", "MAG", "Brasil", "SP", "Sorocaba", "Elite", "Imediatista", 18_000, "#1a1a1a", "#e4b400"],
+  ["Corinthians Futsal", "CORF", "Brasil", "SP", "São Paulo", "Elite", "Tradicional", 16_000, "#1a1a1a", "#e0e0e0"],
+  ["Pato Futsal", "PATF", "Brasil", "PR", "Pato Branco", "Elite", "Formador", 12_000, "#1c8a4a", "#e6e6e6"],
+  ["ACBF Carlos Barbosa", "ACBF", "Brasil", "RS", "Carlos Barbosa", "Elite", "Formador", 13_000, "#c8102e", "#1a1a1a"],
+  ["Joinville Futsal", "JECF", "Brasil", "SC", "Joinville", "Elite", "Tradicional", 11_000, "#1a1a1a", "#e4b400"],
+  ["Jaraguá Futsal", "JARF", "Brasil", "SC", "Jaraguá do Sul", "Elite", "Formador", 9_500, "#c8102e", "#e6e6e6"],
+  ["Cascavel Futsal", "CASF", "Brasil", "PR", "Cascavel", "Elite", "Vitrine", 9_000, "#1c8a4a", "#e4b400"],
+  ["Atlântico Erechim", "ATLF", "Brasil", "RS", "Erechim", "Serie A", "Formador", 8_200, "#1f4fa0", "#e6e6e6"],
+  ["Marreco Futsal", "MARF", "Brasil", "PR", "Francisco Beltrão", "Serie A", "Pechincha", 6_800, "#1c8a4a", "#e4b400"],
+  ["Praia Clube Futsal", "PRAF", "Brasil", "MG", "Uberlândia", "Serie A", "Vitrine", 7_400, "#1f5fb0", "#e6e6e6"],
+  ["Minas Tênis Futsal", "MINF", "Brasil", "MG", "Belo Horizonte", "Serie A", "Formador", 7_800, "#1a1a1a", "#e6e6e6"],
+  ["Brasília Futsal", "BSBF", "Brasil", "DF", "Brasília", "Serie A", "Tradicional", 6_200, "#e4b400", "#1f4fa0"],
+  ["Blumenau Futsal", "BLUF", "Brasil", "SC", "Blumenau", "Serie A", "Formador", 5_900, "#1f4fa0", "#e6e6e6"],
+  ["Tubarão Futsal", "TUBF", "Brasil", "SC", "Tubarão", "Serie B", "Pechincha", 4_100, "#c8102e", "#1a1a1a"],
+  ["Campo Mourão Futsal", "CMOF", "Brasil", "PR", "Campo Mourão", "Serie B", "Formador", 4_400, "#1f8ecd", "#e6e6e6"],
+  ["Umuarama Futsal", "UMUF", "Brasil", "PR", "Umuarama", "Serie B", "Pechincha", 3_800, "#e4b400", "#1c8a4a"],
+  ["São José Futsal", "SJCF", "Brasil", "SP", "São José dos Campos", "Serie B", "Formador", 4_600, "#1f4fa0", "#e4b400"],
+  ["Taubaté Futsal", "TAUF", "Brasil", "SP", "Taubaté", "Serie B", "Tradicional", 4_200, "#1f4fa0", "#e6e6e6"],
+  ["Assoeva Futsal", "ASSF", "Brasil", "RS", "Venâncio Aires", "Serie B", "Formador", 3_600, "#1c8a4a", "#e6e6e6"],
+  ["Passo Fundo Futsal", "PFUF", "Brasil", "RS", "Passo Fundo", "Serie C", "Pechincha", 2_400, "#1f4fa0", "#e4b400"],
+  ["Guarapuava Futsal", "GUAF", "Brasil", "PR", "Guarapuava", "Serie C", "Pechincha", 2_200, "#1a1a1a", "#1f8ecd"],
+  ["Foz Cataratas Futsal", "FOZF", "Brasil", "PR", "Foz do Iguaçu", "Serie C", "Formador", 2_600, "#1c8a4a", "#1f4fa0"],
+  ["Ceará Futsal", "CEAF", "Brasil", "CE", "Fortaleza", "Serie C", "Tradicional", 2_800, "#1a1a1a", "#e6e6e6"],
+  ["Sport Futsal", "SPTF", "Brasil", "PE", "Recife", "Serie C", "Tradicional", 2_900, "#c8102e", "#1a1a1a"],
+  ["Apodi Futsal", "APOF", "Brasil", "RN", "Apodi", "Serie C", "Pechincha", 1_900, "#1f8ecd", "#e6e6e6"],
+  ["Constelação Futsal", "CONF", "Brasil", "AM", "Manaus", "Serie D", "Formador", 1_300, "#e4b400", "#1c8a4a"],
+  ["Real Brasília Futsal", "RBSF", "Brasil", "DF", "Brasília", "Serie D", "Pechincha", 1_200, "#1f4fa0", "#e6e6e6"],
+  ["Dracena Futsal", "DRAF", "Brasil", "SP", "Dracena", "Serie D", "Formador", 1_400, "#1c8a4a", "#e4b400"],
+  ["Bauru Futsal", "BAUF", "Brasil", "SP", "Bauru", "Serie D", "Pechincha", 1_500, "#c8102e", "#e6e6e6"],
+  ["Peixe Futsal", "PEIF", "Brasil", "SC", "Itajaí", "Amador", "Formador", 420, "#1f5fb0", "#e6e6e6"],
+  ["Vila Nova Futsal", "VNOF", "Brasil", "RS", "Porto Alegre", "Amador", "Pechincha", 260, "#1a1a1a", "#e4b400"],
+  ["AABB Futsal", "AABF", "Brasil", "MG", "Juiz de Fora", "Amador", "Formador", 240, "#1c8a4a", "#e6e6e6"],
+];
+
+function montar(t: Tupla, modalidade: Modalidade): ClubSeed {
+  return {
+    nome: t[0], abrev: t[1], pais: t[2], estado: t[3], cidade: t[4],
+    categoria: t[5], personalidade: t[6], orcamentoK: t[7], cores: [t[8], t[9]],
+    modalidade,
+  };
+}
+
+export const CLUB_SEEDS: ClubSeed[] = [
+  ...T.map(t => montar(t, "campo")),
+  ...F.map(t => montar(t, "futsal")),
+];
+
+/** Apenas os clubes de futsal — usados nas quadras e ligas de salão. */
+export const FUTSAL_SEEDS: ClubSeed[] = CLUB_SEEDS.filter(c => c.modalidade === "futsal");
 
 /** Clubes de coração possíveis para quem nasce em determinado estado. */
 export function clubesDaRegiao(estado: string): ClubSeed[] {
-  const doEstado = CLUB_SEEDS.filter(c => c.estado === estado && c.pais === "Brasil");
-  return doEstado.length ? doEstado : CLUB_SEEDS.filter(c => c.pais === "Brasil");
+  const campo = CLUB_SEEDS.filter(c => c.modalidade !== "futsal");
+  const doEstado = campo.filter(c => c.estado === estado && c.pais === "Brasil");
+  return doEstado.length ? doEstado : campo.filter(c => c.pais === "Brasil");
 }

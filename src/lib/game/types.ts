@@ -258,6 +258,9 @@ export type ClubPersonality =
   | "Vitrine"        // compra jovens para revender
   | "Tradicional";   // conservador, exige muito
 
+/** Modalidade praticada pelo clube/competição. */
+export type Modalidade = "campo" | "futsal";
+
 export type Division = "Amador" | "Serie D" | "Serie C" | "Serie B" | "Serie A" | "Elite";
 
 export interface Club {
@@ -271,6 +274,8 @@ export interface Club {
   competicoes: string[];
   pais: string;
   estado: string;
+  /** Futebol de campo (padrão) ou futsal. */
+  modalidade?: Modalidade;
   personalidade: ClubPersonality;
   orcamento: number;
   cidade: string;
@@ -382,9 +387,50 @@ export interface GameState {
   locaisVisitados: string[];
   /** Contatos pessoais ainda não avistados em campo (aparecem na primeira várzea). */
   contatosPendentes?: Player[];
+  /** Foto da agência no início do ano — base do resumo de fim de temporada. */
+  snapshotInicioAno?: {
+    ano: number;
+    dinheiro: number;
+    reputacao: number;
+    jogadores: Record<string, { ovr: number; valor: number }>;
+  };
+  /** Resumos de fim de temporada, do mais recente para o mais antigo. */
+  resumosTemporada?: SeasonSummary[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;
+}
+
+/** Linha do resumo de fim de temporada de um cliente. */
+export interface SeasonSummaryPlayer {
+  playerId: string;
+  nome: string;
+  clube: string;
+  categoria: string;
+  ovrInicio: number;
+  ovrFim: number;
+  valorInicio: number;
+  valorFim: number;
+  jogos: number;
+  gols: number;
+  assistencias: number;
+  notaMedia: number;
+  titulos: string[];
+}
+
+/** Balanço completo de uma temporada da agência. */
+export interface SeasonSummary {
+  ano: number;
+  dinheiroInicio: number;
+  dinheiroFim: number;
+  reputacaoInicio: number;
+  reputacaoFim: number;
+  clientes: number;
+  titulos: number;
+  receita: number;
+  despesa: number;
+  jogadores: SeasonSummaryPlayer[];
+  destaques: string[];
 }
 
 export const MESES = [
