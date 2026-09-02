@@ -31,7 +31,7 @@ export function categoriaDoAtleta(p: Player): AgeCategory {
 /** Competições que o atleta realmente disputa neste momento do calendário. */
 export function competicoesDoAtleta(clube: Club, p: Player, mes: number): Competition[] {
   const cat = categoriaDoAtleta(p);
-  return competicoesDoClube(clube.categoria, clube.pais, clube.estado)
+  return competicoesDoClube(clube.categoria, clube.pais, clube.estado, clube.modalidade ?? "campo")
     .filter(c => c.categorias.includes(cat))
     .filter(c => competicaoAtiva(c, mes));
 }
@@ -205,7 +205,7 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
 
   for (const comp of COMPETICOES) {
     const participantes = state.clubes.filter(c =>
-      competicoesDoClube(c.categoria, c.pais, c.estado).some(x => x.id === comp.id));
+      competicoesDoClube(c.categoria, c.pais, c.estado, c.modalidade ?? "campo").some(x => x.id === comp.id));
     if (participantes.length < 2) continue;
 
     const porEstado = ["estadual", "amadora", "regional"].includes(comp.tipo) || comp.id === "estadual-base";
