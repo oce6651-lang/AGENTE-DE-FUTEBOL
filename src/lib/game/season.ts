@@ -4,7 +4,7 @@ import { pick, rnd } from "./generators";
 import { ganharReputacao, REP_XP } from "./reputation";
 import type {
   AgeCategory, Club, CompetitionSeason, GameState, NewsItem, Player,
-  SeasonCompetition, SeasonRecord, TransferRecord,
+  SeasonCompetition, SeasonRecord, SeasonSummary, TransferRecord,
 } from "./types";
 
 function uid(prefix: string) {
@@ -344,5 +344,67 @@ export function encerrarTemporada(state: GameState): { state: GameState; noticia
     ].slice(0, 1200),
   };
 
+  // ---- balanço de fim de temporada da agência ----
+  s = { ...s, resumosTemporada: [montarResumo(state, s), ...(s.resumosTemporada ?? [])].slice(0, 40) };
+
   return { state: s, noticias };
+}
+
+/** Compara a foto do início do ano com o estado atual e monta o balanço anual. */
+function montarResumo(inicial: GameState, s: GameState): SeasonSummary {
+  const snap = s.snapshotInicioAno?.ano === s.ano ? s.snapshotInicioAno : undefined;
+  const doAno = (p: Player) => (p.temporadas ?? []).filter(t => t.ano === s.ano);
+
+  const jogadores = s.jogadores.map(p => {
+    const temps = doAno(p);
+    const jogos = temps.reduce((a, t) => a + t.jogos, 0);
+    const notas = temps.filter(t => t.jogos > 0);
+    const anterior = snap?.jogadores[p.id];
+    return {
+      playerId: p.id,
+      nome: p.nome,
+      clube: p.clube ?? "Sem clube",
+      categoria: categoriaDoAtleta(p),
+      ovrInicio: anterior?.ovr ?? p.atual,
+      ovrFim: p.atual,
+      valorInicio: anterior?.valor ?? p.valorMercado,
+      valorFim: p.valorMercado,
+      jogos,
+      gols: temps.reduce((a, t) => a + t.gols, 0),
+      assistencias: temps.reduce((a, t) => a + t.assistencias, 0),
+      notaMedia: notas.length
+        ? notas.reduce((a, t) => a + (t.notaMedia ?? 0) * t.jogos, 0) / Math.max(1, jogos)
+        : 0,
+      titulos: temps.flatMap(t => t.titulos),
+    };
+  });
+
+  const financasDoAno = (s.financas ?? []).filter(f => f.data.endsWith(String(s.ano)));
+  const receita = financasDoAno.filter(f => f.tipo === "receita").reduce((a, f) => a + f.valor, 0);
+  const despesa = financasDoAno.filter(f => f.tipo === "despesa").reduce((a, f) => a + f.valor, 0);
+
+  const destaques: string[] = [];
+  const evoluiu = [...jogadores].sort((a, b) => (b.ovrFim - b.ovrInicio) - (a.ovrFim - a.ovrInicio))[0];
+  if (evoluiu && evoluiu.ovrFim > evoluiu.ovrInicio) {
+    destaques.push(`${evoluiu.nome} evoluiu ${evoluiu.ovrFim - evoluiu.ovrInicio} pontos de Overall.`);
+  }
+  const artilheiro = [...jogadores].sort((a, b) => b.gols - a.gols)[0];
+  if (artilheiro && artilheiro.gols > 0) destaques.push(`${artilheiro.nome} marcou ${artilheiro.gols} gols na temporada.`);
+  const campeoesResumo = jogadores.filter(j => j.titulos.length);
+  if (campeoesResumo.length) destaques.push(`${campeoesResumo.length} cliente(s) conquistaram títulos.`);
+  if (!destaques.length) destaques.push("Temporada de construção: nenhum feito relevante ainda.");
+
+  return {
+    ano: s.ano,
+    dinheiroInicio: snap?.dinheiro ?? inicial.dinheiro,
+    dinheiroFim: s.dinheiro,
+    reputacaoInicio: snap?.reputacao ?? inicial.reputacao,
+    reputacaoFim: s.reputacao,
+    clientes: s.jogadores.length,
+    titulos: jogadores.reduce((a, j) => a + j.titulos.length, 0),
+    receita,
+    despesa,
+    jogadores,
+    destaques,
+  };
 }
