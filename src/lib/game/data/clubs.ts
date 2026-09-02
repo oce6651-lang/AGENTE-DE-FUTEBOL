@@ -467,6 +467,7 @@ export const FUTSAL_SEEDS: ClubSeed[] = CLUB_SEEDS.filter(c => c.modalidade === 
 
 /** Clubes de coração possíveis para quem nasce em determinado estado. */
 export function clubesDaRegiao(estado: string): ClubSeed[] {
-  const doEstado = CLUB_SEEDS.filter(c => c.estado === estado && c.pais === "Brasil");
-  return doEstado.length ? doEstado : CLUB_SEEDS.filter(c => c.pais === "Brasil");
+  const campo = CLUB_SEEDS.filter(c => c.modalidade !== "futsal");
+  const doEstado = campo.filter(c => c.estado === estado && c.pais === "Brasil");
+  return doEstado.length ? doEstado : campo.filter(c => c.pais === "Brasil");
 }
