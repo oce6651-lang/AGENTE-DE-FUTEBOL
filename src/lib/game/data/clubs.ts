@@ -447,6 +447,32 @@ const F: Tupla[] = [
   ["Peixe Futsal", "PEIF", "Brasil", "SC", "Itajaí", "Amador", "Formador", 420, "#1f5fb0", "#e6e6e6"],
   ["Vila Nova Futsal", "VNOF", "Brasil", "RS", "Porto Alegre", "Amador", "Pechincha", 260, "#1a1a1a", "#e4b400"],
   ["AABB Futsal", "AABF", "Brasil", "MG", "Juiz de Fora", "Amador", "Formador", 240, "#1c8a4a", "#e6e6e6"],
+
+  // ---------- Futsal gaúcho (RS) ----------
+  ["Sercesa Anta Gorda", "SERF", "Brasil", "RS", "Anta Gorda", "Serie A", "Formador", 3_900, "#1f4fa0", "#e4b400"],
+  ["Uruguaiana Futsal", "URUF", "Brasil", "RS", "Uruguaiana", "Serie B", "Pechincha", 2_700, "#1c8a4a", "#e6e6e6"],
+  ["Cerro Largo Futsal", "CLGF", "Brasil", "RS", "Cerro Largo", "Serie B", "Formador", 3_100, "#c8102e", "#e6e6e6"],
+  ["Guarany Espumoso", "GESF", "Brasil", "RS", "Espumoso", "Serie B", "Tradicional", 2_500, "#1f8ecd", "#1a1a1a"],
+  ["Sport Clube Gaúcho Futsal", "SCGF", "Brasil", "RS", "Passo Fundo", "Serie C", "Pechincha", 1_800, "#e4b400", "#1f4fa0"],
+  ["Santa Cruz Futsal", "SCFF", "Brasil", "RS", "Santa Cruz do Sul", "Serie C", "Formador", 2_100, "#1a1a1a", "#e6e6e6"],
+  ["Novo Hamburgo Futsal", "NHUF", "Brasil", "RS", "Novo Hamburgo", "Serie C", "Tradicional", 1_950, "#1f4fa0", "#e6e6e6"],
+  ["Caxias Futsal", "CAXF", "Brasil", "RS", "Caxias do Sul", "Serie C", "Formador", 2_300, "#1f4fa0", "#e4b400"],
+  ["Bento Gonçalves Futsal", "BGOF", "Brasil", "RS", "Bento Gonçalves", "Serie C", "Vitrine", 2_050, "#7b1e3a", "#e6e6e6"],
+  ["Lajeado Futsal", "LAJF", "Brasil", "RS", "Lajeado", "Serie C", "Pechincha", 1_700, "#1c8a4a", "#e4b400"],
+  ["Gramado Futsal", "GRMF", "Brasil", "RS", "Gramado", "Serie D", "Formador", 1_200, "#1f5fb0", "#e6e6e6"],
+  ["Pelotas Futsal", "PELF", "Brasil", "RS", "Pelotas", "Serie D", "Tradicional", 1_400, "#1a1a1a", "#e4b400"],
+  ["Rio Grande Futsal", "RGRF", "Brasil", "RS", "Rio Grande", "Serie D", "Pechincha", 1_100, "#1f4fa0", "#c8102e"],
+  ["Santa Maria Futsal", "SMAF", "Brasil", "RS", "Santa Maria", "Serie D", "Formador", 1_350, "#c8102e", "#e6e6e6"],
+  ["Ijuí Futsal", "IJUF", "Brasil", "RS", "Ijuí", "Serie D", "Pechincha", 980, "#1c8a4a", "#e6e6e6"],
+  ["Sapucaia Futsal", "SAPF", "Brasil", "RS", "Sapucaia do Sul", "Serie D", "Pechincha", 900, "#e4b400", "#1a1a1a"],
+  ["Canoas Futsal", "CANF", "Brasil", "RS", "Canoas", "Serie D", "Formador", 1_050, "#1f8ecd", "#e6e6e6"],
+  ["Viamão Futsal", "VIAF", "Brasil", "RS", "Viamão", "Amador", "Pechincha", 380, "#1a1a1a", "#1c8a4a"],
+  ["Gravataí Futsal", "GRVF", "Brasil", "RS", "Gravataí", "Amador", "Formador", 420, "#c8102e", "#e4b400"],
+  ["São Leopoldo Futsal", "SLEF", "Brasil", "RS", "São Leopoldo", "Amador", "Tradicional", 460, "#1f4fa0", "#e6e6e6"],
+  ["Alvorada Futsal", "ALVF", "Brasil", "RS", "Alvorada", "Amador", "Pechincha", 300, "#e4b400", "#1f8ecd"],
+  ["Montenegro Futsal", "MNTF", "Brasil", "RS", "Montenegro", "Amador", "Formador", 340, "#1c8a4a", "#1a1a1a"],
+  ["Torres Futsal", "TORF", "Brasil", "RS", "Torres", "Amador", "Pechincha", 280, "#1f5fb0", "#e4b400"],
+  ["Erechim Futsal Base", "ERBF", "Brasil", "RS", "Erechim", "Amador", "Formador", 320, "#1f4fa0", "#c8102e"],
 ];
 
 function montar(t: Tupla, modalidade: Modalidade): ClubSeed {

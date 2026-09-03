@@ -162,7 +162,51 @@ export const COMPETICOES: Competition[] = [
   { id: "copa-futsal-base", nome: "Copa Brasil de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 7, mesFim: 9, modalidade: "futsal" },
   { id: "estadual-futsal-base", nome: "Estadual de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 3, mesFim: 10, modalidade: "futsal" },
   { id: "liga-futsal-amadora", nome: "Liga Municipal de Futsal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador", "Serie D"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 1, mesFim: 12, modalidade: "futsal" },
+
+  // ---------- Futsal gaúcho (RS) ----------
+  { id: "citadino-futsal-rs", nome: "Citadino Gaúcho de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "copa-rs-futsal", nome: "Copa Rio Grande do Sul de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 5, mesFim: 8, estados: ["RS"], modalidade: "futsal" },
+  { id: "supercopa-gaucha-futsal", nome: "Supercopa Gaúcha de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 2, mesFim: 3, estados: ["RS"], modalidade: "futsal" },
+  { id: "serie-ouro-rs", nome: "Série Ouro Gaúcha de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 4, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
+  { id: "serie-prata-rs", nome: "Série Prata Gaúcha de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Serie B", "Serie C"], categorias: PRO, mesInicio: 4, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "serie-bronze-rs", nome: "Série Bronze Gaúcha de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Serie D", "Amador"], categorias: PRO, mesInicio: 5, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "liga-serra-futsal", nome: "Liga Serrana de Futsal", pais: "Brasil", tipo: "regional", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 4, mesFim: 9, estados: ["RS"], modalidade: "futsal" },
+  { id: "liga-vale-taquari-futsal", nome: "Liga do Vale do Taquari de Futsal", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 4, mesFim: 9, estados: ["RS"], modalidade: "futsal" },
+  { id: "liga-missoes-futsal", nome: "Liga das Missões de Futsal", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 5, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "liga-fronteira-futsal", nome: "Liga da Fronteira Oeste de Futsal", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 5, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "liga-metropolitana-futsal", nome: "Liga Metropolitana de Futsal", pais: "Brasil", tipo: "regional", divisoes: ["Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 3, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
+  { id: "liga-sul-futsal", nome: "Liga Sul Gaúcha de Futsal", pais: "Brasil", tipo: "regional", divisoes: ["Serie C", "Serie D", "Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 4, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "gaucho-futsal-base", nome: "Gauchão de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 3, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
+  { id: "copa-gaucha-futsal-base", nome: "Copa Gaúcha de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17"], mesInicio: 6, mesFim: 9, estados: ["RS"], modalidade: "futsal" },
+  { id: "citadino-poa-futsal", nome: "Citadino de Porto Alegre de Futsal", pais: "Brasil", tipo: "amadora", divisoes: ["Serie D", "Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 2, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
 ];
+
+/** Grupo temático usado para organizar a aba de competições. */
+export type CompetitionGroup = "Futsal" | "Base" | "Amador e várzea" | "Copas" | "Futebol de campo";
+
+const GRUPO_POR_NOME = new Map<string, CompetitionGroup>(
+  COMPETICOES.map(c => [c.nome, grupoDaCompeticao(c)]),
+);
+
+export function grupoDaCompeticao(c: Competition): CompetitionGroup {
+  if ((c.modalidade ?? "campo") === "futsal") return "Futsal";
+  if (c.tipo === "base") return "Base";
+  if (c.tipo === "amadora") return "Amador e várzea";
+  if (c.tipo === "copa") return "Copas";
+  return "Futebol de campo";
+}
+
+/** Descobre o grupo a partir do nome registrado no histórico. */
+export function grupoPorNome(nome: string): CompetitionGroup {
+  const direto = GRUPO_POR_NOME.get(nome);
+  if (direto) return direto;
+  const n = nome.toLowerCase();
+  if (n.includes("futsal")) return "Futsal";
+  if (/sub-\d/.test(n) || n.includes("base") || n.includes("juniores")) return "Base";
+  if (n.includes("amador") || n.includes("várzea") || n.includes("municipal") || n.includes("citadino")) return "Amador e várzea";
+  if (n.includes("copa") || n.includes("taça") || n.includes("cup")) return "Copas";
+  return "Futebol de campo";
+}
 
 /** Liga principal de um clube, conforme divisão e país. */
 export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modalidade = "campo"): string {
