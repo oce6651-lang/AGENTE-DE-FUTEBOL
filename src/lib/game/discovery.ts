@@ -1,5 +1,5 @@
 import { gerarJogador, pick, rid, rnd, calcularValorMercado } from "./generators";
-import { ganharReputacao, REP_XP } from "./reputation";
+import { ganharReputacao } from "./reputation";
 import type { FinanceEntry, GameState, NewsItem, Player, ScoutNote, TimelineEvent } from "./types";
 import { MESES } from "./types";
 
@@ -171,7 +171,7 @@ export function realizarPeneiraPropria(state: GameState): { state: GameState; me
     novoAtleta(s, "Peneira da agência", [8, Math.max(18, teto)], [42, Math.min(99, 60 + Math.floor(s.reputacao * 0.4))], rnd(12, 19)));
 
   s = inserirNoRadar(s, achados);
-  s = ganharReputacao(s, REP_XP.estrutura ? 2 : 2);
+  s = ganharReputacao(s, 2);
 
   const not: NewsItem = {
     id: rid("NEW", seq()), semana: s.semana, mes: s.mes, ano: s.ano,
