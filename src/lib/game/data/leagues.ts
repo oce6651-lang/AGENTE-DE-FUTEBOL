@@ -180,8 +180,8 @@ export const COMPETICOES: Competition[] = [
   { id: "gauchao-lgf-b", nome: "Gauchão de Futsal LGF Série B", pais: "Brasil", tipo: "estadual", divisoes: ["Serie C"], categorias: PRO, mesInicio: 5, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
   { id: "gauchao-lgf-c", nome: "Gauchão de Futsal LGF Série C", pais: "Brasil", tipo: "estadual", divisoes: ["Serie D", "Amador"], categorias: PRO, mesInicio: 6, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
   { id: "copa-rs-futsal", nome: "Copa RS de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 5, mesFim: 9, estados: ["RS"], modalidade: "futsal" },
-  { id: "copa-pampas-futsal", nome: "Copa dos Pampas de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 5, estados: ["RS"], modalidade: "futsal" },
-  { id: "taca-inverno-lgf", nome: "Taça de Inverno LGF", pais: "Brasil", tipo: "copa", divisoes: ["Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 6, mesFim: 8, estados: ["RS"], modalidade: "futsal" },
+  { id: "copa-gaucha-futsal", nome: "Copa Gaúcha de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 5, estados: ["RS"], modalidade: "futsal" },
+
   { id: "gaucho-futsal-base", nome: "Campeonato Gaúcho de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 3, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
   { id: "gauchao-lgf-base", nome: "Gauchão de Futsal de Base LGF", pais: "Brasil", tipo: "base", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 4, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
 ];
