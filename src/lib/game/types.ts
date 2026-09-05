@@ -307,7 +307,7 @@ export interface Negotiation {
   expiraEm: number; // semanas restantes
   criadaEm: string;
   /** Natureza do negócio proposto. */
-  tipo?: "Compra definitiva" | "Empréstimo" | "Livre";
+  tipo?: "Compra definitiva" | "Empréstimo" | "Livre" | "Renovação";
   /** Duração do contrato oferecido, em anos. */
   duracaoAnos?: number;
   /** Categoria em que o clube pretende utilizar o atleta. */
