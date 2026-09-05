@@ -497,6 +497,177 @@ const F: Tupla[] = [
   ["Filhéus Futsal", "FILF", "Brasil", "RS", "Antônio Prado", "Amador", "Pechincha", 380, "#c8102e", "#e4b400"],
 ];
 
+/** Reforço de elencos reais para ligas que estavam com poucos participantes. */
+const T2: Tupla[] = [
+  // ---- França ----
+  ["LOSC Lille", "LIL", "França", "HDF", "Lille", "Elite", "Formador", 240_000, "#c8102e", "#0b1d4d"],
+  ["AS Monaco", "MON", "França", "PAC", "Mônaco", "Elite", "Vitrine", 320_000, "#c8102e", "#e6e6e6"],
+  ["OGC Nice", "NIC", "França", "PAC", "Nice", "Serie A", "Formador", 150_000, "#c8102e", "#1a1a1a"],
+  ["FC Nantes", "NAN", "França", "PDL", "Nantes", "Serie A", "Formador", 95_000, "#e4d400", "#1c8a4a"],
+  ["RC Strasbourg", "STR", "França", "GES", "Estrasburgo", "Serie A", "Pechincha", 90_000, "#1f4fa0", "#e6e6e6"],
+  ["Toulouse FC", "TFC", "França", "OCC", "Toulouse", "Serie A", "Formador", 80_000, "#6a3fa0", "#e6e6e6"],
+  ["Stade Brestois", "BRE", "França", "BRE", "Brest", "Serie A", "Pechincha", 70_000, "#c8102e", "#e6e6e6"],
+  // ---- Alemanha ----
+  ["Eintracht Frankfurt", "SGE", "Alemanha", "HES", "Frankfurt", "Elite", "Vitrine", 280_000, "#1a1a1a", "#c8102e"],
+  ["VfB Stuttgart", "VFB", "Alemanha", "BAW", "Stuttgart", "Serie A", "Formador", 160_000, "#e6e6e6", "#c8102e"],
+  ["Werder Bremen", "SVW", "Alemanha", "BRE", "Bremen", "Serie A", "Tradicional", 110_000, "#1c8a4a", "#e6e6e6"],
+  ["Borussia Mönchengladbach", "BMG", "Alemanha", "NRW", "Mönchengladbach", "Serie A", "Formador", 120_000, "#1a1a1a", "#1c8a4a"],
+  ["TSG Hoffenheim", "TSG", "Alemanha", "BAW", "Sinsheim", "Serie A", "Vitrine", 115_000, "#1f4fa0", "#e6e6e6"],
+  ["VfL Wolfsburg", "WOB", "Alemanha", "NIE", "Wolfsburg", "Serie A", "Imediatista", 140_000, "#1c8a4a", "#e6e6e6"],
+  ["Union Berlin", "FCU", "Alemanha", "BER", "Berlim", "Serie A", "Pechincha", 95_000, "#c8102e", "#e4b400"],
+  // ---- Holanda ----
+  ["FC Twente", "TWE", "Holanda", "OV", "Enschede", "Serie A", "Formador", 45_000, "#c8102e", "#e6e6e6"],
+  ["FC Utrecht", "UTR", "Holanda", "UT", "Utrecht", "Serie A", "Formador", 40_000, "#c8102e", "#e6e6e6"],
+  ["Vitesse", "VIT", "Holanda", "GE", "Arnhem", "Serie B", "Pechincha", 18_000, "#e4d400", "#1a1a1a"],
+  ["SC Heerenveen", "HEE", "Holanda", "FR", "Heerenveen", "Serie A", "Formador", 30_000, "#1f4fa0", "#e6e6e6"],
+  ["Sparta Rotterdam", "SPR", "Holanda", "ZH", "Roterdã", "Serie B", "Pechincha", 15_000, "#c8102e", "#e6e6e6"],
+  // ---- Bélgica ----
+  ["Club Brugge", "BRU", "Bélgica", "WV", "Bruges", "Elite", "Vitrine", 130_000, "#1f4fa0", "#1a1a1a"],
+  ["RSC Anderlecht", "AND", "Bélgica", "BRU", "Bruxelas", "Serie A", "Formador", 85_000, "#6a3fa0", "#e6e6e6"],
+  ["KRC Genk", "GEN", "Bélgica", "LIM", "Genk", "Serie A", "Formador", 70_000, "#1f4fa0", "#e6e6e6"],
+  ["KAA Gent", "GNT", "Bélgica", "OV", "Gante", "Serie A", "Pechincha", 60_000, "#1f4fa0", "#e6e6e6"],
+  ["Standard de Liège", "STL", "Bélgica", "LIE", "Liège", "Serie B", "Tradicional", 35_000, "#c8102e", "#e6e6e6"],
+  ["Royal Antwerp", "ANT", "Bélgica", "ANT", "Antuérpia", "Serie A", "Imediatista", 55_000, "#c8102e", "#e6e6e6"],
+  // ---- Espanha (2ª divisão) ----
+  ["Real Zaragoza", "ZAR", "Espanha", "ARA", "Saragoça", "Serie B", "Tradicional", 22_000, "#1f4fa0", "#e6e6e6"],
+  ["Sporting de Gijón", "SPG", "Espanha", "AST", "Gijón", "Serie B", "Formador", 20_000, "#c8102e", "#e6e6e6"],
+  ["Racing de Santander", "RSA", "Espanha", "CAN", "Santander", "Serie B", "Formador", 19_000, "#1c8a4a", "#e6e6e6"],
+  ["Deportivo La Coruña", "DEP", "Espanha", "GAL", "A Coruña", "Serie C", "Tradicional", 16_000, "#1f4fa0", "#e6e6e6"],
+  ["Levante UD", "LEV", "Espanha", "VAL", "Valência", "Serie B", "Pechincha", 24_000, "#1f4fa0", "#c8102e"],
+  ["SD Eibar", "EIB", "Espanha", "PVA", "Eibar", "Serie B", "Pechincha", 18_000, "#c8102e", "#1f4fa0"],
+  // ---- Itália (Serie B) ----
+  ["Palermo FC", "PAL", "Itália", "SIC", "Palermo", "Serie B", "Imediatista", 26_000, "#e05aa0", "#1a1a1a"],
+  ["Sampdoria", "SAM", "Itália", "LIG", "Gênova", "Serie B", "Tradicional", 24_000, "#1f4fa0", "#e6e6e6"],
+  ["SSC Bari", "BAR", "Itália", "PUG", "Bari", "Serie B", "Formador", 20_000, "#c8102e", "#e6e6e6"],
+  ["Brescia Calcio", "BRC", "Itália", "LOM", "Bréscia", "Serie C", "Formador", 14_000, "#1f4fa0", "#e6e6e6"],
+  ["US Cremonese", "CRE", "Itália", "LOM", "Cremona", "Serie B", "Pechincha", 18_000, "#c8102e", "#1c8a4a"],
+  // ---- Argentina (Primera Nacional) ----
+  ["San Martín de Tucumán", "SMT", "Argentina", "TUC", "Tucumán", "Serie B", "Formador", 6_000, "#c8102e", "#e6e6e6"],
+  ["Almirante Brown", "ALB", "Argentina", "BA", "San Justo", "Serie C", "Pechincha", 3_500, "#e4b400", "#1a1a1a"],
+  ["Chacarita Juniors", "CHJ", "Argentina", "BA", "San Martín", "Serie C", "Tradicional", 4_000, "#c8102e", "#1a1a1a"],
+  ["Ferro Carril Oeste", "FCO", "Argentina", "CABA", "Buenos Aires", "Serie B", "Formador", 5_000, "#1c8a4a", "#e6e6e6"],
+  ["Gimnasia de Mendoza", "GIM", "Argentina", "MEN", "Mendoza", "Serie C", "Pechincha", 3_000, "#e6e6e6", "#1f4fa0"],
+  // ---- Uruguai ----
+  ["Rampla Juniors", "RAM", "Uruguai", "MVD", "Montevidéu", "Serie B", "Pechincha", 1_400, "#c8102e", "#1c8a4a"],
+  ["Central Español", "CES", "Uruguai", "MVD", "Montevidéu", "Serie C", "Pechincha", 1_100, "#c8102e", "#e6e6e6"],
+  ["Albion FC", "ALB2", "Uruguai", "MVD", "Montevidéu", "Serie C", "Formador", 1_200, "#1f4fa0", "#e6e6e6"],
+  ["Uruguay Montevideo", "URM", "Uruguai", "MVD", "Montevidéu", "Serie C", "Formador", 900, "#e4b400", "#1a1a1a"],
+  // ---- México ----
+  ["Cruz Azul", "CAZ", "México", "CMX", "Cidade do México", "Elite", "Imediatista", 200_000, "#1f4fa0", "#e6e6e6"],
+  ["Pumas UNAM", "PUM", "México", "CMX", "Cidade do México", "Serie A", "Formador", 130_000, "#e4b400", "#1f4fa0"],
+  ["CF Monterrey", "MTY", "México", "NL", "Monterrey", "Elite", "Imediatista", 210_000, "#1f4fa0", "#e6e6e6"],
+  ["Deportivo Toluca", "TOL", "México", "MEX", "Toluca", "Serie A", "Formador", 120_000, "#c8102e", "#e6e6e6"],
+  ["Santos Laguna", "SAN2", "México", "COA", "Torreón", "Serie A", "Vitrine", 100_000, "#1c8a4a", "#e6e6e6"],
+  ["Club León", "LEO", "México", "GUA", "León", "Serie A", "Formador", 110_000, "#1c8a4a", "#e4b400"],
+  ["Atlante FC", "ATE", "México", "QRO", "Cancún", "Serie B", "Pechincha", 20_000, "#1f4fa0", "#c8102e"],
+  ["Tepatitlán FC", "TEP", "México", "JAL", "Tepatitlán", "Serie C", "Pechincha", 12_000, "#c8102e", "#e6e6e6"],
+  ["Correcaminos UAT", "COR", "México", "TAM", "Ciudad Victoria", "Serie C", "Formador", 10_000, "#e4b400", "#1f4fa0"],
+  ["Venados FC", "VEN", "México", "YUC", "Mérida", "Serie B", "Pechincha", 14_000, "#1c8a4a", "#e6e6e6"],
+  // ---- Chile ----
+  ["Universidad Católica", "UCA", "Chile", "RM", "Santiago", "Serie A", "Formador", 42_000, "#e6e6e6", "#1f4fa0"],
+  ["Cobresal", "COB", "Chile", "ATA", "El Salvador", "Serie A", "Pechincha", 12_000, "#e4b400", "#1a1a1a"],
+  ["Huachipato", "HUA", "Chile", "BIO", "Talcahuano", "Serie A", "Formador", 15_000, "#1f4fa0", "#e6e6e6"],
+  ["Palestino", "PLS", "Chile", "RM", "Santiago", "Serie A", "Formador", 13_000, "#1c8a4a", "#c8102e"],
+  ["Santiago Wanderers", "SWA", "Chile", "VAL", "Valparaíso", "Serie B", "Tradicional", 6_000, "#1c8a4a", "#e6e6e6"],
+  ["Deportes Temuco", "TEM", "Chile", "ARA", "Temuco", "Serie C", "Pechincha", 4_000, "#1c8a4a", "#e6e6e6"],
+  ["San Marcos de Arica", "SMA", "Chile", "ARI", "Arica", "Serie C", "Pechincha", 3_500, "#e4b400", "#1a1a1a"],
+  // ---- Colômbia ----
+  ["América de Cali", "AMC", "Colômbia", "VAC", "Cali", "Serie A", "Tradicional", 30_000, "#c8102e", "#e6e6e6"],
+  ["Deportivo Cali", "DCA", "Colômbia", "VAC", "Cali", "Serie A", "Formador", 28_000, "#1c8a4a", "#e6e6e6"],
+  ["Junior de Barranquilla", "JUN", "Colômbia", "ATL", "Barranquilla", "Serie A", "Imediatista", 34_000, "#e4b400", "#c8102e"],
+  ["Independiente Medellín", "DIM", "Colômbia", "ANT", "Medellín", "Serie A", "Tradicional", 26_000, "#c8102e", "#1f4fa0"],
+  ["Once Caldas", "ONC", "Colômbia", "CAL", "Manizales", "Serie A", "Formador", 18_000, "#e6e6e6", "#1f4fa0"],
+  ["Real Cartagena", "RCA", "Colômbia", "BOL", "Cartagena", "Serie B", "Pechincha", 5_000, "#1c8a4a", "#e4b400"],
+  ["Atlético Huila", "HUI", "Colômbia", "HUI", "Neiva", "Serie C", "Formador", 4_000, "#c8102e", "#e6e6e6"],
+  ["Boyacá Chicó", "CHI2", "Colômbia", "BOY", "Tunja", "Serie B", "Pechincha", 4_500, "#1c8a4a", "#e6e6e6"],
+  // ---- Paraguai ----
+  ["Club Olimpia", "OLI", "Paraguai", "ASU", "Assunção", "Serie A", "Tradicional", 30_000, "#e6e6e6", "#1a1a1a"],
+  ["Club Guaraní", "GUA2", "Paraguai", "ASU", "Assunção", "Serie A", "Formador", 18_000, "#e4b400", "#1a1a1a"],
+  ["Club Nacional (PAR)", "NAC2", "Paraguai", "ASU", "Assunção", "Serie A", "Formador", 15_000, "#1f4fa0", "#e6e6e6"],
+  ["Sportivo Luqueño", "LUQ", "Paraguai", "CEN", "Luque", "Serie B", "Pechincha", 6_000, "#e4b400", "#1f4fa0"],
+  // ---- Estados Unidos ----
+  ["LA Galaxy", "LAG", "EUA", "CA", "Los Angeles", "Serie A", "Imediatista", 110_000, "#e6e6e6", "#1f4fa0"],
+  ["Los Angeles FC", "LFC", "EUA", "CA", "Los Angeles", "Serie A", "Vitrine", 130_000, "#1a1a1a", "#e4b400"],
+  ["Seattle Sounders", "SEA", "EUA", "WA", "Seattle", "Serie A", "Formador", 100_000, "#1c8a4a", "#1f4fa0"],
+  ["Atlanta United", "ATU", "EUA", "GA", "Atlanta", "Serie A", "Vitrine", 105_000, "#c8102e", "#1a1a1a"],
+  ["New York Red Bulls", "NYR", "EUA", "NY", "Nova York", "Serie A", "Formador", 95_000, "#c8102e", "#e6e6e6"],
+  ["Columbus Crew", "CLB", "EUA", "OH", "Columbus", "Serie A", "Formador", 98_000, "#e4b400", "#1a1a1a"],
+  // ---- Japão ----
+  ["Kashima Antlers", "KAS", "Japão", "IBA", "Kashima", "Serie A", "Formador", 62_000, "#c8102e", "#1a1a1a"],
+  ["Yokohama F. Marinos", "YFM", "Japão", "KAN", "Yokohama", "Serie A", "Imediatista", 66_000, "#1f4fa0", "#e6e6e6"],
+  ["Gamba Osaka", "GAM", "Japão", "OSA", "Suita", "Serie A", "Formador", 58_000, "#1f4fa0", "#1a1a1a"],
+  ["Vissel Kobe", "VIS", "Japão", "HYO", "Kobe", "Serie A", "Imediatista", 70_000, "#c8102e", "#1a1a1a"],
+  ["Cerezo Osaka", "CER2", "Japão", "OSA", "Osaka", "Serie A", "Formador", 55_000, "#e05aa0", "#1a1a1a"],
+  ["FC Tokyo", "FCT", "Japão", "TOK", "Tóquio", "Serie A", "Formador", 57_000, "#c8102e", "#1f4fa0"],
+  // ---- Brasil: estaduais com poucos participantes ----
+  ["Santa Cruz", "STC", "Brasil", "PE", "Recife", "Serie D", "Tradicional", 6_500, "#c8102e", "#1a1a1a"],
+  ["Salgueiro", "SAL", "Brasil", "PE", "Salgueiro", "Serie D", "Pechincha", 2_800, "#e4b400", "#1f4fa0"],
+  ["Retrô FC", "RET", "Brasil", "PE", "Camaragibe", "Serie C", "Vitrine", 9_000, "#1a1a1a", "#e4b400"],
+  ["Petrolina", "PET", "Brasil", "PE", "Petrolina", "Amador", "Pechincha", 900, "#1f4fa0", "#e6e6e6"],
+  ["Rio Branco-ES", "RBE", "Brasil", "ES", "Vitória", "Serie D", "Tradicional", 2_200, "#e6e6e6", "#1a1a1a"],
+  ["Desportiva Ferroviária", "DFE", "Brasil", "ES", "Cariacica", "Serie D", "Formador", 2_000, "#c8102e", "#1a1a1a"],
+  ["Nova Venécia", "NVE", "Brasil", "ES", "Nova Venécia", "Amador", "Pechincha", 700, "#1c8a4a", "#e6e6e6"],
+  ["Porto Vitória", "PVI", "Brasil", "ES", "Vitória", "Amador", "Formador", 650, "#1f4fa0", "#e4b400"],
+  ["Luverdense", "LUV", "Brasil", "MT", "Lucas do Rio Verde", "Serie D", "Formador", 2_400, "#1c8a4a", "#e6e6e6"],
+  ["União Rondonópolis", "URO", "Brasil", "MT", "Rondonópolis", "Serie D", "Pechincha", 1_600, "#c8102e", "#e6e6e6"],
+  ["Mixto EC", "MIX", "Brasil", "MT", "Cuiabá", "Amador", "Tradicional", 800, "#1a1a1a", "#e6e6e6"],
+  ["Sinop FC", "SIN", "Brasil", "MT", "Sinop", "Serie D", "Pechincha", 1_500, "#1c8a4a", "#e4b400"],
+  ["Operário FC (MS)", "OPF", "Brasil", "MS", "Campo Grande", "Serie D", "Tradicional", 1_400, "#c8102e", "#1a1a1a"],
+  ["Costa Rica EC", "CRE2", "Brasil", "MS", "Costa Rica", "Serie D", "Formador", 1_800, "#1f4fa0", "#e6e6e6"],
+  ["Aquidauanense", "AQU", "Brasil", "MS", "Aquidauana", "Amador", "Pechincha", 600, "#1c8a4a", "#e6e6e6"],
+  ["Coxim AC", "COX", "Brasil", "MS", "Coxim", "Amador", "Pechincha", 550, "#e4b400", "#1a1a1a"],
+  ["Santa Cruz de Natal", "SCN", "Brasil", "RN", "Natal", "Amador", "Pechincha", 500, "#c8102e", "#e6e6e6"],
+  ["Potiguar de Mossoró", "POT", "Brasil", "RN", "Mossoró", "Serie D", "Formador", 1_300, "#c8102e", "#e6e6e6"],
+  ["Força e Luz", "FEL", "Brasil", "RN", "Natal", "Amador", "Pechincha", 450, "#e4b400", "#1a1a1a"],
+  ["ASA de Arapiraca", "ASA", "Brasil", "AL", "Arapiraca", "Serie D", "Tradicional", 1_700, "#c8102e", "#e6e6e6"],
+  ["Murici FC", "MUR", "Brasil", "AL", "Murici", "Serie D", "Formador", 1_200, "#1c8a4a", "#e6e6e6"],
+  ["Cruzeiro de Arapiraca", "CAP", "Brasil", "AL", "Arapiraca", "Amador", "Pechincha", 500, "#1f4fa0", "#e6e6e6"],
+  ["Club Sportivo Sergipe", "CSS", "Brasil", "SE", "Aracaju", "Serie D", "Tradicional", 1_500, "#c8102e", "#e6e6e6"],
+  ["Associação Olímpica de Itabaiana", "ITA", "Brasil", "SE", "Itabaiana", "Serie D", "Formador", 1_400, "#1c8a4a", "#e6e6e6"],
+  ["Lagarto FC", "LAG2", "Brasil", "SE", "Lagarto", "Amador", "Pechincha", 600, "#1f4fa0", "#e4b400"],
+  ["Falcon FC", "FAL", "Brasil", "SE", "Aracaju", "Amador", "Formador", 550, "#1a1a1a", "#e4b400"],
+  ["Moto Club", "MOT", "Brasil", "MA", "São Luís", "Serie D", "Tradicional", 1_600, "#1a1a1a", "#e4b400"],
+  ["Imperatriz", "IMP", "Brasil", "MA", "Imperatriz", "Serie D", "Pechincha", 1_200, "#e4b400", "#1c8a4a"],
+  ["Maranhão AC", "MAC", "Brasil", "MA", "São Luís", "Amador", "Formador", 600, "#c8102e", "#e6e6e6"],
+  ["Tuntum EC", "TUN", "Brasil", "MA", "Tuntum", "Amador", "Pechincha", 480, "#1f4fa0", "#e6e6e6"],
+  ["Águia de Marabá", "AGM", "Brasil", "PA", "Marabá", "Serie D", "Formador", 1_500, "#1f4fa0", "#e4b400"],
+  ["Tuna Luso", "TUL", "Brasil", "PA", "Belém", "Serie D", "Tradicional", 1_100, "#1c8a4a", "#e6e6e6"],
+  ["Castanhal EC", "CAS", "Brasil", "PA", "Castanhal", "Serie D", "Pechincha", 950, "#1f4fa0", "#e6e6e6"],
+  ["River AC", "RIV", "Brasil", "PI", "Teresina", "Serie D", "Tradicional", 1_300, "#c8102e", "#e6e6e6"],
+  ["Fluminense-PI", "FPI", "Brasil", "PI", "Teresina", "Amador", "Pechincha", 520, "#1c8a4a", "#c8102e"],
+  ["Parnahyba SC", "PAR2", "Brasil", "PI", "Parnaíba", "Amador", "Formador", 560, "#1f4fa0", "#e6e6e6"],
+  ["Sociedade Esportiva do Gama", "GAM2", "Brasil", "DF", "Gama", "Serie D", "Tradicional", 1_800, "#1c8a4a", "#e6e6e6"],
+  ["Ceilândia EC", "CEI", "Brasil", "DF", "Ceilândia", "Serie D", "Formador", 1_400, "#e4b400", "#1f4fa0"],
+  ["Real Brasília", "RBR", "Brasil", "DF", "Brasília", "Serie D", "Formador", 1_500, "#1f4fa0", "#e6e6e6"],
+  ["Capital CF", "CAP2", "Brasil", "DF", "Brasília", "Amador", "Pechincha", 700, "#1a1a1a", "#e4b400"],
+];
+
+/** Equipes reais de futsal usadas para completar as federações estaduais. */
+const F2: Tupla[] = [
+  ["Corinthians Futsal", "COR3", "Brasil", "SP", "São Paulo", "Serie A", "Tradicional", 3_800, "#1a1a1a", "#e6e6e6"],
+  ["São José Futsal", "SJF", "Brasil", "SP", "São José dos Campos", "Serie B", "Formador", 2_200, "#c8102e", "#e6e6e6"],
+  ["Taubaté Futsal", "TAU", "Brasil", "SP", "Taubaté", "Serie B", "Formador", 1_900, "#1f4fa0", "#e6e6e6"],
+  ["Praia Grande Futsal", "PGF", "Brasil", "SP", "Praia Grande", "Serie C", "Pechincha", 1_200, "#1c8a4a", "#e6e6e6"],
+  ["Suzano Futsal", "SUZ", "Brasil", "SP", "Suzano", "Serie B", "Formador", 1_600, "#1f4fa0", "#e4b400"],
+  ["Minas Tênis Clube", "MTC", "Brasil", "MG", "Belo Horizonte", "Serie A", "Formador", 2_600, "#1f4fa0", "#e6e6e6"],
+  ["Praia Clube", "PRC", "Brasil", "MG", "Uberlândia", "Serie B", "Formador", 1_800, "#1c8a4a", "#e6e6e6"],
+  ["Betim Futsal", "BET", "Brasil", "MG", "Betim", "Serie B", "Pechincha", 1_400, "#c8102e", "#1a1a1a"],
+  ["Fortaleza Futsal", "FOF", "Brasil", "CE", "Fortaleza", "Serie B", "Tradicional", 1_500, "#1f4fa0", "#c8102e"],
+  ["Horizonte Futsal", "HOR", "Brasil", "CE", "Horizonte", "Serie C", "Pechincha", 900, "#1c8a4a", "#e6e6e6"],
+  ["Eusébio Futsal", "EUS", "Brasil", "CE", "Eusébio", "Serie C", "Formador", 850, "#e4b400", "#1f4fa0"],
+  ["Náutico Futsal", "NAF", "Brasil", "PE", "Recife", "Serie B", "Tradicional", 1_400, "#c8102e", "#e6e6e6"],
+  ["Santa Cruz Futsal", "SCF2", "Brasil", "PE", "Recife", "Serie C", "Pechincha", 800, "#c8102e", "#1a1a1a"],
+  ["Cabo Futsal", "CBF", "Brasil", "PE", "Cabo de Santo Agostinho", "Serie C", "Formador", 700, "#1f4fa0", "#e6e6e6"],
+  ["Assu Futsal", "ASF", "Brasil", "RN", "Assu", "Serie C", "Pechincha", 620, "#1c8a4a", "#e6e6e6"],
+  ["Mossoró Futsal", "MOF", "Brasil", "RN", "Mossoró", "Serie C", "Formador", 680, "#c8102e", "#e6e6e6"],
+  ["Natal Futsal", "NTF", "Brasil", "RN", "Natal", "Serie D", "Pechincha", 520, "#1f4fa0", "#e4b400"],
+  ["Manaus Futsal", "MNF", "Brasil", "AM", "Manaus", "Serie C", "Formador", 760, "#1c8a4a", "#e4b400"],
+  ["Amazonas Futsal", "AMF", "Brasil", "AM", "Manaus", "Serie D", "Pechincha", 540, "#1f4fa0", "#e6e6e6"],
+  ["Brasília Futsal", "BSF", "Brasil", "DF", "Brasília", "Serie B", "Formador", 1_300, "#1f4fa0", "#e6e6e6"],
+  ["Gama Futsal", "GMF", "Brasil", "DF", "Gama", "Serie C", "Pechincha", 700, "#1c8a4a", "#e6e6e6"],
+  ["Taguatinga Futsal", "TGF", "Brasil", "DF", "Taguatinga", "Serie C", "Formador", 720, "#e4b400", "#1a1a1a"],
+];
+
 function montar(t: Tupla, modalidade: Modalidade): ClubSeed {
   return {
     nome: t[0], abrev: t[1], pais: t[2], estado: t[3], cidade: t[4],
@@ -505,10 +676,18 @@ function montar(t: Tupla, modalidade: Modalidade): ClubSeed {
   };
 }
 
-export const CLUB_SEEDS: ClubSeed[] = [
+const TODOS: ClubSeed[] = [
   ...T.map(t => montar(t, "campo")),
+  ...T2.map(t => montar(t, "campo")),
   ...F.map(t => montar(t, "futsal")),
+  ...F2.map(t => montar(t, "futsal")),
 ];
+
+/** Remove eventuais repetições de nome — nunca existem dois clubes iguais. */
+export const CLUB_SEEDS: ClubSeed[] = TODOS.filter(
+  (c, i) => TODOS.findIndex(o => o.nome === c.nome && o.modalidade === c.modalidade) === i,
+);
+
 
 /** Apenas os clubes de futsal — usados nas quadras e ligas de salão. */
 export const FUTSAL_SEEDS: ClubSeed[] = CLUB_SEEDS.filter(c => c.modalidade === "futsal");

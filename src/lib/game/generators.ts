@@ -287,8 +287,9 @@ export function gerarClubes(): Club[] {
     personalidade: c.personalidade,
     orcamento: c.orcamentoK * 1000,
     modalidade: c.modalidade ?? "campo",
-    liga: ligaPrincipal(c.categoria, c.pais, c.modalidade ?? "campo"),
+    liga: ligaPrincipal(c.categoria, c.pais, c.modalidade ?? "campo", c.estado),
     competicoes: competicoesDoClube(c.categoria, c.pais, c.estado, c.modalidade ?? "campo").map(x => x.nome),
+
     tecnico: pick(TECNICOS),
     moralTecnico: rnd(45, 80),
     pontos: 0,

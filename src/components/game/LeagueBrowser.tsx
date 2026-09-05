@@ -3,8 +3,12 @@ import { ClubCrest } from "./ClubCrest";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, Star } from "lucide-react";
-import type { Club, Division } from "@/lib/game/types";
+import { ArrowLeft, ChevronRight, Star, Trophy } from "lucide-react";
+import { COMPETICOES, type Competition } from "@/lib/game/data/leagues";
+import type { Club, Division, Modalidade } from "@/lib/game/types";
+import heroFutebol from "@/assets/hero-ligas-futebol.jpg";
+import heroFutsal from "@/assets/hero-ligas-futsal.jpg";
+import heroCompeticao from "@/assets/hero-competicao-detalhe.jpg";
 
 /** Prestígio de 1 a 5 estrelas, calculado pela divisão e pelo orçamento do clube. */
 export function prestigioDoClube(c: Club): number {
@@ -25,49 +29,74 @@ function Estrelas({ n }: { n: number }) {
   );
 }
 
-/**
- * Navegador de ligas: lista todas as competições em que os clubes disputam a
- * temporada, com os participantes, o nível técnico e o prestígio de cada um.
- */
-export function LeagueBrowser({ clubes, onBack }: { clubes: Club[]; onBack: () => void }) {
-  const [busca, setBusca] = useState("");
-  const [ligaAberta, setLigaAberta] = useState<string | null>(null);
+const NIVEL_LIGA: Record<Division, string> = {
+  Amador: "Amador", "Serie D": "Base nacional", "Serie C": "Intermediária",
+  "Serie B": "Profissional", "Serie A": "Alto nível", Elite: "Elite mundial",
+};
 
-  const ligas = useMemo(() => {
-    const mapa = new Map<string, Club[]>();
-    for (const c of clubes) {
-      const chave = c.liga || "Sem competição definida";
-      mapa.set(chave, [...(mapa.get(chave) ?? []), c]);
-    }
-    return Array.from(mapa.entries())
-      .map(([nome, times]) => ({
-        nome,
-        times: times.slice().sort((a, b) => prestigioDoClube(b) - prestigioDoClube(a)),
-        modalidade: times[0]?.modalidade ?? "campo",
-        pais: times[0]?.pais ?? "Brasil",
+/** Nível médio da competição, calculado pelas divisões dos participantes. */
+function nivelDaCompeticao(times: Club[]): string {
+  if (!times.length) return "Sem participantes";
+  const ordem: Division[] = ["Amador", "Serie D", "Serie C", "Serie B", "Serie A", "Elite"];
+  const media = times.reduce((s, c) => s + ordem.indexOf(c.categoria), 0) / times.length;
+  return NIVEL_LIGA[ordem[Math.round(media)]];
+}
+
+/**
+ * Navegador de ligas: mostra todas as competições do mundo separadas por
+ * modalidade, com os clubes participantes, o nível técnico e o prestígio.
+ */
+export function LeagueBrowser({ clubes, onBack, competicoesExtras = [] }: {
+  clubes: Club[];
+  onBack: () => void;
+  competicoesExtras?: Competition[];
+}) {
+  const [modalidade, setModalidade] = useState<Modalidade>("campo");
+  const [busca, setBusca] = useState("");
+  const [aberta, setAberta] = useState<string | null>(null);
+
+  const competicoes = useMemo(() => {
+    const todas = [...COMPETICOES, ...competicoesExtras];
+    return todas
+      .filter(c => (c.modalidade ?? "campo") === modalidade)
+      .map(c => ({
+        comp: c,
+        times: clubes
+          .filter(cl => (cl.modalidade ?? "campo") === modalidade && cl.competicoes?.includes(c.nome))
+          .sort((a, b) => prestigioDoClube(b) - prestigioDoClube(a)),
       }))
-      .sort((a, b) => a.pais.localeCompare(b.pais) || a.nome.localeCompare(b.nome));
-  }, [clubes]);
+      .sort((a, b) => b.times.length - a.times.length || a.comp.nome.localeCompare(b.comp.nome));
+  }, [clubes, modalidade, competicoesExtras]);
 
   const filtro = busca.trim().toLowerCase();
-  const visiveis = ligas.filter(l => !filtro || `${l.nome} ${l.pais}`.toLowerCase().includes(filtro));
-  const atual = ligaAberta ? ligas.find(l => l.nome === ligaAberta) : null;
+  const visiveis = competicoes.filter(l =>
+    !filtro || `${l.comp.nome} ${l.comp.pais} ${l.comp.tipo}`.toLowerCase().includes(filtro));
+  const atual = aberta ? competicoes.find(l => l.comp.nome === aberta) : null;
 
   if (atual) {
     return (
-      <div className="p-4 space-y-3 animate-in fade-in duration-300">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setLigaAberta(null)}>
+      <div className="animate-in fade-in duration-300">
+        <div className="relative h-32 overflow-hidden">
+          <img src={heroCompeticao} alt="Troféu da competição" loading="lazy" width={1280} height={640}
+            className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background to-background/20" />
+          <Button variant="ghost" size="icon" onClick={() => setAberta(null)}
+            className="absolute top-2 left-2 bg-background/60 backdrop-blur">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="min-w-0">
-            <div className="font-black truncate">{atual.nome}</div>
+          <div className="absolute bottom-2 left-4 right-4">
+            <div className="font-black text-lg truncate">{atual.comp.nome}</div>
             <div className="text-[11px] text-muted-foreground">
-              {atual.pais} • {atual.times.length} clubes • {atual.modalidade === "futsal" ? "Futsal" : "Futebol de campo"}
+              {atual.comp.pais} • {atual.times.length} clubes • {nivelDaCompeticao(atual.times)}
             </div>
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="p-4 space-y-2">
+          <div className="flex flex-wrap gap-1">
+            {atual.comp.categorias.map(cat => (
+              <Badge key={cat} variant="secondary" className="text-[10px]">{cat}</Badge>
+            ))}
+          </div>
           {atual.times.map(c => (
             <div key={c.id} className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
               <ClubCrest cores={c.cores} abrev={c.abrev} size={34} />
@@ -86,34 +115,60 @@ export function LeagueBrowser({ clubes, onBack }: { clubes: Club[]; onBack: () =
               </div>
             </div>
           ))}
+          {!atual.times.length && (
+            <div className="text-xs text-muted-foreground text-center py-8">
+              Nenhum clube disputa esta competição nesta temporada.
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-3 animate-in fade-in duration-300">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-5 w-5" /></Button>
-        <div className="font-black">Ligas e clubes do mundo</div>
+    <div className="animate-in fade-in duration-300">
+      <div className="relative h-32 overflow-hidden">
+        <img src={modalidade === "futsal" ? heroFutsal : heroFutebol}
+          alt={modalidade === "futsal" ? "Quadra de futsal lotada" : "Estádio de futebol lotado"}
+          loading="lazy" width={1280} height={640} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-background/20" />
+        <Button variant="ghost" size="icon" onClick={onBack}
+          className="absolute top-2 left-2 bg-background/60 backdrop-blur">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="absolute bottom-2 left-4 font-black text-lg">Ligas e clubes do mundo</div>
       </div>
-      <Input placeholder="Buscar liga ou país" value={busca} onChange={e => setBusca(e.target.value)} />
-      <div className="space-y-2">
-        {visiveis.map(l => (
-          <button key={l.nome} onClick={() => setLigaAberta(l.nome)}
-            className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-sm truncate">{l.nome}</div>
-              <div className="text-[11px] text-muted-foreground">
-                {l.pais} • {l.times.length} clubes • {l.modalidade === "futsal" ? "Futsal" : "Campo"}
+
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant={modalidade === "campo" ? "default" : "outline"} className="h-11 font-bold"
+            onClick={() => { setModalidade("campo"); setAberta(null); }}>
+            Futebol
+          </Button>
+          <Button variant={modalidade === "futsal" ? "default" : "outline"} className="h-11 font-bold"
+            onClick={() => { setModalidade("futsal"); setAberta(null); }}>
+            Futsal
+          </Button>
+        </div>
+        <Input placeholder="Buscar competição ou país" value={busca} onChange={e => setBusca(e.target.value)} />
+        <div className="space-y-2">
+          {visiveis.map(l => (
+            <button key={l.comp.id} onClick={() => setAberta(l.comp.nome)}
+              className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors flex items-center gap-3">
+              <Trophy className="h-4 w-4 text-primary shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm truncate">{l.comp.nome}</div>
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {l.comp.pais} • {l.times.length} clubes • {nivelDaCompeticao(l.times)}
+                </div>
               </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        ))}
-        {!visiveis.length && (
-          <div className="text-xs text-muted-foreground text-center py-8">Nenhuma liga encontrada.</div>
-        )}
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ))}
+          {!visiveis.length && (
+            <div className="text-xs text-muted-foreground text-center py-8">Nenhuma competição encontrada.</div>
+          )}
+        </div>
       </div>
     </div>
   );

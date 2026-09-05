@@ -224,18 +224,30 @@ export function continenteDoPais(pais: string): string {
   return CONTINENTE[pais] ?? "Mundo";
 }
 
+/** Estaduais de futsal por estado — clubes de divisões inferiores disputam a sua região. */
+const ESTADUAL_FUTSAL: Record<string, string> = {
+  RS: "Campeonato Gaúcho de Futsal",
+  SC: "Campeonato Catarinense de Futsal",
+  PR: "Campeonato Paranaense de Futsal",
+  SP: "Campeonato Paulista de Futsal",
+  MG: "Campeonato Mineiro de Futsal",
+  CE: "Campeonato Cearense de Futsal",
+  PE: "Campeonato Pernambucano de Futsal",
+  RN: "Campeonato Potiguar de Futsal",
+  AM: "Campeonato Amazonense de Futsal",
+  DF: "Campeonato Brasiliense de Futsal",
+};
+
 /** Liga principal de um clube, conforme divisão e país. */
-export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modalidade = "campo"): string {
+export function ligaPrincipal(
+  divisao: Division, pais: string, modalidade: Modalidade = "campo", estado = "",
+): string {
   if (modalidade === "futsal") {
-    const futsal: Record<Division, string> = {
-      Amador: "Liga Municipal de Futsal",
-      "Serie D": "LNF Silver",
-      "Serie C": "LNF Silver",
-      "Serie B": "LNF Silver",
-      "Serie A": "LNF Silver",
-      Elite: "Liga Nacional de Futsal",
-    };
-    return futsal[divisao];
+    if (divisao === "Elite") return "Liga Nacional de Futsal";
+    if (divisao === "Serie A") return "LNF Silver";
+    if (divisao === "Amador") return ESTADUAL_FUTSAL[estado] ?? "Liga Municipal de Futsal";
+    // Série B, C e D disputam prioritariamente o estadual da sua federação
+    return ESTADUAL_FUTSAL[estado] ?? "LNF Silver";
   }
   if (pais !== "Brasil") {
     const mapa: Record<string, string> = {
@@ -259,18 +271,19 @@ export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modal
     "Serie C": "Brasileirão Série C",
     "Serie B": "Brasileirão Série B",
     "Serie A": "Brasileirão Série A",
-    Elite: "Liga Internacional",
+    Elite: "Brasileirão Série A",
   };
   return mapa[divisao];
 }
 
+/** Nomes usados no campo "pais" para competições supranacionais. */
+const CONTINENTAIS = new Set(["Europa", "América do Sul", "América do Norte", "Ásia", "Mundo"]);
+
 /** Países que disputam cada competição continental. */
 function continentalPermite(c: Competition, pais: string): boolean {
   const cont = continenteDoPais(pais);
-  if (c.pais === "Europa") return cont === "Europa";
-  if (c.pais === "América do Sul") return cont === "América do Sul";
   if (c.pais === "Mundo") return true;
-  return false;
+  return c.pais === cont;
 }
 
 /**
@@ -279,17 +292,20 @@ function continentalPermite(c: Competition, pais: string): boolean {
  */
 export function competicoesDoClube(
   divisao: Division, pais: string, estado: string, modalidade: Modalidade = "campo",
+  extras: Competition[] = [],
 ): Competition[] {
-  return COMPETICOES.filter(c => {
+  return [...COMPETICOES, ...extras].filter(c => {
     // futsal e futebol de campo nunca se misturam
     if ((c.modalidade ?? "campo") !== modalidade) return false;
     if (!c.divisoes.includes(divisao)) return false;
     if (c.estados && !c.estados.includes(estado)) return false;
-    if (c.tipo === "continental") return continentalPermite(c, pais);
+    // competições supranacionais valem por continente, inclusive as de base
+    if (CONTINENTAIS.has(c.pais)) return continentalPermite(c, pais);
     // qualquer competição de um país só aceita clubes daquele país
     return c.pais === pais;
   });
 }
+
 
 
 export function competicaoAtiva(c: Competition, mes: number): boolean {
