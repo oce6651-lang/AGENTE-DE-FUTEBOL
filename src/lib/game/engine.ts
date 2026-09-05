@@ -1,4 +1,5 @@
-import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, calcularSalario, sortearSonhos } from "./generators";
+import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, valorDeMercadoDoAtleta, calcularSalario, sortearSonhos } from "./generators";
+import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
 import { calcularOverall, evoluirAtributos } from "./attributes";
 import { categoriaDoAtleta, categoriaPorIdade, registrarPassagem } from "./season";
 import { montarProposta } from "./offers";
@@ -7,7 +8,7 @@ import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
 import { semanaEsportiva, encerrarTemporada } from "./season";
 import { convocacoesSemanais } from "./callups";
-import { janelaAberta } from "./calendar";
+import { janelaAberta, janelaAtual } from "./calendar";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -45,6 +46,8 @@ export const UPGRADES: Upgrade[] = [
   { id: "analista", nome: "Analista de vídeo", descricao: "Observações 40% mais baratas e estimativas de potencial mais precisas.", custo: 22_000, reputacaoMin: 25 },
   { id: "sede", nome: "Sede da agência", descricao: "Clubes confiam mais em você e sua reputação para de oscilar tanto.", custo: 45_000, reputacaoMin: 40 },
   { id: "juridico", nome: "Departamento jurídico", descricao: "+3% de comissão em todas as transferências.", custo: 80_000, reputacaoMin: 55 },
+  { id: "olheiros", nome: "Central de olheiros", descricao: "Olheiros mapeiam atletas sozinhos toda semana e melhoram a rede de contatos.", custo: 34_000, reputacaoMin: 30 },
+  { id: "alojamento", nome: "Alojamento da agência", descricao: "Atletas moram na estrutura: confiam mais em você e rendem mais nas peneiras.", custo: 58_000, reputacaoMin: 45 },
   { id: "filial", nome: "Filial internacional", descricao: "+1 energia e acesso facilitado a clubes da elite europeia.", custo: 180_000, reputacaoMin: 75 },
 ];
 
