@@ -92,14 +92,9 @@ export const COMPETICOES: Competition[] = [
   { id: "copa-interior", nome: "Copa do Interior", pais: "Brasil", tipo: "regional", divisoes: ["Amador", "Serie D", "Serie C"], categorias: ["Sub-15", "Sub-17", "Sub-20", "Livre"], mesInicio: 4, mesFim: 8 },
   { id: "torneio-integracao", nome: "Torneio de Integração Municipal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-13", "Sub-15", "Sub-17", "Livre"], mesInicio: 2, mesFim: 6 },
 
-  // ---------- Novas competições nacionais e internacionais ----------
-  { id: "la-liga", nome: "La Liga", pais: "Espanha", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
-  { id: "premier-league", nome: "Premier League", pais: "Inglaterra", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
-  { id: "serie-a-ita", nome: "Serie A (ITA)", pais: "Itália", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
-  { id: "primeira-liga", nome: "Primeira Liga", pais: "Portugal", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 8, mesFim: 5 },
-  { id: "liga-argentina", nome: "Liga Profesional Argentina", pais: "Argentina", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 1, mesFim: 12 },
-  { id: "liga-uruguaia", nome: "Primera División (URU)", pais: "Uruguai", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 2, mesFim: 12 },
-  { id: "copa-libertadores-fem", nome: "CONMEBOL Copa Sudamericana Sub-17", pais: "América do Sul", tipo: "base", divisoes: ["Serie A", "Elite"], categorias: ["Sub-17"], mesInicio: 3, mesFim: 4 },
+  // ---------- Competições continentais de base ----------
+  { id: "sudamericana-sub17", nome: "CONMEBOL Sub-17 de Clubes", pais: "América do Sul", tipo: "base", divisoes: ["Serie A", "Elite"], categorias: ["Sub-17"], mesInicio: 3, mesFim: 4 },
+
   { id: "supercopa-rei", nome: "Supercopa Rei da Base", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B"], categorias: ["Sub-17", "Sub-20"], mesInicio: 2, mesFim: 3 },
   { id: "copa-brasil-sub13", nome: "Copa do Brasil Sub-13", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B", "Serie C"], categorias: ["Sub-13"], mesInicio: 4, mesFim: 8 },
   { id: "bra-sub13", nome: "Brasileirão Sub-13", pais: "Brasil", tipo: "base", divisoes: ["Serie A", "Serie B"], categorias: ["Sub-13"], mesInicio: 5, mesFim: 10 },
@@ -147,22 +142,30 @@ export const COMPETICOES: Competition[] = [
   { id: "copa-argentina", nome: "Copa Argentina", pais: "Argentina", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 3, mesFim: 11 },
   { id: "copa-mx", nome: "Copa MX", pais: "México", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 3, mesFim: 10 },
 
-  // ---------- Futsal brasileiro (competições reais) ----------
+  // ---------- Futsal brasileiro (apenas competições existentes) ----------
   { id: "lnf", nome: "Liga Nacional de Futsal", pais: "Brasil", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 3, mesFim: 12, modalidade: "futsal" },
   { id: "lnf-silver", nome: "LNF Silver", pais: "Brasil", tipo: "nacional", divisoes: ["Serie A", "Serie B"], categorias: PRO, mesInicio: 4, mesFim: 11, modalidade: "futsal" },
-  { id: "copa-lnf", nome: "Copa LNF", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 6, mesFim: 8, modalidade: "futsal" },
   { id: "taca-brasil-futsal", nome: "Taça Brasil de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: PRO, mesInicio: 6, mesFim: 7, modalidade: "futsal" },
   { id: "copa-brasil-futsal", nome: "Copa do Brasil de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 8, mesFim: 10, modalidade: "futsal" },
   { id: "supercopa-gramado-futsal", nome: "Supercopa Gramado de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 1, mesFim: 2, modalidade: "futsal" },
   { id: "libertadores-futsal", nome: "Copa Libertadores de Futsal", pais: "América do Sul", tipo: "continental", divisoes: ["Elite"], categorias: PRO, mesInicio: 7, mesFim: 8, modalidade: "futsal" },
   { id: "intercontinental-futsal", nome: "Copa Intercontinental de Futsal", pais: "Mundo", tipo: "continental", divisoes: ["Elite"], categorias: PRO, mesInicio: 11, mesFim: 12, modalidade: "futsal" },
-  { id: "estadual-futsal", nome: "Campeonato Estadual de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 11, modalidade: "futsal" },
-  { id: "lnf-sub20", nome: "Liga Nacional de Futsal Sub-20", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B"], categorias: ["Sub-20"], mesInicio: 5, mesFim: 10, modalidade: "futsal" },
   { id: "taca-brasil-futsal-sub20", nome: "Taça Brasil de Futsal Sub-20", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: ["Sub-20"], mesInicio: 7, mesFim: 8, modalidade: "futsal" },
   { id: "taca-brasil-futsal-sub17", nome: "Taça Brasil de Futsal Sub-17", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: ["Sub-17"], mesInicio: 7, mesFim: 8, modalidade: "futsal" },
   { id: "taca-brasil-futsal-sub15", nome: "Taça Brasil de Futsal Sub-15", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: ["Sub-15"], mesInicio: 8, mesFim: 9, modalidade: "futsal" },
-  { id: "estadual-futsal-base", nome: "Campeonato Estadual de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 3, mesFim: 10, modalidade: "futsal" },
-  { id: "liga-futsal-amadora", nome: "Liga Municipal de Futsal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador", "Serie D"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 1, mesFim: 12, modalidade: "futsal" },
+
+  // ---------- Estaduais de futsal (federações reais) ----------
+  { id: "paranaense-futsal", nome: "Campeonato Paranaense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["PR"], modalidade: "futsal" },
+  { id: "catarinense-futsal", nome: "Campeonato Catarinense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["SC"], modalidade: "futsal" },
+  { id: "paulista-futsal", nome: "Campeonato Paulista de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["SP"], modalidade: "futsal" },
+  { id: "mineiro-futsal", nome: "Campeonato Mineiro de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["MG"], modalidade: "futsal" },
+  { id: "cearense-futsal", nome: "Campeonato Cearense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["CE"], modalidade: "futsal" },
+  { id: "pernambucano-futsal", nome: "Campeonato Pernambucano de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["PE"], modalidade: "futsal" },
+  { id: "potiguar-futsal", nome: "Campeonato Potiguar de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["RN"], modalidade: "futsal" },
+  { id: "amazonense-futsal", nome: "Campeonato Amazonense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["AM"], modalidade: "futsal" },
+  { id: "brasiliense-futsal", nome: "Campeonato Brasiliense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["DF"], modalidade: "futsal" },
+  { id: "liga-futsal-amadora", nome: "Liga Municipal de Futsal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 1, mesFim: 12, modalidade: "futsal" },
+
 
   // ---------- Futsal gaúcho: FGFS e Liga Gaúcha (LGF) ----------
   { id: "serie-ouro-rs", nome: "Campeonato Gaúcho de Futsal Série Ouro", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 5, mesFim: 12, estados: ["RS"], modalidade: "futsal" },
@@ -172,8 +175,8 @@ export const COMPETICOES: Competition[] = [
   { id: "gauchao-lgf-b", nome: "Gauchão de Futsal LGF Série B", pais: "Brasil", tipo: "estadual", divisoes: ["Serie C"], categorias: PRO, mesInicio: 5, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
   { id: "gauchao-lgf-c", nome: "Gauchão de Futsal LGF Série C", pais: "Brasil", tipo: "estadual", divisoes: ["Serie D", "Amador"], categorias: PRO, mesInicio: 6, mesFim: 11, estados: ["RS"], modalidade: "futsal" },
   { id: "copa-rs-futsal", nome: "Copa RS de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 5, mesFim: 9, estados: ["RS"], modalidade: "futsal" },
-  { id: "copa-pampas-futsal", nome: "Copa dos Pampas de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 5, estados: ["RS"], modalidade: "futsal" },
-  { id: "taca-inverno-lgf", nome: "Taça de Inverno LGF", pais: "Brasil", tipo: "copa", divisoes: ["Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 6, mesFim: 8, estados: ["RS"], modalidade: "futsal" },
+  { id: "copa-gaucha-futsal", nome: "Copa Gaúcha de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 5, estados: ["RS"], modalidade: "futsal" },
+
   { id: "gaucho-futsal-base", nome: "Campeonato Gaúcho de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 3, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
   { id: "gauchao-lgf-base", nome: "Gauchão de Futsal de Base LGF", pais: "Brasil", tipo: "base", divisoes: ["Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 4, mesFim: 10, estados: ["RS"], modalidade: "futsal" },
 ];
@@ -205,15 +208,31 @@ export function grupoPorNome(nome: string): CompetitionGroup {
   return "Futebol de campo";
 }
 
+/** Continente de cada país — usado no mercado e nas competições continentais. */
+export const CONTINENTE: Record<string, string> = {
+  Brasil: "América do Sul", Argentina: "América do Sul", Uruguai: "América do Sul",
+  Chile: "América do Sul", Colômbia: "América do Sul", Paraguai: "América do Sul",
+  Peru: "América do Sul", Equador: "América do Sul", Bolívia: "América do Sul", Venezuela: "América do Sul",
+  Espanha: "Europa", Inglaterra: "Europa", Itália: "Europa", Portugal: "Europa",
+  França: "Europa", Alemanha: "Europa", Holanda: "Europa", Bélgica: "Europa",
+  Escócia: "Europa", Turquia: "Europa", Grécia: "Europa", Suíça: "Europa", Áustria: "Europa",
+  México: "América do Norte", EUA: "América do Norte", Canadá: "América do Norte",
+  Japão: "Ásia", "Coreia do Sul": "Ásia", China: "Ásia", "Arábia Saudita": "Ásia", Catar: "Ásia",
+};
+
+export function continenteDoPais(pais: string): string {
+  return CONTINENTE[pais] ?? "Mundo";
+}
+
 /** Liga principal de um clube, conforme divisão e país. */
 export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modalidade = "campo"): string {
   if (modalidade === "futsal") {
     const futsal: Record<Division, string> = {
       Amador: "Liga Municipal de Futsal",
-      "Serie D": "Campeonato Estadual de Futsal",
-      "Serie C": "Liga Nacional de Futsal — Divisão de Acesso",
-      "Serie B": "Liga Nacional de Futsal — Divisão de Acesso",
-      "Serie A": "Liga Nacional de Futsal",
+      "Serie D": "LNF Silver",
+      "Serie C": "LNF Silver",
+      "Serie B": "LNF Silver",
+      "Serie A": "LNF Silver",
       Elite: "Liga Nacional de Futsal",
     };
     return futsal[divisao];
@@ -245,7 +264,19 @@ export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modal
   return mapa[divisao];
 }
 
-/** Todas as competições que um clube disputa no ano. */
+/** Países que disputam cada competição continental. */
+function continentalPermite(c: Competition, pais: string): boolean {
+  const cont = continenteDoPais(pais);
+  if (c.pais === "Europa") return cont === "Europa";
+  if (c.pais === "América do Sul") return cont === "América do Sul";
+  if (c.pais === "Mundo") return true;
+  return false;
+}
+
+/**
+ * Todas as competições que um clube disputa no ano.
+ * Cada liga tem times fixos: um clube nunca entra em competição de outro país.
+ */
 export function competicoesDoClube(
   divisao: Division, pais: string, estado: string, modalidade: Modalidade = "campo",
 ): Competition[] {
@@ -254,16 +285,12 @@ export function competicoesDoClube(
     if ((c.modalidade ?? "campo") !== modalidade) return false;
     if (!c.divisoes.includes(divisao)) return false;
     if (c.estados && !c.estados.includes(estado)) return false;
-    if (c.pais === "Brasil" && pais !== "Brasil") return false;
-    // ligas nacionais estrangeiras: só clubes daquele país
-    if (c.tipo === "nacional" && c.pais !== "Brasil" && c.pais !== pais) return false;
-    if (c.tipo === "continental") {
-      if (c.id === "champions" || c.id === "europa-league") return pais !== "Brasil";
-      return pais === "Brasil" || pais === "Argentina" || pais === "Uruguai";
-    }
-    return true;
+    if (c.tipo === "continental") return continentalPermite(c, pais);
+    // qualquer competição de um país só aceita clubes daquele país
+    return c.pais === pais;
   });
 }
+
 
 export function competicaoAtiva(c: Competition, mes: number): boolean {
   return c.mesInicio <= c.mesFim
