@@ -93,6 +93,8 @@ export interface Player {
   visual: number;
   /** Semanas restantes de lesão (0 = apto). */
   lesaoSemanas?: number;
+  /** Ano em que o contrato com o clube atual se encerra. */
+  contratoAteAno?: number;
   /** A família confia cegamente no empresário (contatos pessoais iniciais). */
   familiaConfia?: boolean;
   /** Títulos conquistados na carreira. */
@@ -155,7 +157,7 @@ export interface SeasonCompetition {
 
 /** Registro permanente de uma movimentação de mercado. */
 export interface TransferRecord {
-  tipo: "Livre" | "Empréstimo" | "Compra definitiva" | "Promoção interna" | "Base";
+  tipo: "Livre" | "Empréstimo" | "Compra definitiva" | "Promoção interna" | "Base" | "Renovação" | "Renovação";
   valor: number;
   moeda: "R$" | "€";
   de: string | null;
@@ -305,7 +307,7 @@ export interface Negotiation {
   expiraEm: number; // semanas restantes
   criadaEm: string;
   /** Natureza do negócio proposto. */
-  tipo?: "Compra definitiva" | "Empréstimo" | "Livre";
+  tipo?: "Compra definitiva" | "Empréstimo" | "Livre" | "Renovação";
   /** Duração do contrato oferecido, em anos. */
   duracaoAnos?: number;
   /** Categoria em que o clube pretende utilizar o atleta. */

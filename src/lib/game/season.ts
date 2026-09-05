@@ -189,7 +189,9 @@ function forcaNaCategoria(c: Club, cat: AgeCategory, ano: number): number {
 
 /** Ajuste interno de força competitiva por clube. */
 function fatorOculto(c: Club): number {
-  return c.nome === "Grêmio FBPA" ? 1.5 : 1;
+  if (c.nome === "Grêmio FBPA") return 1.5;
+  if (c.nome.startsWith("ATLEC")) return 1.25;
+  return 1;
 }
 
 /** Define campeão, vice e colocações de todas as competições da temporada. */

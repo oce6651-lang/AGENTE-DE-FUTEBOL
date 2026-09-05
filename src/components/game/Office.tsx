@@ -7,6 +7,7 @@ import { CareerHistory } from "./CareerHistory";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
+import { LeagueBrowser } from "./LeagueBrowser";
 import { janelaAberta, statusJanela } from "@/lib/game/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +25,9 @@ import {
 import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
 import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
 import { gerarJogador } from "@/lib/game/generators";
+import {
+  acionarContatos, realizarPeneiraPropria, podeFazerPeneiraPropria, CUSTOS_DESCOBERTA,
+} from "@/lib/game/discovery";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
@@ -33,12 +37,13 @@ import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
   Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
+  Phone, ListTree, BarChart3,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
-  | "arquivo" | "competicoes";
+  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada";
 
 /** Único código autorizado a abrir o painel administrativo. */
 const ADMIN_CODE = "GGG-209-213";
@@ -75,6 +80,28 @@ export function Office({ state, setState, onExit }: {
     const { state: next, eventos } = avancarSemana(state);
     setState(next);
     toast(eventos[0] ?? "Semana avançada", { description: eventos[1] });
+  };
+
+  const handleAvancarMes = () => {
+    let s = state;
+    const acumulados: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const r = avancarSemana(s);
+      s = r.state;
+      acumulados.push(...r.eventos);
+    }
+    setState(s);
+    toast("Um mês se passou", { description: acumulados.slice(0, 2).join(" • ") || undefined });
+  };
+
+  const handleContatos = () => {
+    const r = acionarContatos(state);
+    setState(r.state); toast(r.mensagem);
+  };
+
+  const handlePeneiraPropria = () => {
+    const r = realizarPeneiraPropria(state);
+    setState(r.state); toast(r.mensagem);
   };
 
   const abrirLocal = (l: ScoutLocation) => {
@@ -213,12 +240,20 @@ export function Office({ state, setState, onExit }: {
                 badge={state.historicoCompeticoes?.length ?? 0} onClick={() => setView("competicoes")} />
               <MenuTile icon={<Briefcase className="h-6 w-6" />} label="Agência" onClick={() => setView("agency")} />
               <MenuTile icon={<ClubCrest cores={["#1f8ecd", "#0b1d2e"]} abrev="CLB" size={26} />} label="Clubes" onClick={() => setView("clubs")} />
+              <MenuTile icon={<Phone className="h-6 w-6" />} label="Descoberta" onClick={() => setView("descoberta")} />
+              <MenuTile icon={<ListTree className="h-6 w-6" />} label="Ligas" onClick={() => setView("ligas")} />
+              <MenuTile icon={<BarChart3 className="h-6 w-6" />} label="Fim de temporada"
+                badge={state.resumosTemporada?.length ?? 0} onClick={() => setView("temporada")} />
               <MenuTile icon={<ShieldCheck className="h-6 w-6" />} label="ADM" onClick={() => setView("admin")} />
             </div>
 
             <Button onClick={handleAvancar} className="w-full h-14 text-base font-black hover:scale-[1.01] transition-transform"
               style={{ background: "var(--gradient-primary)", color: "var(--primary-foreground)" }}>
               Avançar semana
+            </Button>
+            <Button variant="secondary" onClick={handleAvancarMes}
+              className="w-full h-12 text-sm font-bold">
+              Avançar mês (4 semanas)
             </Button>
             <Button variant="ghost" onClick={onExit} className="w-full">Voltar ao menu principal</Button>
           </div>
@@ -732,6 +767,99 @@ export function Office({ state, setState, onExit }: {
                   })}
               </div>
             )}
+          </div>
+        )}
+
+        {view === "ligas" && (
+          <LeagueBrowser clubes={state.clubes} onBack={() => setView("home")} />
+        )}
+
+        {view === "descoberta" && (
+          <div className="p-4 space-y-3 animate-in fade-in duration-300">
+            <SubHeader title="Descoberta de talentos" onBack={() => setView("home")} />
+            <p className="text-xs text-muted-foreground">
+              Nem todo craque aparece indo a campo. Use a rede de contatos, organize sua própria peneira
+              e deixe a central de olheiros trabalhar por você.
+            </p>
+            <Card className="p-4 space-y-2">
+              <div className="font-bold text-sm">Acionar rede de contatos</div>
+              <div className="text-xs text-muted-foreground">
+                Telefonemas para treinadores e amigos do meio. Custa R$ {CUSTOS_DESCOBERTA.contatos} e 1 de energia.
+              </div>
+              <Button className="w-full" onClick={handleContatos}
+                disabled={state.energia <= 0 || state.dinheiro < CUSTOS_DESCOBERTA.contatos}>
+                Fazer as ligações
+              </Button>
+            </Card>
+            <Card className="p-4 space-y-2">
+              <div className="font-bold text-sm">Peneira própria da agência</div>
+              <div className="text-xs text-muted-foreground">
+                Campo, arbitragem e divulgação: R$ {CUSTOS_DESCOBERTA.peneiraPropria.toLocaleString("pt-BR")} e 2 de energia.
+              </div>
+              <Button className="w-full" variant="secondary" onClick={handlePeneiraPropria}
+                disabled={!podeFazerPeneiraPropria(state).ok}>
+                Organizar peneira
+              </Button>
+              {!podeFazerPeneiraPropria(state).ok && (
+                <div className="text-[11px] text-muted-foreground">{podeFazerPeneiraPropria(state).motivo}</div>
+              )}
+            </Card>
+            <Card className="p-4 space-y-1">
+              <div className="font-bold text-sm">Central de olheiros</div>
+              <div className="text-xs text-muted-foreground">
+                {temUpgrade(state, "olheiros")
+                  ? "Em operação: seus olheiros mapeiam atletas sozinhos toda semana."
+                  : "Ainda não construída. Adquira na aba Agência para receber relatórios automáticos."}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {view === "temporada" && (
+          <div className="p-4 space-y-3 animate-in fade-in duration-300">
+            <SubHeader title="Fim de temporada" onBack={() => setView("home")} />
+            {!(state.resumosTemporada ?? []).length && (
+              <div className="text-xs text-muted-foreground text-center py-10">
+                Nenhuma temporada encerrada ainda. Avance até dezembro para ver o balanço da agência.
+              </div>
+            )}
+            {(state.resumosTemporada ?? []).map(r => (
+              <Card key={r.ano} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-lg font-black">Temporada {r.ano}</div>
+                  <Badge variant="secondary" className="text-[10px]">{r.clientes} cliente(s)</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Stat label="Caixa no fim" value={`R$ ${r.dinheiroFim.toLocaleString("pt-BR")}`} />
+                  <Stat label="Reputação" value={`${r.reputacaoInicio} → ${r.reputacaoFim}`} />
+                  <Stat label="Receita" value={`R$ ${r.receita.toLocaleString("pt-BR")}`} />
+                  <Stat label="Despesa" value={`R$ ${r.despesa.toLocaleString("pt-BR")}`} />
+                </div>
+                {!!r.destaques.length && (
+                  <div className="space-y-1">
+                    {r.destaques.map((d, i) => (
+                      <div key={i} className="text-xs text-muted-foreground">• {d}</div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {r.jogadores.map(j => (
+                    <div key={j.playerId} className="rounded-xl border border-border bg-card p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-bold text-sm truncate">{j.nome}</div>
+                        <Badge variant="outline" className="text-[10px]">{j.ovrInicio} → {j.ovrFim} OVR</Badge>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {j.clube || "Sem clube"} • {j.categoria} • {j.jogos}J {j.gols}G {j.assistencias}A • nota {j.notaMedia.toFixed(2)}
+                      </div>
+                      {!!j.titulos.length && (
+                        <div className="text-[11px] text-primary font-bold mt-1">{j.titulos.join(" • ")}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
           </div>
         )}
 

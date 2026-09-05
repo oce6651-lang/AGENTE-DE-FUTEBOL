@@ -12,6 +12,13 @@ function desce(d: Division): Division {
   return ORDEM[Math.max(0, i - 1)];
 }
 
+/** Bônus permanente de desempenho de alguns clubes. */
+function bonusDesempenho(c: Club): number {
+  if (c.nome === "Grêmio FBPA") return 1.5;
+  if (c.nome.startsWith("ATLEC")) return 1.25;
+  return 1;
+}
+
 const NOMES_FICTICIOS = [
   "Rodrigo Vasques","Elias Prado","Tiago Bertoldo","Cauã Menezes","Léo Vidal","Juninho Barros",
   "Ramon Estevão","Wallace Duarte","Kevin Sartori","Bruno Casagrande","Marlon Pizzato",
@@ -34,7 +41,7 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
   s = {
     ...s,
     clubes: s.clubes.map(c => {
-      const forca = (ORDEM.indexOf(c.categoria) + 1) * (c.nome === "Grêmio FBPA" ? 1.5 : 1);
+      const forca = (ORDEM.indexOf(c.categoria) + 1) * bonusDesempenho(c);
       const r = Math.random() * (forca + 3);
       const pontos = r > forca * 0.6 ? 3 : r > forca * 0.35 ? 1 : 0;
       const moral = Math.max(0, Math.min(100, c.moralTecnico + (pontos === 3 ? rnd(2, 6) : pontos === 1 ? 0 : -rnd(3, 9))));

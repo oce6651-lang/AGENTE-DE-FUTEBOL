@@ -1,4 +1,5 @@
-import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, calcularSalario, sortearSonhos } from "./generators";
+import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, valorDeMercadoDoAtleta, calcularSalario, sortearSonhos } from "./generators";
+
 import { calcularOverall, evoluirAtributos } from "./attributes";
 import { categoriaDoAtleta, categoriaPorIdade, registrarPassagem } from "./season";
 import { montarProposta } from "./offers";
@@ -7,7 +8,8 @@ import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
 import { semanaEsportiva, encerrarTemporada } from "./season";
 import { convocacoesSemanais } from "./callups";
-import { janelaAberta } from "./calendar";
+import { janelaAberta, janelaAtual } from "./calendar";
+import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -45,6 +47,8 @@ export const UPGRADES: Upgrade[] = [
   { id: "analista", nome: "Analista de vídeo", descricao: "Observações 40% mais baratas e estimativas de potencial mais precisas.", custo: 22_000, reputacaoMin: 25 },
   { id: "sede", nome: "Sede da agência", descricao: "Clubes confiam mais em você e sua reputação para de oscilar tanto.", custo: 45_000, reputacaoMin: 40 },
   { id: "juridico", nome: "Departamento jurídico", descricao: "+3% de comissão em todas as transferências.", custo: 80_000, reputacaoMin: 55 },
+  { id: "olheiros", nome: "Central de olheiros", descricao: "Olheiros mapeiam atletas sozinhos toda semana e melhoram a rede de contatos.", custo: 34_000, reputacaoMin: 30 },
+  { id: "alojamento", nome: "Alojamento da agência", descricao: "Atletas moram na estrutura: confiam mais em você e rendem mais nas peneiras.", custo: 58_000, reputacaoMin: 45 },
   { id: "filial", nome: "Filial internacional", descricao: "+1 energia e acesso facilitado a clubes da elite europeia.", custo: 180_000, reputacaoMin: 75 },
 ];
 
@@ -119,7 +123,14 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
   };
-  return { ...base, radar: [], contatosPendentes: contatosIniciais(base) };
+  const inicial: GameState = { ...base, radar: [], contatosPendentes: contatosIniciais(base) };
+  return {
+    ...inicial,
+    snapshotInicioAno: {
+      ano: inicial.ano, dinheiro: inicial.dinheiro, reputacao: inicial.reputacao, jogadores: {},
+    },
+    resumosTemporada: [],
+  };
 }
 
 /**
@@ -411,6 +422,9 @@ export function aceitaInscricao(state: GameState, clube: Club, player: Player): 
     + (state.upgrades.includes("filial") && clube.categoria === "Elite" ? 25 : 0);
   if (clube.confiancaEmVoce + state.reputacao * 0.4 + bonusEstrutura < exigeConfianca)
     return { ok: false, motivo: `${clube.nome} não responde às suas mensagens. Ganhe reputação primeiro.` };
+  // Potencial abre portas: promessas jovens conseguem teste mesmo abaixo do nível.
+  if (player.idade < 23 && player.potencial >= player.atual + 20 && Math.random() < 0.5)
+    return { ok: true };
   if (clube.personalidade === "Formador" && player.idade > 20)
     return { ok: false, motivo: `${clube.nome} só avalia atletas de base.` };
   if (clube.personalidade === "Imediatista" && player.idade < 18)
@@ -464,14 +478,47 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   const eventos: string[] = [];
   let s: GameState = { ...state };
 
+  const mesAnterior = s.mes;
+  const paisAgente = s.agent.pais;
+
   s.semana += 1;
   if (s.semana > 4) {
     s.semana = 1;
     s.mes += 1;
-    if (s.mes > 12) { s.mes = 1; s.ano += 1; s = viradaDeAno(s); }
+    if (s.mes > 12) {
+      s.mes = 1; s.ano += 1;
+      s = viradaDeAno(s);
+      s = fimDeContratos(s, eventos);
+      s = registrarSnapshot(s);
+    }
     const desp = CUSTOS.fixoMensal + s.jogadores.length * CUSTOS.porAtleta;
     s = gastar(s, desp, "Custos operacionais da agência");
     eventos.push(`Custos mensais: R$ ${desp.toLocaleString("pt-BR")}`);
+
+    // avisos de abertura e fechamento das janelas de transferência
+    const antes = janelaAberta(mesAnterior, paisAgente);
+    const agora = janelaAberta(s.mes, paisAgente);
+    if (!antes && agora) {
+      const j = janelaAtual(s.mes, paisAgente);
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: `${j?.nome ?? "Janela de transferências"} está aberta`,
+        texto: "O mercado se movimenta: é agora que as propostas realmente aparecem. Ofereça seus atletas.",
+        tipo: "mercado",
+      };
+      s = { ...s, noticias: [not, ...s.noticias] };
+      eventos.push(not.titulo);
+    }
+    if (antes && !agora) {
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: "Janela de transferências fechada",
+        texto: "O mercado praticamente para até a próxima janela. Use o período para observar e formar atletas.",
+        tipo: "mercado",
+      };
+      s = { ...s, noticias: [not, ...s.noticias] };
+      eventos.push(not.titulo);
+    }
   }
 
   // energia da semana
@@ -487,11 +534,12 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
       const jovem = p.idade < 21;
       const chance = (jovem ? 0.14 : 0.05) * (emClube ? 1.4 : 0.5);
       if (Math.random() < chance) {
+        // O Overall é SEMPRE derivado da ficha de atributos — nunca somado à parte.
         const atributos = evoluirAtributos(p.atributos, 1, p.posicao);
-        const atual = Math.min(p.potencial, Math.max(p.atual + 1, calcularOverall(atributos, p.posicao)));
+        const atual = Math.min(p.potencial, calcularOverall(atributos, p.posicao));
         q = {
           ...p, atributos, atual,
-          valorMercado: calcularValorMercado(atual, p.potencial, p.idade, !!p.clube),
+          valorMercado: valorDeMercadoDoAtleta({ ...p, atual }, s.clubes),
         };
       }
     }
@@ -559,12 +607,87 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     }
   }
 
+  // estrutura da agência trabalhando sozinha
+  const relatorios = relatoriosAutomaticos(s);
+  s = efeitoAlojamento(relatorios.state);
+  eventos.push(...relatorios.manchetes);
+
   // mundo vivo
   const mundo = mundoSemanal(s);
   s = mundo.state;
   eventos.push(...mundo.manchetes);
 
   return { state: s, eventos };
+}
+
+/** Guarda a foto da agência no primeiro dia do ano, base do resumo de temporada. */
+function registrarSnapshot(s: GameState): GameState {
+  const jogadores: Record<string, { ovr: number; valor: number }> = {};
+  for (const p of s.jogadores) jogadores[p.id] = { ovr: p.atual, valor: p.valorMercado };
+  return {
+    ...s,
+    snapshotInicioAno: { ano: s.ano, dinheiro: s.dinheiro, reputacao: s.reputacao, jogadores },
+  };
+}
+
+/**
+ * Virada de ano: contratos que venceram geram proposta de renovação. Se o clube
+ * não quiser renovar, o atleta sai de graça e fica sem clube.
+ */
+function fimDeContratos(state: GameState, eventos: string[]): GameState {
+  let s = state;
+  for (const p of s.jogadores) {
+    if (!p.clube || p.status === "Aposentado") continue;
+    if ((p.contratoAteAno ?? s.ano + 1) > s.ano) continue;
+    const clube = s.clubes.find(c => c.nome === p.clube);
+    if (!clube) continue;
+
+    const nivelExigido = { Amador: 16, "Serie D": 30, "Serie C": 46, "Serie B": 64, "Serie A": 78, Elite: 90 }[clube.categoria];
+    const querRenovar = p.atual + Math.max(0, p.potencial - p.atual) * (p.idade < 23 ? 0.5 : 0)
+      >= nivelExigido - 6 && Math.random() < 0.75;
+
+    if (querRenovar) {
+      const neg: Negotiation = { ...montarProposta(s, clube, p), id: nextNegId() };
+      const renovacao: Negotiation = {
+        ...neg,
+        tipo: "Renovação",
+        valorProposta: 0,
+        duracaoAnos: p.idade <= 21 ? rnd(3, 5) : rnd(1, 3),
+        expiraEm: 4,
+        etapas: [{ data: `${s.mes}/${s.ano}`, texto: `${clube.nome} quer renovar o contrato de ${p.nome}.` }],
+      };
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: `${clube.nome} propõe renovação a ${p.nome}`,
+        texto: `Contrato vencido. O clube oferece ${renovacao.duracaoAnos} ano(s) e salário de R$ ${renovacao.salario.toLocaleString("pt-BR")}/mês.`,
+        tipo: "mercado",
+      };
+      s = { ...s, negociacoes: [renovacao, ...s.negociacoes], noticias: [not, ...s.noticias] };
+      eventos.push(not.titulo);
+    } else {
+      const evt: TimelineEvent = {
+        ano: s.ano, mes: s.mes, semana: s.semana, tipo: "transferencia",
+        texto: `Contrato encerrado com o ${clube.nome}. Saiu de graça.`,
+      };
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: `${p.nome} deixa o ${clube.nome}`,
+        texto: "Fim de contrato sem renovação. O atleta está livre no mercado.",
+        tipo: "mercado",
+      };
+      s = {
+        ...s,
+        noticias: [not, ...s.noticias],
+        jogadores: s.jogadores.map(x => x.id === p.id ? {
+          ...x, clube: null, status: "Sem clube", salario: 0, valorMercado: 0,
+          contratoAteAno: undefined, categoriaForcada: undefined,
+          timeline: [...x.timeline, evt],
+        } : x),
+      };
+      eventos.push(not.titulo);
+    }
+  }
+  return s;
 }
 
 function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
@@ -712,7 +835,8 @@ export function responderNegociacao(
     status: `No ${clube.nome}`,
     salario,
     categoriaForcada: categoria === categoriaPorIdade(player.idade) ? undefined : categoria,
-    valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true),
+    valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true, clube.categoria),
+    contratoAteAno: state.ano + (neg.duracaoAnos ?? 2),
     temporadas: registrarPassagem(player, clube, categoria, state.ano, transferencia),
     historico: [...player.historico, `${tipo} para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
     timeline: [...player.timeline, {
