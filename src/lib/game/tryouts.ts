@@ -153,7 +153,12 @@ export function avaliarPeneira(state: GameState, t: Tryout): { state: GameState;
     + (tr === "Profissional" ? 3 : 0) + (tr === "Indisciplinado" ? -6 : 0)
     + (tr === "Tímido" ? -3 : 0) + (tr === "Líder" ? 3 : 0), 0);
 
-  const score = player.atual + Math.round(player.atributos.mental / 18) + bonusTraco + rnd(-12, 12);
+  // Avaliadores olham o potencial: garotos com teto alto ganham margem de erro.
+  const bonusPotencial = player.idade < 23
+    ? Math.round(Math.max(0, player.potencial - player.atual) * 0.35)
+    : 0;
+  const score = player.atual + Math.round(player.atributos.mental / 18)
+    + bonusTraco + bonusPotencial + rnd(-12, 12);
 
   // ---- destaque da peneira ----
   if (score >= exig + 14) {
