@@ -770,6 +770,99 @@ export function Office({ state, setState, onExit }: {
           </div>
         )}
 
+        {view === "ligas" && (
+          <LeagueBrowser clubes={state.clubes} onBack={() => setView("home")} />
+        )}
+
+        {view === "descoberta" && (
+          <div className="p-4 space-y-3 animate-in fade-in duration-300">
+            <SubHeader title="Descoberta de talentos" onBack={() => setView("home")} />
+            <p className="text-xs text-muted-foreground">
+              Nem todo craque aparece indo a campo. Use a rede de contatos, organize sua própria peneira
+              e deixe a central de olheiros trabalhar por você.
+            </p>
+            <Card className="p-4 space-y-2">
+              <div className="font-bold text-sm">Acionar rede de contatos</div>
+              <div className="text-xs text-muted-foreground">
+                Telefonemas para treinadores e amigos do meio. Custa R$ {CUSTOS_DESCOBERTA.contatos} e 1 de energia.
+              </div>
+              <Button className="w-full" onClick={handleContatos}
+                disabled={state.energia <= 0 || state.dinheiro < CUSTOS_DESCOBERTA.contatos}>
+                Fazer as ligações
+              </Button>
+            </Card>
+            <Card className="p-4 space-y-2">
+              <div className="font-bold text-sm">Peneira própria da agência</div>
+              <div className="text-xs text-muted-foreground">
+                Campo, arbitragem e divulgação: R$ {CUSTOS_DESCOBERTA.peneiraPropria.toLocaleString("pt-BR")} e 2 de energia.
+              </div>
+              <Button className="w-full" variant="secondary" onClick={handlePeneiraPropria}
+                disabled={!podeFazerPeneiraPropria(state).ok}>
+                Organizar peneira
+              </Button>
+              {!podeFazerPeneiraPropria(state).ok && (
+                <div className="text-[11px] text-muted-foreground">{podeFazerPeneiraPropria(state).motivo}</div>
+              )}
+            </Card>
+            <Card className="p-4 space-y-1">
+              <div className="font-bold text-sm">Central de olheiros</div>
+              <div className="text-xs text-muted-foreground">
+                {temUpgrade(state, "olheiros")
+                  ? "Em operação: seus olheiros mapeiam atletas sozinhos toda semana."
+                  : "Ainda não construída. Adquira na aba Agência para receber relatórios automáticos."}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {view === "temporada" && (
+          <div className="p-4 space-y-3 animate-in fade-in duration-300">
+            <SubHeader title="Fim de temporada" onBack={() => setView("home")} />
+            {!(state.resumosTemporada ?? []).length && (
+              <div className="text-xs text-muted-foreground text-center py-10">
+                Nenhuma temporada encerrada ainda. Avance até dezembro para ver o balanço da agência.
+              </div>
+            )}
+            {(state.resumosTemporada ?? []).map(r => (
+              <Card key={r.ano} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-lg font-black">Temporada {r.ano}</div>
+                  <Badge variant="secondary" className="text-[10px]">{r.clientes} cliente(s)</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Stat label="Caixa no fim" value={`R$ ${r.dinheiroFim.toLocaleString("pt-BR")}`} />
+                  <Stat label="Reputação" value={`${r.reputacaoInicio} → ${r.reputacaoFim}`} />
+                  <Stat label="Receita" value={`R$ ${r.receita.toLocaleString("pt-BR")}`} />
+                  <Stat label="Despesa" value={`R$ ${r.despesa.toLocaleString("pt-BR")}`} />
+                </div>
+                {!!r.destaques.length && (
+                  <div className="space-y-1">
+                    {r.destaques.map((d, i) => (
+                      <div key={i} className="text-xs text-muted-foreground">• {d}</div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {r.jogadores.map(j => (
+                    <div key={j.playerId} className="rounded-xl border border-border bg-card p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-bold text-sm truncate">{j.nome}</div>
+                        <Badge variant="outline" className="text-[10px]">{j.ovrInicio} → {j.ovrFim} OVR</Badge>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {j.clube || "Sem clube"} • {j.categoria} • {j.jogos}J {j.gols}G {j.assistencias}A • nota {j.notaMedia.toFixed(2)}
+                      </div>
+                      {!!j.titulos.length && (
+                        <div className="text-[11px] text-primary font-bold mt-1">{j.titulos.join(" • ")}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
         {view === "news" && (
           <div className="p-4 space-y-3">
             <SubHeader title="Notícias" onBack={() => setView("home")} />
