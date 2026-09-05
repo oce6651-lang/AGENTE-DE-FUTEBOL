@@ -593,12 +593,87 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     }
   }
 
+  // estrutura da agência trabalhando sozinha
+  const relatorios = relatoriosAutomaticos(s);
+  s = efeitoAlojamento(relatorios.state);
+  eventos.push(...relatorios.manchetes);
+
   // mundo vivo
   const mundo = mundoSemanal(s);
   s = mundo.state;
   eventos.push(...mundo.manchetes);
 
   return { state: s, eventos };
+}
+
+/** Guarda a foto da agência no primeiro dia do ano, base do resumo de temporada. */
+function registrarSnapshot(s: GameState): GameState {
+  const jogadores: Record<string, { ovr: number; valor: number }> = {};
+  for (const p of s.jogadores) jogadores[p.id] = { ovr: p.atual, valor: p.valorMercado };
+  return {
+    ...s,
+    snapshotInicioAno: { ano: s.ano, dinheiro: s.dinheiro, reputacao: s.reputacao, jogadores },
+  };
+}
+
+/**
+ * Virada de ano: contratos que venceram geram proposta de renovação. Se o clube
+ * não quiser renovar, o atleta sai de graça e fica sem clube.
+ */
+function fimDeContratos(state: GameState, eventos: string[]): GameState {
+  let s = state;
+  for (const p of s.jogadores) {
+    if (!p.clube || p.status === "Aposentado") continue;
+    if ((p.contratoAteAno ?? s.ano + 1) > s.ano) continue;
+    const clube = s.clubes.find(c => c.nome === p.clube);
+    if (!clube) continue;
+
+    const nivelExigido = { Amador: 16, "Serie D": 30, "Serie C": 46, "Serie B": 64, "Serie A": 78, Elite: 90 }[clube.categoria];
+    const querRenovar = p.atual + Math.max(0, p.potencial - p.atual) * (p.idade < 23 ? 0.5 : 0)
+      >= nivelExigido - 6 && Math.random() < 0.75;
+
+    if (querRenovar) {
+      const neg: Negotiation = { ...montarProposta(s, clube, p), id: nextNegId() };
+      const renovacao: Negotiation = {
+        ...neg,
+        tipo: "Renovação",
+        valorProposta: 0,
+        duracaoAnos: p.idade <= 21 ? rnd(3, 5) : rnd(1, 3),
+        expiraEm: 4,
+        etapas: [{ data: `${s.mes}/${s.ano}`, texto: `${clube.nome} quer renovar o contrato de ${p.nome}.` }],
+      };
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: `${clube.nome} propõe renovação a ${p.nome}`,
+        texto: `Contrato vencido. O clube oferece ${renovacao.duracaoAnos} ano(s) e salário de R$ ${renovacao.salario.toLocaleString("pt-BR")}/mês.`,
+        tipo: "mercado",
+      };
+      s = { ...s, negociacoes: [renovacao, ...s.negociacoes], noticias: [not, ...s.noticias] };
+      eventos.push(not.titulo);
+    } else {
+      const evt: TimelineEvent = {
+        ano: s.ano, mes: s.mes, semana: s.semana, tipo: "transferencia",
+        texto: `Contrato encerrado com o ${clube.nome}. Saiu de graça.`,
+      };
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: `${p.nome} deixa o ${clube.nome}`,
+        texto: "Fim de contrato sem renovação. O atleta está livre no mercado.",
+        tipo: "mercado",
+      };
+      s = {
+        ...s,
+        noticias: [not, ...s.noticias],
+        jogadores: s.jogadores.map(x => x.id === p.id ? {
+          ...x, clube: null, status: "Sem clube", salario: 0, valorMercado: 0,
+          contratoAteAno: undefined, categoriaForcada: undefined,
+          timeline: [...x.timeline, evt],
+        } : x),
+      };
+      eventos.push(not.titulo);
+    }
+  }
+  return s;
 }
 
 function sondagensDeClubes(state: GameState, eventos: string[]): GameState {
