@@ -487,11 +487,12 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
       const jovem = p.idade < 21;
       const chance = (jovem ? 0.14 : 0.05) * (emClube ? 1.4 : 0.5);
       if (Math.random() < chance) {
+        // O Overall é SEMPRE derivado da ficha de atributos — nunca somado à parte.
         const atributos = evoluirAtributos(p.atributos, 1, p.posicao);
-        const atual = Math.min(p.potencial, Math.max(p.atual + 1, calcularOverall(atributos, p.posicao)));
+        const atual = Math.min(p.potencial, calcularOverall(atributos, p.posicao));
         q = {
           ...p, atributos, atual,
-          valorMercado: calcularValorMercado(atual, p.potencial, p.idade, !!p.clube),
+          valorMercado: valorDeMercadoDoAtleta({ ...p, atual }, s.clubes),
         };
       }
     }
