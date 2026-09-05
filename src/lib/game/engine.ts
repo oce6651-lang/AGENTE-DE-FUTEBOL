@@ -713,7 +713,8 @@ export function responderNegociacao(
     status: `No ${clube.nome}`,
     salario,
     categoriaForcada: categoria === categoriaPorIdade(player.idade) ? undefined : categoria,
-    valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true),
+    valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true, clube.categoria),
+    contratoAteAno: state.ano + (neg.duracaoAnos ?? 2),
     temporadas: registrarPassagem(player, clube, categoria, state.ano, transferencia),
     historico: [...player.historico, `${tipo} para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
     timeline: [...player.timeline, {
