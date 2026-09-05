@@ -91,19 +91,29 @@ export function responder(state: GameState, clube: Club, player: Player): ClubRe
   const exigido = NIVEL_DIVISAO[clube.categoria];
   const exterior = clube.pais !== player.pais;
 
+  // Clubes valorizam potencial em atletas jovens: um garoto abaixo do nível hoje
+  // ainda interessa se puder chegar ao patamar do clube antes dos 23 anos.
+  const promessa = player.idade < 23 && player.potencial >= exigido + 4;
+  const nivelConsiderado = promessa
+    ? Math.max(player.atual, Math.round((player.atual + player.potencial) / 2))
+    : player.atual;
+
   // clubes muito acima do nível do atleta nem abrem conversa
-  if (exigido - player.atual > 12) {
+  if (exigido - nivelConsiderado > 12) {
     return { ...base, resultado: "abaixo_do_nivel", texto: `${clube.nome} nem avaliou o material: o atleta está muito distante do nível da ${clube.categoria}.` };
   }
   if (exterior) {
-    const exige = EXIGENCIA_EXTERIOR[clube.categoria];
-    if (player.atual < exige) {
+    // Sair para clubes do mesmo continente é bem mais simples do que atravessar o mundo.
+    const mesmoContinente = continenteDoPais(clube.pais) === continenteDoPais(player.pais);
+    const exige = Math.round(EXIGENCIA_EXTERIOR[clube.categoria] * (mesmoContinente ? 0.8 : 1));
+    if (nivelConsiderado < exige) {
       return {
         ...base, resultado: "abaixo_do_nivel",
         texto: `Sair do país é para poucos: ${clube.nome} só analisa atletas a partir de ${exige} de nível técnico.`,
       };
     }
-    const repMin = { Amador: 10, "Serie D": 14, "Serie C": 22, "Serie B": 35, "Serie A": 50, Elite: 70 }[clube.categoria];
+    const repBase = { Amador: 10, "Serie D": 14, "Serie C": 22, "Serie B": 35, "Serie A": 50, Elite: 70 }[clube.categoria];
+    const repMin = Math.round(repBase * (mesmoContinente ? 0.6 : 1));
     if (state.reputacao < repMin && !state.upgrades.includes("filial")) {
       return { ...base, resultado: "ignorou", texto: "Clube do exterior: não negocia com agências sem projeção internacional." };
     }
@@ -115,7 +125,7 @@ export function responder(state: GameState, clube: Club, player: Player): ClubRe
     return { ...base, resultado: "ignorou", texto: "Não retornou seus contatos. Sua agência ainda não é conhecida aqui." };
   }
 
-  if (player.atual < exigido - 4 && !(clube.personalidade === "Formador" && player.idade <= 19 && player.potencial >= exigido + 8)) {
+  if (nivelConsiderado < exigido - 4 && !(clube.personalidade === "Formador" && player.idade <= 19 && player.potencial >= exigido + 8)) {
     return { ...base, resultado: "abaixo_do_nivel", texto: `Avaliação: nível técnico abaixo do exigido pela ${clube.categoria}.` };
   }
 
@@ -124,14 +134,17 @@ export function responder(state: GameState, clube: Club, player: Player): ClubRe
     return { ...base, resultado: "posicao_ocupada", texto: `O elenco já está servido de ${player.posicao} nesta temporada.` };
   }
 
+  // Gigantes da elite praticamente nunca deixam de contratar por falta de caixa.
+  const semLimite = clube.categoria === "Elite";
   const teto = clube.orcamento * (clube.personalidade === "Pechincha" ? 0.004 : 0.02);
-  if (player.valorMercado > teto) {
+  if (!semLimite && player.valorMercado > teto) {
     return { ...base, resultado: "sem_orcamento", texto: `Interesse existe, mas o valor de R$ ${player.valorMercado.toLocaleString("pt-BR")} está fora do orçamento.` };
   }
 
   const jovem = player.idade <= 20;
-  let peso = 18 + (player.atual - exigido) * 2.2 + clube.confiancaEmVoce * 0.35 + state.reputacao * 0.2;
+  let peso = 18 + (nivelConsiderado - exigido) * 2.2 + clube.confiancaEmVoce * 0.35 + state.reputacao * 0.2;
   if (precisa) peso += 22;
+  if (promessa) peso += 12;
   if (clube.personalidade === "Formador" && jovem) peso += 18;
   if (clube.personalidade === "Formador" && !jovem) peso -= 25;
   if (clube.personalidade === "Imediatista" && jovem) peso -= 22;
