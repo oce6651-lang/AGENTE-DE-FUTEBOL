@@ -105,6 +105,7 @@ export function PlayerDetail({
             <div>Clube: {player.clube ?? "Sem clube"}</div>
             {player.nascimento && <div>Nascimento: {player.nascimento}</div>}
             {player.salario > 0 && <div>Salário: R$ {player.salario.toLocaleString("pt-BR")}/mês</div>}
+            {player.contratoAteAno && <div>Contrato até: dezembro de {player.contratoAteAno}</div>}
             <div>Valor de mercado: R$ {player.valorMercado.toLocaleString("pt-BR")}</div>
           <div>Nascido em: {player.cidade}/{player.estado} • {player.pais} ({player.nacionalidade})</div>
           <div>Clube do coração: {player.clubeCoracao}</div>
