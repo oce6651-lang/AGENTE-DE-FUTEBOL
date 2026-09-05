@@ -109,29 +109,44 @@ export interface GerarPlayerOpts {
 }
 
 /**
- * Valor de mercado em reais, calibrado com o futebol real: garotos de várzea
- * valem centenas de reais, e apenas atletas de altíssimo nível chegam aos milhões.
+ * Valor de mercado em reais, calibrado com o futebol real:
+ * - atleta sem clube não tem valor de mercado (sai de graça);
+ * - abaixo do Sub-15 o mercado simplesmente não precifica o atleta;
+ * - amador vale quase nada e cada divisão acima multiplica o preço.
  */
 export function calcularValorMercado(
   atual: number, potencial: number, idade: number, temClube: boolean, divisao?: Division,
 ): number {
+  // Sem clube: transferência livre, valor zero.
+  if (!temClube) return 0;
+  // Crianças abaixo do Sub-15 não têm valor de mercado.
+  if (idade < 15) return 0;
+
   const base = Math.pow(Math.max(1, atual) / 100, 6.2) * 90_000_000;
   const fatorPot = 1 + Math.max(0, potencial - atual) / 45;
-  // Abaixo do Sub-15 o mercado praticamente não precifica o atleta: são crianças.
-  const fatorIdade = idade <= 12 ? 0.03
-    : idade <= 14 ? 0.08
-      : idade <= 16 ? 0.45
-        : idade <= 18 ? 1.15
-          : idade <= 23 ? 1.35 : idade <= 27 ? 1 : idade <= 31 ? 0.55 : 0.18;
+  const fatorIdade = idade <= 16 ? 0.35
+    : idade <= 18 ? 1.05
+      : idade <= 23 ? 1.35 : idade <= 27 ? 1 : idade <= 31 ? 0.55 : 0.18;
   const fatorDivisao: Record<Division, number> = {
-    Amador: 0.12, "Serie D": 0.35, "Serie C": 0.6, "Serie B": 0.85, "Serie A": 1.15, Elite: 1.8,
+    Amador: 0.02, "Serie D": 0.22, "Serie C": 0.5, "Serie B": 0.85, "Serie A": 1.2, Elite: 2,
   };
-  const fatorClube = temClube ? (divisao ? fatorDivisao[divisao] : 0.6) : 0.12;
-  const bruto = base * fatorPot * fatorIdade * fatorClube;
+  const fatorClube = fatorDivisao[divisao ?? "Serie D"];
+  // Nas categorias de base o valor é uma fração do que o mesmo atleta valeria no profissional.
+  const fatorBase = idade <= 15 ? 0.12 : idade <= 17 ? 0.35 : idade <= 19 ? 0.7 : 1;
+  const bruto = base * fatorPot * fatorIdade * fatorClube * fatorBase;
   if (bruto < 1000) return Math.max(0, Math.round(bruto / 50) * 50);
   if (bruto < 100_000) return Math.round(bruto / 500) * 500;
   if (bruto < 1_000_000) return Math.round(bruto / 10_000) * 10_000;
   return Math.round(bruto / 100_000) * 100_000;
+}
+
+/** Valor de mercado coerente com o atleta E com a divisão do clube dele. */
+export function valorDeMercadoDoAtleta(
+  p: { atual: number; potencial: number; idade: number; clube: string | null },
+  clubes: { nome: string; categoria: Division }[],
+): number {
+  const clube = p.clube ? clubes.find(c => c.nome === p.clube) : undefined;
+  return calcularValorMercado(p.atual, p.potencial, p.idade, !!p.clube, clube?.categoria);
 }
 
 /** Salário mensal realista conforme nível técnico e divisão do clube. */
