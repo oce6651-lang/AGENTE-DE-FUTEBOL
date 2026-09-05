@@ -7,6 +7,7 @@ import { CareerHistory } from "./CareerHistory";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
+import { LeagueBrowser } from "./LeagueBrowser";
 import { janelaAberta, statusJanela } from "@/lib/game/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +25,9 @@ import {
 import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
 import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
 import { gerarJogador } from "@/lib/game/generators";
+import {
+  acionarContatos, realizarPeneiraPropria, podeFazerPeneiraPropria, CUSTOS_DESCOBERTA,
+} from "@/lib/game/discovery";
 import { LOCATIONS, localLiberado, requisitoTexto, getLocation } from "@/lib/game/locations";
 import type { ScoutLocation } from "@/lib/game/locations";
 import officeHero from "@/assets/office-hero.jpg";
@@ -33,12 +37,13 @@ import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
   Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
+  Phone, ListTree, BarChart3,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
-  | "arquivo" | "competicoes";
+  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada";
 
 /** Único código autorizado a abrir o painel administrativo. */
 const ADMIN_CODE = "GGG-209-213";
@@ -75,6 +80,28 @@ export function Office({ state, setState, onExit }: {
     const { state: next, eventos } = avancarSemana(state);
     setState(next);
     toast(eventos[0] ?? "Semana avançada", { description: eventos[1] });
+  };
+
+  const handleAvancarMes = () => {
+    let s = state;
+    const acumulados: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const r = avancarSemana(s);
+      s = r.state;
+      acumulados.push(...r.eventos);
+    }
+    setState(s);
+    toast("Um mês se passou", { description: acumulados.slice(0, 2).join(" • ") || undefined });
+  };
+
+  const handleContatos = () => {
+    const r = acionarContatos(state);
+    setState(r.state); toast(r.mensagem);
+  };
+
+  const handlePeneiraPropria = () => {
+    const r = realizarPeneiraPropria(state);
+    setState(r.state); toast(r.mensagem);
   };
 
   const abrirLocal = (l: ScoutLocation) => {
@@ -213,12 +240,20 @@ export function Office({ state, setState, onExit }: {
                 badge={state.historicoCompeticoes?.length ?? 0} onClick={() => setView("competicoes")} />
               <MenuTile icon={<Briefcase className="h-6 w-6" />} label="Agência" onClick={() => setView("agency")} />
               <MenuTile icon={<ClubCrest cores={["#1f8ecd", "#0b1d2e"]} abrev="CLB" size={26} />} label="Clubes" onClick={() => setView("clubs")} />
+              <MenuTile icon={<Phone className="h-6 w-6" />} label="Descoberta" onClick={() => setView("descoberta")} />
+              <MenuTile icon={<ListTree className="h-6 w-6" />} label="Ligas" onClick={() => setView("ligas")} />
+              <MenuTile icon={<BarChart3 className="h-6 w-6" />} label="Fim de temporada"
+                badge={state.resumosTemporada?.length ?? 0} onClick={() => setView("temporada")} />
               <MenuTile icon={<ShieldCheck className="h-6 w-6" />} label="ADM" onClick={() => setView("admin")} />
             </div>
 
             <Button onClick={handleAvancar} className="w-full h-14 text-base font-black hover:scale-[1.01] transition-transform"
               style={{ background: "var(--gradient-primary)", color: "var(--primary-foreground)" }}>
               Avançar semana
+            </Button>
+            <Button variant="secondary" onClick={handleAvancarMes}
+              className="w-full h-12 text-sm font-bold">
+              Avançar mês (4 semanas)
             </Button>
             <Button variant="ghost" onClick={onExit} className="w-full">Voltar ao menu principal</Button>
           </div>
