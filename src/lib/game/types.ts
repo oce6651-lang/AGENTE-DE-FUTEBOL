@@ -93,6 +93,8 @@ export interface Player {
   visual: number;
   /** Semanas restantes de lesão (0 = apto). */
   lesaoSemanas?: number;
+  /** Ano em que o contrato com o clube atual se encerra. */
+  contratoAteAno?: number;
   /** A família confia cegamente no empresário (contatos pessoais iniciais). */
   familiaConfia?: boolean;
   /** Títulos conquistados na carreira. */
