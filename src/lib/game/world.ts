@@ -12,6 +12,13 @@ function desce(d: Division): Division {
   return ORDEM[Math.max(0, i - 1)];
 }
 
+/** Bônus permanente de desempenho de alguns clubes. */
+function bonusDesempenho(c: Club): number {
+  if (c.nome === "Grêmio FBPA") return 1.5;
+  if (c.nome.startsWith("ATLEC")) return 1.25;
+  return 1;
+}
+
 const NOMES_FICTICIOS = [
   "Rodrigo Vasques","Elias Prado","Tiago Bertoldo","Cauã Menezes","Léo Vidal","Juninho Barros",
   "Ramon Estevão","Wallace Duarte","Kevin Sartori","Bruno Casagrande","Marlon Pizzato",
