@@ -1,5 +1,5 @@
 import { gerarClubes, gerarRivais, gerarJogador, pick, rid, rnd, calcularValorMercado, valorDeMercadoDoAtleta, calcularSalario, sortearSonhos } from "./generators";
-import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
+
 import { calcularOverall, evoluirAtributos } from "./attributes";
 import { categoriaDoAtleta, categoriaPorIdade, registrarPassagem } from "./season";
 import { montarProposta } from "./offers";
@@ -9,6 +9,7 @@ import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "
 import { semanaEsportiva, encerrarTemporada } from "./season";
 import { convocacoesSemanais } from "./callups";
 import { janelaAberta, janelaAtual } from "./calendar";
+import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";

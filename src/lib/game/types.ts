@@ -157,7 +157,7 @@ export interface SeasonCompetition {
 
 /** Registro permanente de uma movimentação de mercado. */
 export interface TransferRecord {
-  tipo: "Livre" | "Empréstimo" | "Compra definitiva" | "Promoção interna" | "Base" | "Renovação";
+  tipo: "Livre" | "Empréstimo" | "Compra definitiva" | "Promoção interna" | "Base" | "Renovação" | "Renovação";
   valor: number;
   moeda: "R$" | "€";
   de: string | null;
