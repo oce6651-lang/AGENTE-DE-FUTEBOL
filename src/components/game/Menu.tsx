@@ -1,4 +1,7 @@
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LeagueBrowser } from "./LeagueBrowser";
+import { gerarClubes } from "@/lib/game/generators";
 
 interface Props {
   hasSave: boolean;
@@ -7,6 +10,20 @@ interface Props {
 }
 
 export function Menu({ hasSave, onNew, onContinue }: Props) {
+  const [verLigas, setVerLigas] = useState(false);
+  // Catálogo apenas para consulta, gerado sob demanda.
+  const clubes = useMemo(() => (verLigas ? gerarClubes() : []), [verLigas]);
+
+  if (verLigas) {
+    return (
+      <div className="min-h-screen" style={{ background: "var(--gradient-pitch)" }}>
+        <div className="max-w-3xl mx-auto pb-16">
+          <LeagueBrowser clubes={clubes} onBack={() => setVerLigas(false)} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4"
       style={{ background: "var(--gradient-pitch)" }}>
@@ -29,8 +46,8 @@ export function Menu({ hasSave, onNew, onContinue }: Props) {
         <Button size="lg" variant="secondary" disabled={!hasSave} onClick={onContinue} className="h-14 text-base font-bold">
           Continuar
         </Button>
-        <Button size="lg" variant="outline" className="h-14 text-base" disabled>
-          Configurações
+        <Button size="lg" variant="outline" className="h-14 text-base" onClick={() => setVerLigas(true)}>
+          Ligas e clubes
         </Button>
         <Button size="lg" variant="ghost" className="h-14 text-base" disabled>
           Créditos
