@@ -464,14 +464,47 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   const eventos: string[] = [];
   let s: GameState = { ...state };
 
+  const mesAnterior = s.mes;
+  const paisAgente = s.agent.pais;
+
   s.semana += 1;
   if (s.semana > 4) {
     s.semana = 1;
     s.mes += 1;
-    if (s.mes > 12) { s.mes = 1; s.ano += 1; s = viradaDeAno(s); }
+    if (s.mes > 12) {
+      s.mes = 1; s.ano += 1;
+      s = viradaDeAno(s);
+      s = fimDeContratos(s, eventos);
+      s = registrarSnapshot(s);
+    }
     const desp = CUSTOS.fixoMensal + s.jogadores.length * CUSTOS.porAtleta;
     s = gastar(s, desp, "Custos operacionais da agência");
     eventos.push(`Custos mensais: R$ ${desp.toLocaleString("pt-BR")}`);
+
+    // avisos de abertura e fechamento das janelas de transferência
+    const antes = janelaAberta(mesAnterior, paisAgente);
+    const agora = janelaAberta(s.mes, paisAgente);
+    if (!antes && agora) {
+      const j = janelaAtual(s.mes, paisAgente);
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: `${j?.nome ?? "Janela de transferências"} está aberta`,
+        texto: "O mercado se movimenta: é agora que as propostas realmente aparecem. Ofereça seus atletas.",
+        tipo: "mercado",
+      };
+      s = { ...s, noticias: [not, ...s.noticias] };
+      eventos.push(not.titulo);
+    }
+    if (antes && !agora) {
+      const not: NewsItem = {
+        id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+        titulo: "Janela de transferências fechada",
+        texto: "O mercado praticamente para até a próxima janela. Use o período para observar e formar atletas.",
+        tipo: "mercado",
+      };
+      s = { ...s, noticias: [not, ...s.noticias] };
+      eventos.push(not.titulo);
+    }
   }
 
   // energia da semana
