@@ -147,22 +147,30 @@ export const COMPETICOES: Competition[] = [
   { id: "copa-argentina", nome: "Copa Argentina", pais: "Argentina", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 3, mesFim: 11 },
   { id: "copa-mx", nome: "Copa MX", pais: "México", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 3, mesFim: 10 },
 
-  // ---------- Futsal brasileiro (competições reais) ----------
+  // ---------- Futsal brasileiro (apenas competições existentes) ----------
   { id: "lnf", nome: "Liga Nacional de Futsal", pais: "Brasil", tipo: "nacional", divisoes: ["Elite"], categorias: PRO, mesInicio: 3, mesFim: 12, modalidade: "futsal" },
   { id: "lnf-silver", nome: "LNF Silver", pais: "Brasil", tipo: "nacional", divisoes: ["Serie A", "Serie B"], categorias: PRO, mesInicio: 4, mesFim: 11, modalidade: "futsal" },
-  { id: "copa-lnf", nome: "Copa LNF", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 6, mesFim: 8, modalidade: "futsal" },
   { id: "taca-brasil-futsal", nome: "Taça Brasil de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: PRO, mesInicio: 6, mesFim: 7, modalidade: "futsal" },
   { id: "copa-brasil-futsal", nome: "Copa do Brasil de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 8, mesFim: 10, modalidade: "futsal" },
   { id: "supercopa-gramado-futsal", nome: "Supercopa Gramado de Futsal", pais: "Brasil", tipo: "copa", divisoes: ["Elite", "Serie A"], categorias: PRO, mesInicio: 1, mesFim: 2, modalidade: "futsal" },
   { id: "libertadores-futsal", nome: "Copa Libertadores de Futsal", pais: "América do Sul", tipo: "continental", divisoes: ["Elite"], categorias: PRO, mesInicio: 7, mesFim: 8, modalidade: "futsal" },
   { id: "intercontinental-futsal", nome: "Copa Intercontinental de Futsal", pais: "Mundo", tipo: "continental", divisoes: ["Elite"], categorias: PRO, mesInicio: 11, mesFim: 12, modalidade: "futsal" },
-  { id: "estadual-futsal", nome: "Campeonato Estadual de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: PRO, mesInicio: 3, mesFim: 11, modalidade: "futsal" },
-  { id: "lnf-sub20", nome: "Liga Nacional de Futsal Sub-20", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B"], categorias: ["Sub-20"], mesInicio: 5, mesFim: 10, modalidade: "futsal" },
   { id: "taca-brasil-futsal-sub20", nome: "Taça Brasil de Futsal Sub-20", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: ["Sub-20"], mesInicio: 7, mesFim: 8, modalidade: "futsal" },
   { id: "taca-brasil-futsal-sub17", nome: "Taça Brasil de Futsal Sub-17", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: ["Sub-17"], mesInicio: 7, mesFim: 8, modalidade: "futsal" },
   { id: "taca-brasil-futsal-sub15", nome: "Taça Brasil de Futsal Sub-15", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C"], categorias: ["Sub-15"], mesInicio: 8, mesFim: 9, modalidade: "futsal" },
-  { id: "estadual-futsal-base", nome: "Campeonato Estadual de Futsal de Base", pais: "Brasil", tipo: "base", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D", "Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20"], mesInicio: 3, mesFim: 10, modalidade: "futsal" },
-  { id: "liga-futsal-amadora", nome: "Liga Municipal de Futsal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador", "Serie D"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 1, mesFim: 12, modalidade: "futsal" },
+
+  // ---------- Estaduais de futsal (federações reais) ----------
+  { id: "paranaense-futsal", nome: "Campeonato Paranaense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["PR"], modalidade: "futsal" },
+  { id: "catarinense-futsal", nome: "Campeonato Catarinense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["SC"], modalidade: "futsal" },
+  { id: "paulista-futsal", nome: "Campeonato Paulista de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["SP"], modalidade: "futsal" },
+  { id: "mineiro-futsal", nome: "Campeonato Mineiro de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["MG"], modalidade: "futsal" },
+  { id: "cearense-futsal", nome: "Campeonato Cearense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["CE"], modalidade: "futsal" },
+  { id: "pernambucano-futsal", nome: "Campeonato Pernambucano de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["PE"], modalidade: "futsal" },
+  { id: "potiguar-futsal", nome: "Campeonato Potiguar de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["RN"], modalidade: "futsal" },
+  { id: "amazonense-futsal", nome: "Campeonato Amazonense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["AM"], modalidade: "futsal" },
+  { id: "brasiliense-futsal", nome: "Campeonato Brasiliense de Futsal", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B", "Serie C", "Serie D"], categorias: PRO, mesInicio: 3, mesFim: 11, estados: ["DF"], modalidade: "futsal" },
+  { id: "liga-futsal-amadora", nome: "Liga Municipal de Futsal", pais: "Brasil", tipo: "amadora", divisoes: ["Amador"], categorias: ["Sub-11", "Sub-13", "Sub-15", "Sub-17", "Sub-20", "Livre", "Veterano"], mesInicio: 1, mesFim: 12, modalidade: "futsal" },
+
 
   // ---------- Futsal gaúcho: FGFS e Liga Gaúcha (LGF) ----------
   { id: "serie-ouro-rs", nome: "Campeonato Gaúcho de Futsal Série Ouro", pais: "Brasil", tipo: "estadual", divisoes: ["Elite", "Serie A", "Serie B"], categorias: PRO, mesInicio: 5, mesFim: 12, estados: ["RS"], modalidade: "futsal" },
