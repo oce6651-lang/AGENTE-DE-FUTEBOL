@@ -208,15 +208,31 @@ export function grupoPorNome(nome: string): CompetitionGroup {
   return "Futebol de campo";
 }
 
+/** Continente de cada país — usado no mercado e nas competições continentais. */
+export const CONTINENTE: Record<string, string> = {
+  Brasil: "América do Sul", Argentina: "América do Sul", Uruguai: "América do Sul",
+  Chile: "América do Sul", Colômbia: "América do Sul", Paraguai: "América do Sul",
+  Peru: "América do Sul", Equador: "América do Sul", Bolívia: "América do Sul", Venezuela: "América do Sul",
+  Espanha: "Europa", Inglaterra: "Europa", Itália: "Europa", Portugal: "Europa",
+  França: "Europa", Alemanha: "Europa", Holanda: "Europa", Bélgica: "Europa",
+  Escócia: "Europa", Turquia: "Europa", Grécia: "Europa", Suíça: "Europa", Áustria: "Europa",
+  México: "América do Norte", EUA: "América do Norte", Canadá: "América do Norte",
+  Japão: "Ásia", "Coreia do Sul": "Ásia", China: "Ásia", "Arábia Saudita": "Ásia", Catar: "Ásia",
+};
+
+export function continenteDoPais(pais: string): string {
+  return CONTINENTE[pais] ?? "Mundo";
+}
+
 /** Liga principal de um clube, conforme divisão e país. */
 export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modalidade = "campo"): string {
   if (modalidade === "futsal") {
     const futsal: Record<Division, string> = {
       Amador: "Liga Municipal de Futsal",
-      "Serie D": "Campeonato Estadual de Futsal",
-      "Serie C": "Liga Nacional de Futsal — Divisão de Acesso",
-      "Serie B": "Liga Nacional de Futsal — Divisão de Acesso",
-      "Serie A": "Liga Nacional de Futsal",
+      "Serie D": "LNF Silver",
+      "Serie C": "LNF Silver",
+      "Serie B": "LNF Silver",
+      "Serie A": "LNF Silver",
       Elite: "Liga Nacional de Futsal",
     };
     return futsal[divisao];
@@ -248,7 +264,19 @@ export function ligaPrincipal(divisao: Division, pais: string, modalidade: Modal
   return mapa[divisao];
 }
 
-/** Todas as competições que um clube disputa no ano. */
+/** Países que disputam cada competição continental. */
+function continentalPermite(c: Competition, pais: string): boolean {
+  const cont = continenteDoPais(pais);
+  if (c.pais === "Europa") return cont === "Europa";
+  if (c.pais === "América do Sul") return cont === "América do Sul";
+  if (c.pais === "Mundo") return true;
+  return false;
+}
+
+/**
+ * Todas as competições que um clube disputa no ano.
+ * Cada liga tem times fixos: um clube nunca entra em competição de outro país.
+ */
 export function competicoesDoClube(
   divisao: Division, pais: string, estado: string, modalidade: Modalidade = "campo",
 ): Competition[] {
@@ -257,16 +285,12 @@ export function competicoesDoClube(
     if ((c.modalidade ?? "campo") !== modalidade) return false;
     if (!c.divisoes.includes(divisao)) return false;
     if (c.estados && !c.estados.includes(estado)) return false;
-    if (c.pais === "Brasil" && pais !== "Brasil") return false;
-    // ligas nacionais estrangeiras: só clubes daquele país
-    if (c.tipo === "nacional" && c.pais !== "Brasil" && c.pais !== pais) return false;
-    if (c.tipo === "continental") {
-      if (c.id === "champions" || c.id === "europa-league") return pais !== "Brasil";
-      return pais === "Brasil" || pais === "Argentina" || pais === "Uruguai";
-    }
-    return true;
+    if (c.tipo === "continental") return continentalPermite(c, pais);
+    // qualquer competição de um país só aceita clubes daquele país
+    return c.pais === pais;
   });
 }
+
 
 export function competicaoAtiva(c: Competition, mes: number): boolean {
   return c.mesInicio <= c.mesFim
