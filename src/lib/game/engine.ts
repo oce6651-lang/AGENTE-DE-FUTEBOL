@@ -122,7 +122,14 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
   };
-  return { ...base, radar: [], contatosPendentes: contatosIniciais(base) };
+  const inicial: GameState = { ...base, radar: [], contatosPendentes: contatosIniciais(base) };
+  return {
+    ...inicial,
+    snapshotInicioAno: {
+      ano: inicial.ano, dinheiro: inicial.dinheiro, reputacao: inicial.reputacao, jogadores: {},
+    },
+    resumosTemporada: [],
+  };
 }
 
 /**
@@ -414,6 +421,9 @@ export function aceitaInscricao(state: GameState, clube: Club, player: Player): 
     + (state.upgrades.includes("filial") && clube.categoria === "Elite" ? 25 : 0);
   if (clube.confiancaEmVoce + state.reputacao * 0.4 + bonusEstrutura < exigeConfianca)
     return { ok: false, motivo: `${clube.nome} não responde às suas mensagens. Ganhe reputação primeiro.` };
+  // Potencial abre portas: promessas jovens conseguem teste mesmo abaixo do nível.
+  if (player.idade < 23 && player.potencial >= player.atual + 20 && Math.random() < 0.5)
+    return { ok: true };
   if (clube.personalidade === "Formador" && player.idade > 20)
     return { ok: false, motivo: `${clube.nome} só avalia atletas de base.` };
   if (clube.personalidade === "Imediatista" && player.idade < 18)
