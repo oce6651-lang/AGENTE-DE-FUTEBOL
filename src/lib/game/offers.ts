@@ -1,6 +1,7 @@
 import { rnd } from "./generators";
 import { categoriaDoAtleta } from "./season";
 import { janelaAberta, statusJanela } from "./calendar";
+import { continenteDoPais } from "./data/leagues";
 import type {
   Club, ClubResponse, GameState, Negotiation, NewsItem, Player, TimelineEvent, Tryout,
 } from "./types";
