@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Club, ClubResponse, Fixture, GameState, MatchPlayer, Player } from "@/lib/game/types";
+import { MESES } from "@/lib/game/types";
 import {
   avancarSemana, conversar, observarJogador, propor, responderNegociacao,
   enviarPeneira, custoPeneira, podeAssistir, pagarPartida, adicionarAoRadar, CUSTOS,
@@ -1309,5 +1310,15 @@ function ArquivoItem({ p, aberto, onToggle, antigo = false }: {
         </div>
       )}
     </Card>
+  );
+}
+
+/** Linha simples de informação usada na ficha do arquivo. */
+function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div className="rounded-lg bg-secondary/30 px-2 py-1.5">
+      <div className="text-[9px] uppercase tracking-wide text-muted-foreground">{rotulo}</div>
+      <div className="truncate font-semibold">{valor}</div>
+    </div>
   );
 }
