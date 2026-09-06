@@ -398,6 +398,8 @@ export interface GameState {
   };
   /** Resumos de fim de temporada, do mais recente para o mais antigo. */
   resumosTemporada?: SeasonSummary[];
+  /** Competições criadas ou editadas pelo painel administrativo. */
+  competicoesCustom?: import("./data/leagues").Competition[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;

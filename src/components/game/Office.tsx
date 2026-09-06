@@ -8,6 +8,7 @@ import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { LeagueBrowser } from "./LeagueBrowser";
+import { AdminClubs, AdminCompetitions, AdminUpgrades } from "./AdminEditors";
 import { janelaAberta, statusJanela } from "@/lib/game/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Club, ClubResponse, Fixture, GameState, MatchPlayer, Player } from "@/lib/game/types";
+import { MESES } from "@/lib/game/types";
 import {
   avancarSemana, conversar, observarJogador, propor, responderNegociacao,
   enviarPeneira, custoPeneira, podeAssistir, pagarPartida, adicionarAoRadar, CUSTOS,
@@ -512,7 +514,11 @@ export function Office({ state, setState, onExit }: {
                     </div>
                   ))}
                 </Card>
+                <AdminClubs state={state} setState={setState} />
+                <AdminCompetitions state={state} setState={setState} />
+                <AdminUpgrades state={state} setState={setState} />
               </>
+
             )}
           </div>
         )}
@@ -1195,10 +1201,124 @@ function ArquivoItem({ p, aberto, onToggle, antigo = false }: {
         </div>
       </button>
       {aberto && (
-        <div className="border-t border-border p-3">
-          <CareerHistory player={p} />
+        <div className="border-t border-border p-3 space-y-4">
+          {/* Dados pessoais e situação contratual */}
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <Info rotulo="Identificação" valor={p.id} />
+            <Info rotulo="Posição" valor={`${p.posicao} • ${p.pe}`} />
+            <Info rotulo="Nascimento" valor={p.nascimento ?? `${p.idade} anos`} />
+            <Info rotulo="Altura" valor={`${p.altura} cm`} />
+            <Info rotulo="Naturalidade" valor={`${p.cidade}/${p.estado} • ${p.pais}`} />
+            <Info rotulo="Clube do coração" valor={p.clubeCoracao ?? "—"} />
+            <Info rotulo="Clube atual" valor={p.clube ?? (antigo ? "Carreira encerrada" : "Sem clube")} />
+            <Info rotulo="Situação" valor={p.status} />
+            <Info rotulo="Salário" valor={p.salario > 0 ? `R$ ${p.salario.toLocaleString("pt-BR")}/mês` : "—"} />
+            <Info rotulo="Contrato até" valor={p.contratoAteAno ? `dez/${p.contratoAteAno}` : "—"} />
+            <Info rotulo="Valor de mercado" valor={`R$ ${p.valorMercado.toLocaleString("pt-BR")}`} />
+            <Info rotulo="Descoberto em" valor={p.local} />
+            <Info rotulo="Confiança na agência" valor={`${p.confianca}%`} />
+            <Info rotulo="Overall / potencial" valor={`${p.atual} / ${p.potencial}`} />
+          </div>
+
+          {/* Personalidade e objetivos de carreira */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Personalidade</div>
+              <div className="flex flex-wrap gap-1">
+                <Badge className="text-[10px]">{p.personalidade}</Badge>
+                {(p.tracos ?? []).map(t => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Sonhos e objetivos</div>
+              <ul className="text-[11px] text-muted-foreground space-y-0.5">
+                {(p.sonhos ?? []).length
+                  ? p.sonhos!.map(s => <li key={s}>• {s}</li>)
+                  : <li>• Ainda não revelou seus objetivos.</li>}
+              </ul>
+            </div>
+          </div>
+
+          {/* Conquistas */}
+          {(p.titulos?.length ?? 0) > 0 && (
+            <div>
+              <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Títulos conquistados</div>
+              <div className="flex flex-wrap gap-1">
+                {p.titulos!.map((t, i) => (
+                  <Badge key={i} className="gap-1 text-[10px]">
+                    <Trophy className="h-3 w-3" /> {t.ano} • {t.competicao} ({t.clube})
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(p.convocacoes?.length ?? 0) > 0 && (
+            <div>
+              <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Convocações</div>
+              <div className="flex flex-wrap gap-1">
+                {p.convocacoes!.map((c, i) => (
+                  <Badge key={i} variant="secondary" className="text-[10px]">
+                    {c.ano} • {c.selecao} ({c.jogos} jogos)
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Histórico de carreira completo */}
+          <div>
+            <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Histórico de carreira</div>
+            <CareerHistory player={p} compacto />
+          </div>
+
+          {/* Relatórios de observação */}
+          {p.relatorios.length > 0 && (
+            <div>
+              <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Relatórios de scout</div>
+              <div className="space-y-2">
+                {p.relatorios.slice(-5).reverse().map((r, i) => (
+                  <div key={i} className="rounded-xl border border-border bg-secondary/40 p-2">
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span className="truncate">{r.partida}</span>
+                      <span className="font-black text-primary">{r.nota.toFixed(1)}</span>
+                    </div>
+                    <div className="text-[11px] mt-1">{r.texto}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Linha do tempo completa */}
+          {p.timeline.length > 0 && (
+            <div>
+              <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Linha do tempo</div>
+              <ol className="relative border-s-2 border-border ms-2 space-y-2">
+                {p.timeline.map((e, i) => (
+                  <li key={i} className="ms-4">
+                    <span className="absolute -start-1.5 mt-1.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                    <div className="text-[10px] uppercase text-muted-foreground">
+                      {MESES[e.mes - 1]} {e.ano} • sem {e.semana}
+                    </div>
+                    <div className="text-[11px]">{e.texto}</div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
       )}
     </Card>
+  );
+}
+
+/** Linha simples de informação usada na ficha do arquivo. */
+function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div className="rounded-lg bg-secondary/30 px-2 py-1.5">
+      <div className="text-[9px] uppercase tracking-wide text-muted-foreground">{rotulo}</div>
+      <div className="truncate font-semibold">{valor}</div>
+    </div>
   );
 }
