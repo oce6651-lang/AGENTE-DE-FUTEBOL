@@ -8,6 +8,7 @@ import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { LeagueBrowser } from "./LeagueBrowser";
+import { AdminClubs, AdminCompetitions, AdminUpgrades } from "./AdminEditors";
 import { janelaAberta, statusJanela } from "@/lib/game/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
