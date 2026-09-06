@@ -513,7 +513,11 @@ export function Office({ state, setState, onExit }: {
                     </div>
                   ))}
                 </Card>
+                <AdminClubs state={state} setState={setState} />
+                <AdminCompetitions state={state} setState={setState} />
+                <AdminUpgrades state={state} setState={setState} />
               </>
+
             )}
           </div>
         )}
