@@ -4,7 +4,7 @@ import { CompetitionLogo } from "./CompetitionLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, Star, Trophy } from "lucide-react";
+import { ArrowLeft, ChevronRight, Star } from "lucide-react";
 import { COMPETICOES, type Competition } from "@/lib/game/data/leagues";
 import type { Club, Division, Modalidade } from "@/lib/game/types";
 import heroFutebol from "@/assets/hero-ligas-futebol.jpg";
