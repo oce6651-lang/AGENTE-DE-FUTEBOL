@@ -85,10 +85,14 @@ export function LeagueBrowser({ clubes, onBack, competicoesExtras = [] }: {
             className="absolute top-2 left-2 bg-background/60 backdrop-blur">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="absolute bottom-2 left-4 right-4">
-            <div className="font-black text-lg truncate">{atual.comp.nome}</div>
-            <div className="text-[11px] text-muted-foreground">
-              {atual.comp.pais} • {atual.times.length} clubes • {nivelDaCompeticao(atual.times)}
+          <div className="absolute bottom-2 left-4 right-4 flex items-center gap-3">
+            <CompetitionLogo nome={atual.comp.nome} tipo={atual.comp.tipo}
+              modalidade={atual.comp.modalidade ?? "campo"} size={40} />
+            <div className="min-w-0">
+              <div className="font-black text-lg truncate">{atual.comp.nome}</div>
+              <div className="text-[11px] text-muted-foreground">
+                {atual.comp.pais} • {atual.times.length} clubes • {nivelDaCompeticao(atual.times)}
+              </div>
             </div>
           </div>
         </div>
