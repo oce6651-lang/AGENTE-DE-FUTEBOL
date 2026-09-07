@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ClubCrest } from "./ClubCrest";
+import { CompetitionLogo } from "./CompetitionLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
