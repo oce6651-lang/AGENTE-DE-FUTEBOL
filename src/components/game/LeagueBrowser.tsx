@@ -156,7 +156,8 @@ export function LeagueBrowser({ clubes, onBack, competicoesExtras = [] }: {
           {visiveis.map(l => (
             <button key={l.comp.id} onClick={() => setAberta(l.comp.nome)}
               className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors flex items-center gap-3">
-              <Trophy className="h-4 w-4 text-primary shrink-0" />
+              <CompetitionLogo nome={l.comp.nome} tipo={l.comp.tipo}
+                modalidade={l.comp.modalidade ?? "campo"} size={30} />
               <div className="min-w-0 flex-1">
                 <div className="font-bold text-sm truncate">{l.comp.nome}</div>
                 <div className="text-[11px] text-muted-foreground truncate">
