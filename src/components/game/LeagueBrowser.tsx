@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { ClubCrest } from "./ClubCrest";
+import { CompetitionLogo } from "./CompetitionLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, Star, Trophy } from "lucide-react";
+import { ArrowLeft, ChevronRight, Star } from "lucide-react";
 import { COMPETICOES, type Competition } from "@/lib/game/data/leagues";
 import type { Club, Division, Modalidade } from "@/lib/game/types";
 import heroFutebol from "@/assets/hero-ligas-futebol.jpg";
@@ -84,10 +85,14 @@ export function LeagueBrowser({ clubes, onBack, competicoesExtras = [] }: {
             className="absolute top-2 left-2 bg-background/60 backdrop-blur">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="absolute bottom-2 left-4 right-4">
-            <div className="font-black text-lg truncate">{atual.comp.nome}</div>
-            <div className="text-[11px] text-muted-foreground">
-              {atual.comp.pais} • {atual.times.length} clubes • {nivelDaCompeticao(atual.times)}
+          <div className="absolute bottom-2 left-4 right-4 flex items-center gap-3">
+            <CompetitionLogo nome={atual.comp.nome} tipo={atual.comp.tipo}
+              modalidade={atual.comp.modalidade ?? "campo"} size={40} />
+            <div className="min-w-0">
+              <div className="font-black text-lg truncate">{atual.comp.nome}</div>
+              <div className="text-[11px] text-muted-foreground">
+                {atual.comp.pais} • {atual.times.length} clubes • {nivelDaCompeticao(atual.times)}
+              </div>
             </div>
           </div>
         </div>
@@ -155,7 +160,8 @@ export function LeagueBrowser({ clubes, onBack, competicoesExtras = [] }: {
           {visiveis.map(l => (
             <button key={l.comp.id} onClick={() => setAberta(l.comp.nome)}
               className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors flex items-center gap-3">
-              <Trophy className="h-4 w-4 text-primary shrink-0" />
+              <CompetitionLogo nome={l.comp.nome} tipo={l.comp.tipo}
+                modalidade={l.comp.modalidade ?? "campo"} size={30} />
               <div className="min-w-0 flex-1">
                 <div className="font-bold text-sm truncate">{l.comp.nome}</div>
                 <div className="text-[11px] text-muted-foreground truncate">

@@ -8,6 +8,8 @@ import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { LeagueBrowser } from "./LeagueBrowser";
+import { CompetitionLogo } from "./CompetitionLogo";
+import { COMPETICOES } from "@/lib/game/data/leagues";
 import { AdminClubs, AdminCompetitions, AdminUpgrades } from "./AdminEditors";
 import { janelaAberta, statusJanela } from "@/lib/game/calendar";
 import { Button } from "@/components/ui/button";
@@ -726,7 +728,14 @@ export function Office({ state, setState, onExit }: {
                 .map(g => (
                   <button key={g.nome} onClick={() => setCompAberta(g.nome)}
                     className="w-full text-left rounded-2xl border border-border bg-card p-3 flex items-center gap-3 hover:border-primary hover:bg-secondary/50 transition-colors">
-                    <Trophy className="h-6 w-6 text-primary shrink-0" />
+                    {(() => {
+                      const meta = [...COMPETICOES, ...(state.competicoesCustom ?? [])]
+                        .find(c => c.nome === g.nome);
+                      return (
+                        <CompetitionLogo nome={g.nome} tipo={meta?.tipo ?? "copa"}
+                          modalidade={meta?.modalidade ?? "campo"} size={30} />
+                      );
+                    })()}
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold truncate">{g.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
