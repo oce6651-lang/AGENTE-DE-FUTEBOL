@@ -1,5 +1,6 @@
 import { pick, rnd } from "./generators";
 import { ganharReputacao, REP_XP } from "./reputation";
+import { montarProposta } from "./offers";
 import type {
   AgeCategory, Club, GameState, NewsItem, OpenTryout, Player, TimelineEvent, Tryout,
 } from "./types";
