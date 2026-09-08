@@ -170,7 +170,9 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
         let cat = c.categoria;
         if (promovidos.some(p => p.id === c.id)) cat = sobe(c.categoria);
         if (rebaixados.some(p => p.id === c.id)) cat = desce(c.categoria);
-        const liga = cat === c.categoria ? c.liga : LIGAS[cat];
+        const liga = cat === c.categoria
+          ? c.liga
+          : ligaPrincipal(cat, c.pais, c.modalidade ?? "campo", c.estado);
         return { ...c, categoria: cat, liga, pontos: 0, jogos: 0, orcamento: Math.round(c.orcamento * (cat === c.categoria ? 1 : promovidos.some(p => p.id === c.id) ? 1.6 : 0.6)) };
       }),
     };
