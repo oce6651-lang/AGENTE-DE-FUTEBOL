@@ -1,4 +1,4 @@
-import { TODOS } from "./src/lib/game/data/clubs";
+import { CLUB_SEEDS as TODOS } from "./src/lib/game/data/clubs";
 import { COMPETICOES, competicoesDoClube } from "./src/lib/game/data/leagues";
 const counts = new Map<string, number>();
 for (const c of COMPETICOES) counts.set(c.nome, 0);
