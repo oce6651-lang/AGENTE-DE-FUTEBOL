@@ -274,3 +274,34 @@ export function nomeDaPeneira(state: GameState, p: OpenTryout): string {
 export function jogadoresElegiveis(state: GameState, p: OpenTryout): Player[] {
   return state.jogadores.filter(j => !j.clube && j.idade <= p.idadeMax && j.status !== "Aposentado" && !p.inscritos.includes(j.id));
 }
+/** O empresário pode retirar o atleta de uma avaliação em andamento. */
+export function cancelarPeneira(state: GameState, tryoutId: string): { state: GameState; mensagem: string } {
+  const t = state.peneiras.find(x => x.id === tryoutId);
+  if (!t) return { state, mensagem: "Peneira não encontrada." };
+  if (t.status !== "em_andamento" && t.status !== "mais_tempo")
+    return { state, mensagem: "Essa avaliação já foi encerrada." };
+  const player = state.jogadores.find(p => p.id === t.playerId);
+  const clube = state.clubes.find(c => c.id === t.clubId);
+  const evt: TimelineEvent = {
+    ano: state.ano, mes: state.mes, semana: state.semana, tipo: "nota",
+    texto: `A agência retirou o atleta da avaliação${clube ? ` no ${clube.nome}` : ""}.`,
+  };
+  return {
+    state: {
+      ...state,
+      // a peneira sai da lista para não poluir a aba
+      peneiras: state.peneiras.filter(x => x.id !== tryoutId),
+      peneirasAbertas: (state.peneirasAbertas ?? []).map(p => ({
+        ...p, inscritos: p.inscritos.filter(id => id !== t.playerId),
+      })),
+      // desistir irrita o clube: a confiança cai
+      clubes: state.clubes.map(c => c.id === t.clubId
+        ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 4) } : c),
+      jogadores: state.jogadores.map(p => p.id === t.playerId
+        ? { ...p, status: p.clube ? `No ${p.clube}` : "Sem clube", timeline: [...p.timeline, evt] } : p),
+    },
+    mensagem: player
+      ? `${player.nome} foi retirado da avaliação${clube ? ` do ${clube.nome}` : ""}.`
+      : "Avaliação cancelada.",
+  };
+}
