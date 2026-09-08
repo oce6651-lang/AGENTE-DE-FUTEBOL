@@ -1,5 +1,6 @@
 import { pick, rnd } from "./generators";
 import { ganharReputacao, REP_XP } from "./reputation";
+import { montarProposta } from "./offers";
 import type {
   AgeCategory, Club, GameState, NewsItem, OpenTryout, Player, TimelineEvent, Tryout,
 } from "./types";
@@ -160,21 +161,36 @@ export function avaliarPeneira(state: GameState, t: Tryout): { state: GameState;
   const score = player.atual + Math.round(player.atributos.mental / 18)
     + bonusTraco + bonusPotencial + rnd(-12, 12);
 
+  // Aprovar na peneira não assina contrato: o clube apresenta uma proposta,
+  // que o empresário aceita, recusa ou tenta melhorar na aba Negociações.
+  const gerarProposta = (s: GameState, bonus: number) => {
+    const base = montarProposta(s, clube, player);
+    return {
+      ...base,
+      salario: Math.round(base.salario * bonus),
+      etapas: [
+        { data: `${s.mes}/${s.ano}`, texto: `${player.nome} foi avaliado na peneira do ${clube.nome}.` },
+        { data: `${s.mes}/${s.ano}`, texto: `${clube.tecnico} aprovou o atleta e a diretoria enviou proposta de contrato.` },
+      ],
+    };
+  };
+
   // ---- destaque da peneira ----
   if (score >= exig + 14) {
     const evt: TimelineEvent = {
       ano: state.ano, mes: state.mes, semana: state.semana, tipo: "aprovado",
-      texto: `Destaque da peneira do ${clube.nome} — contratado imediatamente.`,
+      texto: `Destaque da peneira do ${clube.nome} — o clube enviou proposta de contrato.`,
     };
     let s = marcar("destaque", `Melhor da avaliação! ${clube.tecnico} pediu contrato imediato.`, `Nota final ${score} (exigido ${exig}).`);
     s = ganharReputacao(s, REP_XP.peneiraDestaque);
+    const proposta = gerarProposta(s, 1.3);
     return {
       state: {
         ...s,
-        clubes: s.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 18), elenco: c.elenco + 1 } : c),
+        negociacoes: [proposta, ...s.negociacoes],
+        clubes: s.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 18) } : c),
         jogadores: s.jogadores.map(p => p.id === player.id ? {
-          ...p, clube: clube.nome, status: `No ${clube.nome}`,
-          salario: Math.max(1200, Math.round(player.atual * 90)),
+          ...p, status: `Proposta do ${clube.abrev}`,
           historico: [...p.historico, `Destaque da peneira do ${clube.nome}.`],
           timeline: [...p.timeline, evt],
         } : p),
@@ -182,10 +198,10 @@ export function avaliarPeneira(state: GameState, t: Tryout): { state: GameState;
       noticia: {
         id: uid("NEW"), semana: state.semana, mes: state.mes, ano: state.ano,
         titulo: `${player.nome} é o destaque da peneira do ${clube.nome}`,
-        texto: `${state.agent.agencia} coloca mais um nome no radar do futebol profissional.`,
+        texto: `${state.agent.agencia} recebe proposta de contrato para o atleta.`,
         tipo: "mercado",
       },
-      resumo: `${player.nome} foi destaque no ${clube.nome}!`,
+      resumo: `${player.nome} foi destaque no ${clube.nome} — proposta na mesa!`,
     };
   }
 
@@ -193,17 +209,18 @@ export function avaliarPeneira(state: GameState, t: Tryout): { state: GameState;
   if (score >= exig + 4) {
     const evt: TimelineEvent = {
       ano: state.ano, mes: state.mes, semana: state.semana, tipo: "aprovado",
-      texto: `Aprovado na peneira e contratado pelo ${clube.nome}.`,
+      texto: `Aprovado na peneira do ${clube.nome}, que apresentou proposta de contrato.`,
     };
-    let s = marcar("aprovado", `Aprovado! Contrato assinado com o ${clube.nome}.`, `Nota final ${score} (exigido ${exig}).`);
+    let s = marcar("aprovado", `Aprovado! O ${clube.nome} enviou uma proposta de contrato.`, `Nota final ${score} (exigido ${exig}).`);
     s = ganharReputacao(s, REP_XP.peneiraAprovada);
+    const proposta = gerarProposta(s, 1);
     return {
       state: {
         ...s,
-        clubes: s.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 12), elenco: c.elenco + 1 } : c),
+        negociacoes: [proposta, ...s.negociacoes],
+        clubes: s.clubes.map(c => c.id === clube.id ? { ...c, confiancaEmVoce: Math.min(100, c.confiancaEmVoce + 12) } : c),
         jogadores: s.jogadores.map(p => p.id === player.id ? {
-          ...p, clube: clube.nome, status: `No ${clube.nome}`,
-          salario: Math.max(1000, Math.round(player.atual * 70)),
+          ...p, status: `Proposta do ${clube.abrev}`,
           historico: [...p.historico, `Aprovado na peneira do ${clube.nome}.`],
           timeline: [...p.timeline, evt],
         } : p),
@@ -211,10 +228,10 @@ export function avaliarPeneira(state: GameState, t: Tryout): { state: GameState;
       noticia: {
         id: uid("NEW"), semana: state.semana, mes: state.mes, ano: state.ano,
         titulo: `${player.nome} é aprovado no ${clube.nome}`,
-        texto: `Mais um atleta de ${state.agent.agencia} entra no futebol organizado.`,
+        texto: `A diretoria apresentou proposta a ${state.agent.agencia}.`,
         tipo: "mercado",
       },
-      resumo: `${player.nome} foi aprovado no ${clube.nome}.`,
+      resumo: `${player.nome} passou na peneira do ${clube.nome} — proposta recebida.`,
     };
   }
 
@@ -256,4 +273,35 @@ export function nomeDaPeneira(state: GameState, p: OpenTryout): string {
 
 export function jogadoresElegiveis(state: GameState, p: OpenTryout): Player[] {
   return state.jogadores.filter(j => !j.clube && j.idade <= p.idadeMax && j.status !== "Aposentado" && !p.inscritos.includes(j.id));
+}
+/** O empresário pode retirar o atleta de uma avaliação em andamento. */
+export function cancelarPeneira(state: GameState, tryoutId: string): { state: GameState; mensagem: string } {
+  const t = state.peneiras.find(x => x.id === tryoutId);
+  if (!t) return { state, mensagem: "Peneira não encontrada." };
+  if (t.status !== "em_andamento" && t.status !== "mais_tempo")
+    return { state, mensagem: "Essa avaliação já foi encerrada." };
+  const player = state.jogadores.find(p => p.id === t.playerId);
+  const clube = state.clubes.find(c => c.id === t.clubId);
+  const evt: TimelineEvent = {
+    ano: state.ano, mes: state.mes, semana: state.semana, tipo: "nota",
+    texto: `A agência retirou o atleta da avaliação${clube ? ` no ${clube.nome}` : ""}.`,
+  };
+  return {
+    state: {
+      ...state,
+      // a peneira sai da lista para não poluir a aba
+      peneiras: state.peneiras.filter(x => x.id !== tryoutId),
+      peneirasAbertas: (state.peneirasAbertas ?? []).map(p => ({
+        ...p, inscritos: p.inscritos.filter(id => id !== t.playerId),
+      })),
+      // desistir irrita o clube: a confiança cai
+      clubes: state.clubes.map(c => c.id === t.clubId
+        ? { ...c, confiancaEmVoce: Math.max(0, c.confiancaEmVoce - 4) } : c),
+      jogadores: state.jogadores.map(p => p.id === t.playerId
+        ? { ...p, status: p.clube ? `No ${p.clube}` : "Sem clube", timeline: [...p.timeline, evt] } : p),
+    },
+    mensagem: player
+      ? `${player.nome} foi retirado da avaliação${clube ? ` do ${clube.nome}` : ""}.`
+      : "Avaliação cancelada.",
+  };
 }

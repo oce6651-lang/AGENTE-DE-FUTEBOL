@@ -27,7 +27,7 @@ import {
   UPGRADES, comprarUpgrade, temUpgrade, custoViagem, custoObservacao,
 } from "@/lib/game/engine";
 import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
-import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
+import { inscreverPeneiraAberta, jogadoresElegiveis, cancelarPeneira } from "@/lib/game/tryouts";
 import { gerarJogador } from "@/lib/game/generators";
 import {
   acionarContatos, realizarPeneiraPropria, podeFazerPeneiraPropria, CUSTOS_DESCOBERTA,
@@ -598,6 +598,15 @@ export function Office({ state, setState, onExit }: {
                   <ul className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
                     {t.notas.map((n, i) => <li key={i}>• {n}</li>)}
                   </ul>
+                  {(t.status === "em_andamento" || t.status === "mais_tempo") && (
+                    <Button size="sm" variant="destructive" className="w-full mt-3"
+                      onClick={() => {
+                        const r = cancelarPeneira(state, t.id);
+                        setState(r.state); toast(r.mensagem);
+                      }}>
+                      Cancelar avaliação
+                    </Button>
+                  )}
                 </Card>
               );
             })}

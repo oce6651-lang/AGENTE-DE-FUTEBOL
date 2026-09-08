@@ -1,4 +1,5 @@
 import { pick, rnd, TECNICOS, POSICOES, LIGAS } from "./generators";
+import { ligaPrincipal } from "./data/leagues";
 import type { Club, Division, GameState, NewsItem, Player, TimelineEvent } from "./types";
 
 const ORDEM: Division[] = ["Amador", "Serie D", "Serie C", "Serie B", "Serie A", "Elite"];
@@ -137,18 +138,32 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
 
   // ---- fim de temporada: promoções e rebaixamentos ----
   if (s.mes === 12 && s.semana === 4) {
-    // Cada divisão tem seu próprio campeão, promovido e rebaixado.
+    // Cada liga tem o seu próprio acesso: o campeão sobe uma divisão e o pior
+    // desempenho cai. Vale para o futebol de campo (país a país) e para o
+    // futsal (estado a estado: Bronze → Prata → Ouro).
     const promovidos: Club[] = [];
     const rebaixados: Club[] = [];
     const campeoes: string[] = [];
-    for (const div of ORDEM) {
-      const daDivisao = s.clubes
-        .filter(c => c.categoria === div && (c.modalidade ?? "campo") === "campo")
-        .sort((a, b) => (b.pontos / Math.max(1, b.jogos)) - (a.pontos / Math.max(1, a.jogos)));
-      if (daDivisao.length < 2) continue;
-      campeoes.push(`${daDivisao[0].nome} (${LIGAS[div]})`);
-      if (div !== "Elite") promovidos.push(daDivisao[0]);
-      if (div !== "Amador") rebaixados.push(daDivisao[daDivisao.length - 1]);
+    const chave = (c: Club) => (c.modalidade ?? "campo") === "futsal"
+      ? `futsal|${c.pais}|${c.estado}`
+      : `campo|${c.pais}`;
+    const ligas = new Map<string, Club[]>();
+    for (const c of s.clubes) {
+      const k = `${chave(c)}|${c.categoria}`;
+      ligas.set(k, [...(ligas.get(k) ?? []), c]);
+    }
+    for (const [k, lista] of ligas) {
+      const div = k.split("|").pop() as Division;
+      if (lista.length < 3) continue;
+      const tabela = [...lista].sort(
+        (a, b) => (b.pontos / Math.max(1, b.jogos)) - (a.pontos / Math.max(1, a.jogos)));
+      const campeao = tabela[0];
+      campeoes.push(`${campeao.nome} (${campeao.liga || LIGAS[div]})`);
+      // só sobe se existir divisão acima com clubes do mesmo grupo
+      const acima = ligas.get(`${chave(campeao)}|${sobe(div)}`);
+      if (div !== "Elite" && acima?.length) promovidos.push(campeao);
+      const abaixo = ligas.get(`${chave(campeao)}|${desce(div)}`);
+      if (div !== "Amador" && abaixo?.length) rebaixados.push(tabela[tabela.length - 1]);
     }
     s = {
       ...s,
@@ -156,7 +171,9 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
         let cat = c.categoria;
         if (promovidos.some(p => p.id === c.id)) cat = sobe(c.categoria);
         if (rebaixados.some(p => p.id === c.id)) cat = desce(c.categoria);
-        const liga = cat === c.categoria ? c.liga : LIGAS[cat];
+        const liga = cat === c.categoria
+          ? c.liga
+          : ligaPrincipal(cat, c.pais, c.modalidade ?? "campo", c.estado);
         return { ...c, categoria: cat, liga, pontos: 0, jogos: 0, orcamento: Math.round(c.orcamento * (cat === c.categoria ? 1 : promovidos.some(p => p.id === c.id) ? 1.6 : 0.6)) };
       }),
     };
