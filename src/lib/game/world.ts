@@ -1,4 +1,5 @@
 import { pick, rnd, TECNICOS, POSICOES, LIGAS } from "./generators";
+import { ligaPrincipal } from "./data/leagues";
 import type { Club, Division, GameState, NewsItem, Player, TimelineEvent } from "./types";
 
 const ORDEM: Division[] = ["Amador", "Serie D", "Serie C", "Serie B", "Serie A", "Elite"];
