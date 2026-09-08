@@ -27,7 +27,7 @@ import {
   UPGRADES, comprarUpgrade, temUpgrade, custoViagem, custoObservacao,
 } from "@/lib/game/engine";
 import { oferecerParaClubes, negociarComClube, CUSTO_OFERTA, CUSTO_ABORDAGEM } from "@/lib/game/offers";
-import { inscreverPeneiraAberta, jogadoresElegiveis } from "@/lib/game/tryouts";
+import { inscreverPeneiraAberta, jogadoresElegiveis, cancelarPeneira } from "@/lib/game/tryouts";
 import { gerarJogador } from "@/lib/game/generators";
 import {
   acionarContatos, realizarPeneiraPropria, podeFazerPeneiraPropria, CUSTOS_DESCOBERTA,
