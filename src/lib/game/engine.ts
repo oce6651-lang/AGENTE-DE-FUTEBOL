@@ -8,6 +8,7 @@ import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
 import { semanaEsportiva, encerrarTemporada } from "./season";
 import { convocacoesSemanais } from "./callups";
+import { torneiosDeSelecao, premiosIndividuais } from "./awards";
 import { janelaAberta, janelaAtual } from "./calendar";
 import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
 import { clubesDaRegiao } from "./data/clubs";
