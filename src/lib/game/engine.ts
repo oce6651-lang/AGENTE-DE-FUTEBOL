@@ -436,7 +436,7 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
   const player = state.jogadores.find(p => p.id === playerId);
   const clube = state.clubes.find(c => c.id === clubId);
   if (!player || !clube) return { state, mensagem: "Dados inválidos." };
-  if (player.clube) return { state, mensagem: `${player.nome} já está em um clube.` };
+  if (player.clube === clube.nome) return { state, mensagem: `${player.nome} já está no ${clube.nome}.` };
   if (state.peneiras.some(t => t.playerId === playerId && (t.status === "em_andamento" || t.status === "mais_tempo")))
     return { state, mensagem: `${player.nome} já está em avaliação.` };
 
