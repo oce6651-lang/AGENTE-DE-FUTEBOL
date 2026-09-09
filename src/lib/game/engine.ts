@@ -8,6 +8,7 @@ import { ganharReputacao, REP_XP } from "./reputation";
 import { gerarPeneirasAbertas, avaliarPeneira as avaliarPeneiraCompleta } from "./tryouts";
 import { semanaEsportiva, encerrarTemporada } from "./season";
 import { convocacoesSemanais } from "./callups";
+import { torneiosDeSelecao, premiosIndividuais } from "./awards";
 import { janelaAberta, janelaAtual } from "./calendar";
 import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
 import { clubesDaRegiao } from "./data/clubs";
@@ -436,15 +437,20 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
   const player = state.jogadores.find(p => p.id === playerId);
   const clube = state.clubes.find(c => c.id === clubId);
   if (!player || !clube) return { state, mensagem: "Dados inválidos." };
-  if (player.clube) return { state, mensagem: `${player.nome} já está em um clube.` };
+  if (player.clube === clube.nome) return { state, mensagem: `${player.nome} já está no ${clube.nome}.` };
   if (state.peneiras.some(t => t.playerId === playerId && (t.status === "em_andamento" || t.status === "mais_tempo")))
     return { state, mensagem: `${player.nome} já está em avaliação.` };
 
   const aceite = aceitaInscricao(state, clube, player);
   if (!aceite.ok) return { state, mensagem: aceite.motivo! };
 
-  const custo = custoPeneira(clube);
+  // atleta com contrato exige liberação e viagem: custa bem mais caro
+  const comContrato = !!player.clube;
+  const custo = Math.round(custoPeneira(clube) * (comContrato ? 2.2 : 1));
   if (state.dinheiro < custo) return { state, mensagem: `Sem caixa. Custo: R$ ${custo}.` };
+  if (comContrato && Math.random() > 0.55 + state.reputacao * 0.004) {
+    return { state, mensagem: `O ${player.clube} não liberou ${player.nome} para treinar em outro clube.` };
+  }
 
   const duracao = clube.categoria === "Serie A" || clube.categoria === "Elite" ? 3 : 2;
   const peneira: Tryout = {
@@ -452,21 +458,27 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
     enviadaAno: state.ano, enviadaMes: state.mes, enviadaSemana: state.semana,
     duracaoSemanas: duracao, restanteSemanas: duracao,
     status: "em_andamento",
-    notas: [`Inscrito no teste do ${clube.nome} (${clube.categoria}), sob comando de ${clube.tecnico}.`],
+    notas: [comContrato
+      ? `Treino de avaliação no ${clube.nome} (${clube.categoria}) com liberação do ${player.clube}.`
+      : `Inscrito no teste do ${clube.nome} (${clube.categoria}), sob comando de ${clube.tecnico}.`],
   };
   const evt: TimelineEvent = {
     ano: state.ano, mes: state.mes, semana: state.semana, tipo: "peneira",
-    texto: `Iniciou peneira no ${clube.nome}.`,
+    texto: comContrato
+      ? `Fez período de avaliação no ${clube.nome}, cedido pelo ${player.clube}.`
+      : `Iniciou peneira no ${clube.nome}.`,
   };
-  const s = gastar(state, custo, `Peneira: ${player.nome} → ${clube.nome}`);
+  const s = gastar(state, custo, `Teste: ${player.nome} → ${clube.nome}`);
   return {
     state: {
       ...s,
       peneiras: [peneira, ...s.peneiras],
       jogadores: s.jogadores.map(p => p.id === playerId
-        ? { ...p, timeline: [...p.timeline, evt], status: `Em teste (${clube.nome})` } : p),
+        ? { ...p, timeline: [...p.timeline, evt], status: comContrato ? p.status : `Em teste (${clube.nome})` } : p),
     },
-    mensagem: `${player.nome} inscrito na peneira do ${clube.nome}.`,
+    mensagem: comContrato
+      ? `${player.nome} vai fazer um período de avaliação no ${clube.nome}.`
+      : `${player.nome} inscrito na peneira do ${clube.nome}.`,
   };
 }
 
@@ -491,6 +503,7 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
       s = fimDeContratos(s, eventos);
       s = registrarSnapshot(s);
     }
+    s = avisosDeContrato(s, eventos);
     const desp = CUSTOS.fixoMensal + s.jogadores.length * CUSTOS.porAtleta;
     s = gastar(s, desp, "Custos operacionais da agência");
     eventos.push(`Custos mensais: R$ ${desp.toLocaleString("pt-BR")}`);
@@ -601,9 +614,15 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   if (s.mes === 12 && s.semana === 4) {
     const fim = encerrarTemporada(s);
     s = fim.state;
-    if (fim.noticias.length) {
-      s = { ...s, noticias: [...fim.noticias, ...s.noticias].slice(0, 150) };
-      eventos.push(fim.noticias[0].titulo);
+    // torneios de seleções e premiações individuais do ano
+    const selecoes = torneiosDeSelecao(s);
+    s = selecoes.state;
+    const premios = premiosIndividuais(s);
+    s = premios.state;
+    const todas = [...fim.noticias, ...selecoes.noticias, ...premios.noticias];
+    if (todas.length) {
+      s = { ...s, noticias: [...todas, ...s.noticias].slice(0, 150) };
+      eventos.push(...todas.map(n => n.titulo));
     }
   }
 
@@ -618,6 +637,41 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   eventos.push(...mundo.manchetes);
 
   return { state: s, eventos };
+}
+
+/**
+ * Avisa com antecedência quando o contrato de um cliente está perto do fim.
+ * Dispara em junho, outubro e dezembro do último ano de contrato.
+ */
+function avisosDeContrato(state: GameState, eventos: string[]): GameState {
+  if (![6, 10, 12].includes(state.mes)) return state;
+  let s = state;
+  for (const p of s.jogadores) {
+    if (!p.clube || p.status === "Aposentado") continue;
+    if (p.contratoAteAno !== s.ano) continue;
+    const meses = 12 - s.mes;
+    const not: NewsItem = {
+      id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+      titulo: `Contrato de ${p.nome} com o ${p.clube} termina em ${meses} mês(es)`,
+      texto: meses === 0
+        ? "O vínculo se encerra neste mês. Sem renovação, ele fica livre no mercado."
+        : `Vence em dezembro de ${s.ano}. É hora de negociar renovação ou buscar um novo clube.`,
+      tipo: "mercado",
+    };
+    s = {
+      ...s,
+      noticias: [not, ...s.noticias].slice(0, 150),
+      jogadores: s.jogadores.map(x => x.id === p.id ? {
+        ...x,
+        timeline: [...x.timeline, {
+          ano: s.ano, mes: s.mes, semana: s.semana, tipo: "nota" as const,
+          texto: `Aviso: contrato com o ${p.clube} termina em dezembro de ${s.ano}.`,
+        }],
+      } : x),
+    };
+    eventos.push(not.titulo);
+  }
+  return s;
 }
 
 /** Guarda a foto da agência no primeiro dia do ano, base do resumo de temporada. */
