@@ -473,9 +473,11 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
       ...s,
       peneiras: [peneira, ...s.peneiras],
       jogadores: s.jogadores.map(p => p.id === playerId
-        ? { ...p, timeline: [...p.timeline, evt], status: `Em teste (${clube.nome})` } : p),
+        ? { ...p, timeline: [...p.timeline, evt], status: comContrato ? p.status : `Em teste (${clube.nome})` } : p),
     },
-    mensagem: `${player.nome} inscrito na peneira do ${clube.nome}.`,
+    mensagem: comContrato
+      ? `${player.nome} vai fazer um período de avaliação no ${clube.nome}.`
+      : `${player.nome} inscrito na peneira do ${clube.nome}.`,
   };
 }
 
