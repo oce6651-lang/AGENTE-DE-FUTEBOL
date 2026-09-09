@@ -502,6 +502,7 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
       s = fimDeContratos(s, eventos);
       s = registrarSnapshot(s);
     }
+    s = avisosDeContrato(s, eventos);
     const desp = CUSTOS.fixoMensal + s.jogadores.length * CUSTOS.porAtleta;
     s = gastar(s, desp, "Custos operacionais da agência");
     eventos.push(`Custos mensais: R$ ${desp.toLocaleString("pt-BR")}`);
