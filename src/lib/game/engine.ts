@@ -632,6 +632,41 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   return { state: s, eventos };
 }
 
+/**
+ * Avisa com antecedência quando o contrato de um cliente está perto do fim.
+ * Dispara em junho, outubro e dezembro do último ano de contrato.
+ */
+function avisosDeContrato(state: GameState, eventos: string[]): GameState {
+  if (![6, 10, 12].includes(state.mes)) return state;
+  let s = state;
+  for (const p of s.jogadores) {
+    if (!p.clube || p.status === "Aposentado") continue;
+    if (p.contratoAteAno !== s.ano) continue;
+    const meses = 12 - s.mes;
+    const not: NewsItem = {
+      id: nextNewsId(), semana: s.semana, mes: s.mes, ano: s.ano,
+      titulo: `Contrato de ${p.nome} com o ${p.clube} termina em ${meses} mês(es)`,
+      texto: meses === 0
+        ? "O vínculo se encerra neste mês. Sem renovação, ele fica livre no mercado."
+        : `Vence em dezembro de ${s.ano}. É hora de negociar renovação ou buscar um novo clube.`,
+      tipo: "mercado",
+    };
+    s = {
+      ...s,
+      noticias: [not, ...s.noticias].slice(0, 150),
+      jogadores: s.jogadores.map(x => x.id === p.id ? {
+        ...x,
+        timeline: [...x.timeline, {
+          ano: s.ano, mes: s.mes, semana: s.semana, tipo: "nota" as const,
+          texto: `Aviso: contrato com o ${p.clube} termina em dezembro de ${s.ano}.`,
+        }],
+      } : x),
+    };
+    eventos.push(not.titulo);
+  }
+  return s;
+}
+
 /** Guarda a foto da agência no primeiro dia do ano, base do resumo de temporada. */
 function registrarSnapshot(s: GameState): GameState {
   const jogadores: Record<string, { ovr: number; valor: number }> = {};
