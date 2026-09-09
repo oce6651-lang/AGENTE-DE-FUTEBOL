@@ -368,11 +368,9 @@ export function Office({ state, setState, onExit }: {
                     onClick={() => { setNegociarFor(p); setClubeFiltro(""); }}>
                     Procurar clube (R$ {CUSTO_ABORDAGEM})
                   </Button>
-                  {!p.clube && (
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setPeneiraFor(p)}>
-                      Pedir teste em clube
-                    </Button>
-                  )}
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => setPeneiraFor(p)}>
+                    Pedir teste em clube
+                  </Button>
                 </div>
               </div>
             ))}
