@@ -443,8 +443,13 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
   const aceite = aceitaInscricao(state, clube, player);
   if (!aceite.ok) return { state, mensagem: aceite.motivo! };
 
-  const custo = custoPeneira(clube);
+  // atleta com contrato exige liberação e viagem: custa bem mais caro
+  const comContrato = !!player.clube;
+  const custo = Math.round(custoPeneira(clube) * (comContrato ? 2.2 : 1));
   if (state.dinheiro < custo) return { state, mensagem: `Sem caixa. Custo: R$ ${custo}.` };
+  if (comContrato && Math.random() > 0.55 + state.reputacao * 0.004) {
+    return { state, mensagem: `O ${player.clube} não liberou ${player.nome} para treinar em outro clube.` };
+  }
 
   const duracao = clube.categoria === "Serie A" || clube.categoria === "Elite" ? 3 : 2;
   const peneira: Tryout = {
@@ -452,13 +457,17 @@ export function enviarPeneira(state: GameState, playerId: string, clubId: string
     enviadaAno: state.ano, enviadaMes: state.mes, enviadaSemana: state.semana,
     duracaoSemanas: duracao, restanteSemanas: duracao,
     status: "em_andamento",
-    notas: [`Inscrito no teste do ${clube.nome} (${clube.categoria}), sob comando de ${clube.tecnico}.`],
+    notas: [comContrato
+      ? `Treino de avaliação no ${clube.nome} (${clube.categoria}) com liberação do ${player.clube}.`
+      : `Inscrito no teste do ${clube.nome} (${clube.categoria}), sob comando de ${clube.tecnico}.`],
   };
   const evt: TimelineEvent = {
     ano: state.ano, mes: state.mes, semana: state.semana, tipo: "peneira",
-    texto: `Iniciou peneira no ${clube.nome}.`,
+    texto: comContrato
+      ? `Fez período de avaliação no ${clube.nome}, cedido pelo ${player.clube}.`
+      : `Iniciou peneira no ${clube.nome}.`,
   };
-  const s = gastar(state, custo, `Peneira: ${player.nome} → ${clube.nome}`);
+  const s = gastar(state, custo, `Teste: ${player.nome} → ${clube.nome}`);
   return {
     state: {
       ...s,
