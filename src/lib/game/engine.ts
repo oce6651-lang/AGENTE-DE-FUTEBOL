@@ -613,9 +613,15 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   if (s.mes === 12 && s.semana === 4) {
     const fim = encerrarTemporada(s);
     s = fim.state;
-    if (fim.noticias.length) {
-      s = { ...s, noticias: [...fim.noticias, ...s.noticias].slice(0, 150) };
-      eventos.push(fim.noticias[0].titulo);
+    // torneios de seleções e premiações individuais do ano
+    const selecoes = torneiosDeSelecao(s);
+    s = selecoes.state;
+    const premios = premiosIndividuais(s);
+    s = premios.state;
+    const todas = [...fim.noticias, ...selecoes.noticias, ...premios.noticias];
+    if (todas.length) {
+      s = { ...s, noticias: [...todas, ...s.noticias].slice(0, 150) };
+      eventos.push(...todas.map(n => n.titulo));
     }
   }
 
