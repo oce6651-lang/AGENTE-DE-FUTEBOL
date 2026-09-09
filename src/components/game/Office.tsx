@@ -1069,13 +1069,14 @@ export function Office({ state, setState, onExit }: {
 
       <Dialog open={!!peneiraFor} onOpenChange={(o) => !o && setPeneiraFor(null)}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Inscrever {peneiraFor?.nome} em peneira</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Pedir teste para {peneiraFor?.nome}</DialogTitle></DialogHeader>
           <p className="text-xs text-muted-foreground">
             Cada clube tem um perfil próprio. Nem todos vão atender você.
+            {peneiraFor?.clube && ` Como ele tem contrato com o ${peneiraFor.clube}, o custo é maior e o clube pode não liberar.`}
           </p>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {state.clubes.map(c => {
-              const custo = custoPeneira(c);
+            {state.clubes.filter(c => c.nome !== peneiraFor?.clube).map(c => {
+              const custo = Math.round(custoPeneira(c) * (peneiraFor?.clube ? 2.2 : 1));
               return (
                 <button key={c.id} disabled={state.dinheiro < custo} onClick={() => handleEnviarPeneira(c)}
                   className="w-full text-left rounded-xl border border-border bg-card p-3 hover:bg-secondary transition-colors disabled:opacity-40">
