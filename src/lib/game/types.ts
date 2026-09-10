@@ -107,6 +107,17 @@ export interface Player {
   contatoInicial?: boolean;
   /** Convocações para seleções de base e principal. */
   convocacoes?: { ano: number; selecao: string; categoria: AgeCategory; jogos: number }[];
+  /** Empréstimo em andamento — ao terminar, o atleta volta ao clube de origem. */
+  emprestimo?: LoanSpell;
+}
+
+/** Empréstimo ativo: guarda o clube de origem e a data de retorno. */
+export interface LoanSpell {
+  clubeOrigem: string;
+  salarioOrigem: number;
+  contratoOrigemAno?: number;
+  ate: { ano: number; mes: number };
+  meses: number;
 }
 
 /** Uma temporada completa na carreira do atleta. */
