@@ -11,6 +11,7 @@ import { convocacoesSemanais } from "./callups";
 import { torneiosDeSelecao, premiosIndividuais } from "./awards";
 import { janelaAberta, janelaAtual } from "./calendar";
 import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
+import { processarLeiloes, processarEmprestimos, iniciarEmprestimo } from "./transfers";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
