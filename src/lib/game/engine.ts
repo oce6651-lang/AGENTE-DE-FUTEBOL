@@ -11,6 +11,7 @@ import { convocacoesSemanais } from "./callups";
 import { torneiosDeSelecao, premiosIndividuais } from "./awards";
 import { janelaAberta, janelaAtual } from "./calendar";
 import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
+import { processarLeiloes, processarEmprestimos, iniciarEmprestimo } from "./transfers";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -572,6 +573,10 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     }
   }
 
+  // leilões recebem lances e empréstimos vencidos devolvem o atleta ao clube de origem
+  s = processarLeiloes(s, eventos);
+  s = processarEmprestimos(s, eventos);
+
   // propostas expiram — e conversas encerradas somem da mesa para não poluir a aba
   s = {
     ...s,
@@ -890,7 +895,13 @@ export function responderNegociacao(
     salario,
     categoriaForcada: categoria === categoriaPorIdade(player.idade) ? undefined : categoria,
     valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true, clube.categoria),
-    contratoAteAno: state.ano + (neg.duracaoAnos ?? 2),
+    contratoAteAno: tipo === "Empréstimo"
+      ? player.contratoAteAno
+      : state.ano + (neg.duracaoAnos ?? 2),
+    // No empréstimo guardamos o vínculo de origem: ao fim do prazo o atleta volta.
+    emprestimo: tipo === "Empréstimo"
+      ? iniciarEmprestimo(player, state.ano, state.mes, neg.duracaoMeses ?? 12)
+      : player.emprestimo,
     temporadas: registrarPassagem(player, clube, categoria, state.ano, transferencia),
     historico: [...player.historico, `${tipo} para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
     timeline: [...player.timeline, {

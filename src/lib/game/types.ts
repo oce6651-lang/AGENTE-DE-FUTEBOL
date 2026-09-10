@@ -107,6 +107,17 @@ export interface Player {
   contatoInicial?: boolean;
   /** Convocações para seleções de base e principal. */
   convocacoes?: { ano: number; selecao: string; categoria: AgeCategory; jogos: number }[];
+  /** Empréstimo em andamento — ao terminar, o atleta volta ao clube de origem. */
+  emprestimo?: LoanSpell;
+}
+
+/** Empréstimo ativo: guarda o clube de origem e a data de retorno. */
+export interface LoanSpell {
+  clubeOrigem: string;
+  salarioOrigem: number;
+  contratoOrigemAno?: number;
+  ate: { ano: number; mes: number };
+  meses: number;
 }
 
 /** Uma temporada completa na carreira do atleta. */
@@ -316,6 +327,34 @@ export interface Negotiation {
   motivo?: string;
   /** Linha do tempo da negociação. */
   etapas?: { data: string; texto: string }[];
+  /** Duração do empréstimo, em meses. */
+  duracaoMeses?: number;
+  /** Rodadas de negociação já usadas — a paciência do clube é limitada. */
+  rodadas?: number;
+  /** Nasceu de um leilão? */
+  origem?: "leilao" | "sondagem" | "oferta" | "peneira" | "renovacao";
+}
+
+/** Leilão aberto pelo empresário: clubes disputam o atleta por algumas semanas. */
+export interface AuctionBid {
+  clubId: string;
+  clube: string;
+  valor: number;
+  salario: number;
+  duracaoAnos: number;
+  quando: string;
+}
+
+export interface Auction {
+  id: string;
+  playerId: string;
+  status: "aberto" | "encerrado" | "cancelado" | "deserto";
+  semanasRestantes: number;
+  abertoEm: string;
+  pisoValor: number;
+  pisoSalario: number;
+  lances: AuctionBid[];
+  vencedorClubId?: string;
 }
 
 export interface RivalAgent {
@@ -400,6 +439,8 @@ export interface GameState {
   resumosTemporada?: SeasonSummary[];
   /** Competições criadas ou editadas pelo painel administrativo. */
   competicoesCustom?: import("./data/leagues").Competition[];
+  /** Leilões de atletas abertos pela agência. */
+  leiloes?: Auction[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;
