@@ -1,4 +1,4 @@
-import { rnd } from "./generators";
+import { rnd, pick } from "./generators";
 import { categoriaDoAtleta } from "./season";
 import { janelaAberta, statusJanela } from "./calendar";
 import { continenteDoPais } from "./data/leagues";
