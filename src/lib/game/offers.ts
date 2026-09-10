@@ -198,6 +198,8 @@ export function montarProposta(state: GameState, clube: Club, player: Player): N
     criadaEm: `${state.mes}/${state.ano} • semana ${state.semana}`,
     tipo: emprestimo ? "Empréstimo" : semContrato ? "Livre" : "Compra definitiva",
     duracaoAnos: emprestimo ? 1 : player.idade <= 20 ? rnd(3, 5) : rnd(1, 3),
+    // Empréstimos têm prazo em meses: meia temporada, uma temporada ou um ano e meio.
+    duracaoMeses: emprestimo ? pick([6, 12, 12, 18]) : undefined,
     categoria: categoriaDoAtleta(player),
     etapas: [
       { data: `${state.mes}/${state.ano}`, texto: `${state.agent.agencia} ofereceu ${player.nome} ao ${clube.nome}.` },
