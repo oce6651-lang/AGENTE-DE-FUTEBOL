@@ -573,6 +573,10 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
     }
   }
 
+  // leilões recebem lances e empréstimos vencidos devolvem o atleta ao clube de origem
+  s = processarLeiloes(s, eventos);
+  s = processarEmprestimos(s, eventos);
+
   // propostas expiram — e conversas encerradas somem da mesa para não poluir a aba
   s = {
     ...s,
