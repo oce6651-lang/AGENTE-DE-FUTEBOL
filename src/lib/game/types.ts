@@ -439,6 +439,8 @@ export interface GameState {
   resumosTemporada?: SeasonSummary[];
   /** Competições criadas ou editadas pelo painel administrativo. */
   competicoesCustom?: import("./data/leagues").Competition[];
+  /** Leilões de atletas abertos pela agência. */
+  leiloes?: Auction[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;
