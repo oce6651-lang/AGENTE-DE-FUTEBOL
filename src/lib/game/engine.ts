@@ -895,7 +895,13 @@ export function responderNegociacao(
     salario,
     categoriaForcada: categoria === categoriaPorIdade(player.idade) ? undefined : categoria,
     valorMercado: calcularValorMercado(player.atual, player.potencial, player.idade, true, clube.categoria),
-    contratoAteAno: state.ano + (neg.duracaoAnos ?? 2),
+    contratoAteAno: tipo === "Empréstimo"
+      ? player.contratoAteAno
+      : state.ano + (neg.duracaoAnos ?? 2),
+    // No empréstimo guardamos o vínculo de origem: ao fim do prazo o atleta volta.
+    emprestimo: tipo === "Empréstimo"
+      ? iniciarEmprestimo(player, state.ano, state.mes, neg.duracaoMeses ?? 12)
+      : player.emprestimo,
     temporadas: registrarPassagem(player, clube, categoria, state.ano, transferencia),
     historico: [...player.historico, `${tipo} para ${clube.nome} por R$ ${neg.valorProposta.toLocaleString("pt-BR")}.`],
     timeline: [...player.timeline, {
