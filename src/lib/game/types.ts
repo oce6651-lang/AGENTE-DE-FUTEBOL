@@ -327,6 +327,34 @@ export interface Negotiation {
   motivo?: string;
   /** Linha do tempo da negociação. */
   etapas?: { data: string; texto: string }[];
+  /** Duração do empréstimo, em meses. */
+  duracaoMeses?: number;
+  /** Rodadas de negociação já usadas — a paciência do clube é limitada. */
+  rodadas?: number;
+  /** Nasceu de um leilão? */
+  origem?: "leilao" | "sondagem" | "oferta" | "peneira" | "renovacao";
+}
+
+/** Leilão aberto pelo empresário: clubes disputam o atleta por algumas semanas. */
+export interface AuctionBid {
+  clubId: string;
+  clube: string;
+  valor: number;
+  salario: number;
+  duracaoAnos: number;
+  quando: string;
+}
+
+export interface Auction {
+  id: string;
+  playerId: string;
+  status: "aberto" | "encerrado" | "cancelado" | "deserto";
+  semanasRestantes: number;
+  abertoEm: string;
+  pisoValor: number;
+  pisoSalario: number;
+  lances: AuctionBid[];
+  vencedorClubId?: string;
 }
 
 export interface RivalAgent {
