@@ -8,6 +8,7 @@ import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { LeagueBrowser } from "./LeagueBrowser";
+import { TransferMarket } from "./TransferMarket";
 import { CompetitionLogo } from "./CompetitionLogo";
 import { COMPETICOES } from "@/lib/game/data/leagues";
 import { AdminClubs, AdminCompetitions, AdminUpgrades } from "./AdminEditors";
@@ -41,13 +42,13 @@ import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
   Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
-  Phone, ListTree, BarChart3,
+  Phone, ListTree, BarChart3, ArrowLeftRight,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
-  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada";
+  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada" | "transfers";
 
 /** Único código autorizado a abrir o painel administrativo. */
 const ADMIN_CODE = "GGG-209-213";
@@ -237,6 +238,8 @@ export function Office({ state, setState, onExit }: {
               <MenuTile icon={<Target className="h-6 w-6" />} label="Peneiras" badge={peneirasAtivas} onClick={() => setView("tryouts")} />
               <MenuTile icon={<Megaphone className="h-6 w-6" />} label="Peneiras abertas" badge={peneirasAbertas.length} onClick={() => setView("openTryouts")} />
               <MenuTile icon={<Handshake className="h-6 w-6" />} label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
+              <MenuTile icon={<ArrowLeftRight className="h-6 w-6" />} label="Transferências"
+                badge={(state.leiloes ?? []).filter(l => l.status === "aberto").length} onClick={() => setView("transfers")} />
               <MenuTile icon={<Newspaper className="h-6 w-6" />} label="Notícias" onClick={() => setView("news")} />
               <MenuTile icon={<Archive className="h-6 w-6" />} label="Arquivo de clientes"
                 badge={state.jogadores.length + (state.historicoAgencia?.length ?? 0)} onClick={() => setView("arquivo")} />
@@ -793,7 +796,12 @@ export function Office({ state, setState, onExit }: {
         )}
 
         {view === "ligas" && (
-          <LeagueBrowser clubes={state.clubes} onBack={() => setView("home")} />
+          <LeagueBrowser clubes={state.clubes} onBack={() => setView("home")}
+            competicoesExtras={state.competicoesCustom ?? []} />
+        )}
+
+        {view === "transfers" && (
+          <TransferMarket state={state} setState={setState} onBack={() => setView("home")} />
         )}
 
         {view === "descoberta" && (
