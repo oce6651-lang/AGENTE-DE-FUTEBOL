@@ -495,6 +495,16 @@ const F: Tupla[] = [
   ["Camaquã Futsal", "CAMF", "Brasil", "RS", "Camaquã", "Serie D", "Formador", 860, "#1c8a4a", "#e6e6e6"],
   ["AAGF Agudo", "AGUF", "Brasil", "RS", "Agudo", "Amador", "Formador", 420, "#1f4fa0", "#e6e6e6"],
   ["Filhéus Futsal", "FILF", "Brasil", "RS", "Antônio Prado", "Amador", "Pechincha", 380, "#c8102e", "#e4b400"],
+
+  // ---------- Reforço do Campeonato Amazonense de Futsal ----------
+  ["Nacional Futsal", "NACF", "Brasil", "AM", "Manaus", "Serie C", "Formador", 1_400, "#1f4fa0", "#e6e6e6"],
+  ["São Raimundo Futsal", "SRAF", "Brasil", "AM", "Manaus", "Serie C", "Tradicional", 1_300, "#1c8a4a", "#e6e6e6"],
+  ["Fast Clube Futsal", "FSTF", "Brasil", "AM", "Manaus", "Serie D", "Pechincha", 1_050, "#c8102e", "#e6e6e6"],
+
+  // ---------- Reforço das ligas municipais amadoras de futsal ----------
+  ["ADAF Flores da Cunha", "ADAF", "Brasil", "RS", "Flores da Cunha", "Amador", "Formador", 360, "#1c8a4a", "#e6e6e6"],
+  ["SER Bom Princípio", "SBPF", "Brasil", "RS", "Bom Princípio", "Amador", "Pechincha", 330, "#1f8ecd", "#e4b400"],
+  ["AD Santa Clara Futsal", "ASCF", "Brasil", "RS", "Santa Clara do Sul", "Amador", "Tradicional", 310, "#1a1a1a", "#c8102e"],
 ];
 
 /** Reforço de elencos reais para ligas que estavam com poucos participantes. */
