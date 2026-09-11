@@ -796,7 +796,12 @@ export function Office({ state, setState, onExit }: {
         )}
 
         {view === "ligas" && (
-          <LeagueBrowser clubes={state.clubes} onBack={() => setView("home")} />
+          <LeagueBrowser clubes={state.clubes} onBack={() => setView("home")}
+            competicoesExtras={state.competicoesCustom ?? []} />
+        )}
+
+        {view === "transfers" && (
+          <TransferMarket state={state} setState={setState} onBack={() => setView("home")} />
         )}
 
         {view === "descoberta" && (
