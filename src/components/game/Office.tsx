@@ -8,6 +8,7 @@ import { PlayerAvatar } from "./PlayerAvatar";
 import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { LeagueBrowser } from "./LeagueBrowser";
+import { TransferMarket } from "./TransferMarket";
 import { CompetitionLogo } from "./CompetitionLogo";
 import { COMPETICOES } from "@/lib/game/data/leagues";
 import { AdminClubs, AdminCompetitions, AdminUpgrades } from "./AdminEditors";
@@ -41,13 +42,13 @@ import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
   Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
-  Phone, ListTree, BarChart3,
+  Phone, ListTree, BarChart3, ArrowLeftRight,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
-  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada";
+  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada" | "transfers";
 
 /** Único código autorizado a abrir o painel administrativo. */
 const ADMIN_CODE = "GGG-209-213";
