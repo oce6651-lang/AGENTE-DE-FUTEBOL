@@ -199,7 +199,7 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
       }),
     };
     const n = noticia(s, `Temporada ${s.ano} encerrada`,
-      `Campeões: ${campeoes.join(", ")}. ${promovidos.map(p => p.nome).join(", ")} sobem de divisão e ${rebaixados.map(p => p.nome).join(", ")} caem.`, "mundo");
+      `Campeões: ${campeoes.join(", ")}. ${nomesPromovidos.join(", ") || "Nenhum clube"} sobem de divisão e ${nomesRebaixados.filter(nm => !nomesPromovidos.includes(nm)).join(", ") || "nenhum clube"} caem.`, "mundo");
     novas.push(n); manchetes.push(n.titulo);
   }
 
