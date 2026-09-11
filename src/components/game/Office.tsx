@@ -238,6 +238,8 @@ export function Office({ state, setState, onExit }: {
               <MenuTile icon={<Target className="h-6 w-6" />} label="Peneiras" badge={peneirasAtivas} onClick={() => setView("tryouts")} />
               <MenuTile icon={<Megaphone className="h-6 w-6" />} label="Peneiras abertas" badge={peneirasAbertas.length} onClick={() => setView("openTryouts")} />
               <MenuTile icon={<Handshake className="h-6 w-6" />} label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
+              <MenuTile icon={<ArrowLeftRight className="h-6 w-6" />} label="Transferências"
+                badge={(state.leiloes ?? []).filter(l => l.status === "aberto").length} onClick={() => setView("transfers")} />
               <MenuTile icon={<Newspaper className="h-6 w-6" />} label="Notícias" onClick={() => setView("news")} />
               <MenuTile icon={<Archive className="h-6 w-6" />} label="Arquivo de clientes"
                 badge={state.jogadores.length + (state.historicoAgencia?.length ?? 0)} onClick={() => setView("arquivo")} />
