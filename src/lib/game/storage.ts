@@ -1,4 +1,5 @@
 import type { GameState } from "./types";
+import { competicoesDoClube, ligaPrincipal } from "./data/leagues";
 
 const KEY = "pfa_save_v6";
 
@@ -15,11 +16,23 @@ export function loadGame(): GameState | null {
   try {
     const parsed = JSON.parse(raw) as GameState;
     // Migração leve: campos novos em saves antigos.
+    const competicoesCustom = parsed.competicoesCustom ?? [];
     return {
       ...parsed,
+      clubes: (parsed.clubes ?? []).map(clube => {
+        const modalidade = clube.modalidade ?? "campo";
+        return {
+          ...clube,
+          liga: ligaPrincipal(clube.categoria, clube.pais, modalidade, clube.estado),
+          competicoes: competicoesDoClube(
+            clube.categoria, clube.pais, clube.estado, modalidade, competicoesCustom,
+          ).map(competicao => competicao.nome),
+        };
+      }),
       historicoCompeticoes: parsed.historicoCompeticoes ?? [],
       historicoAgencia: parsed.historicoAgencia ?? [],
       titulosMundo: parsed.titulosMundo ?? [],
+      competicoesCustom,
     };
   } catch {
     return null;
