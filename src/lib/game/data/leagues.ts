@@ -226,7 +226,6 @@ export function continenteDoPais(pais: string): string {
 
 /** Estaduais de futsal por estado — clubes de divisões inferiores disputam a sua região. */
 const ESTADUAL_FUTSAL: Record<string, string> = {
-  RS: "Campeonato Gaúcho de Futsal",
   SC: "Campeonato Catarinense de Futsal",
   PR: "Campeonato Paranaense de Futsal",
   SP: "Campeonato Paulista de Futsal",
@@ -245,8 +244,13 @@ export function ligaPrincipal(
   if (modalidade === "futsal") {
     if (divisao === "Elite") return "Liga Nacional de Futsal";
     if (divisao === "Serie A") return "LNF Silver";
+    if (estado === "RS") {
+      if (divisao === "Serie B") return "Campeonato Gaúcho de Futsal Série Ouro";
+      if (divisao === "Serie C") return "Campeonato Gaúcho de Futsal Série Prata";
+      return "Campeonato Gaúcho de Futsal Série Bronze";
+    }
     if (divisao === "Amador") return ESTADUAL_FUTSAL[estado] ?? "Liga Municipal de Futsal";
-    // Série B, C e D disputam prioritariamente o estadual da sua federação
+    // Séries B, C e D disputam prioritariamente o estadual da sua federação.
     return ESTADUAL_FUTSAL[estado] ?? "LNF Silver";
   }
   if (pais !== "Brasil") {

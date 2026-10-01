@@ -146,9 +146,14 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
     const nomesPromovidos: string[] = [];
     const nomesRebaixados: string[] = [];
     const campeoes: string[] = [];
-    const chave = (c: Club) => (c.modalidade ?? "campo") === "futsal"
-      ? `futsal|${c.pais}|${c.estado}`
-      : `campo|${c.pais}`;
+    const chave = (c: Club) => {
+      if ((c.modalidade ?? "campo") !== "futsal") return `campo|${c.pais}`;
+      // Elite, Série A e Série B formam a pirâmide nacional (LNF/Silver).
+      // Da Série C para baixo, o acesso é estadual (Bronze → Prata → Ouro).
+      return ["Elite", "Serie A", "Serie B"].includes(c.categoria)
+        ? `futsal|nacional|${c.pais}`
+        : `futsal|estadual|${c.pais}|${c.estado}`;
+    };
     const ligas = new Map<string, Club[]>();
     for (const c of s.clubes) {
       const k = `${chave(c)}|${c.categoria}`;
@@ -162,11 +167,12 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
       const campeao = tabela[0];
       const lanterna = tabela[tabela.length - 1];
       campeoes.push(`${campeao.nome} (${campeao.liga || LIGAS[div]})`);
-      // O campeão sempre sobe, mesmo que a divisão acima ainda esteja vazia.
-      // A única exceção é a Elite mundial, reservada aos grupos que já a disputam.
+      // O campeão sempre sobe. No futebol de campo, a Série A só vira Elite
+      // quando essa camada existe no país; no futsal, a Série A dá acesso à LNF.
       const grupo = chave(campeao);
       const podeElite = (ligas.get(`${grupo}|Elite`)?.length ?? 0) > 0;
-      if (div !== "Elite" && (sobe(div) !== "Elite" || podeElite)) {
+      const futsal = (campeao.modalidade ?? "campo") === "futsal";
+      if (div !== "Elite" && (sobe(div) !== "Elite" || futsal || podeElite)) {
         promovidos.add(campeao.id);
         nomesPromovidos.push(campeao.nome);
       }
