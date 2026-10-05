@@ -9,4 +9,5 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Model futsal promotion as one continuous pyramid: national Elite/A/B, then state C/D/Amador; this keeps LNF and state access coherent with the single club division field.
+- Model futsal as one continuous ladder: Elite (LNF), A (Silver), B (Ouro), C (Prata), D (Bronze), then Amador; this keeps display leagues and movement coherent.
+- Store browser careers in five indexed slots with one active slot; this preserves independent progress and enables reliable migration from the legacy save.
