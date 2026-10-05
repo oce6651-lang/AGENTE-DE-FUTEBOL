@@ -107,7 +107,7 @@ export function answerFightOffer(state: GameState, offerId: string, accept: bool
   const fighter = (state.combatFighters ?? []).find(item => item.id === offer?.fighterId);
   if (!offer || !fighter) return { state, message: "Proposta indisponível." };
   if (!accept) return { state: { ...state, combatOffers: (state.combatOffers ?? []).filter(item => item.id !== offerId) }, message: "Proposta recusada." };
-  const fight: ScheduledFight = { id: uid("fight"), opponent: offer.opponent, opponentRating: offer.opponentRating, organizationId: offer.organizationId, event: offer.event, weeksRemaining: offer.weeksUntilFight, campWeeks: offer.weeksUntilFight, campProgress: 0, weightProgress: 100, strategy: "Equilibrada", titleFight: offer.titleFight, purse: offer.purse, winBonus: offer.winBonus };
+  const fight: ScheduledFight = { id: uid("fight"), opponent: offer.opponent, opponentRating: offer.opponentRating, organizationId: offer.organizationId, event: offer.event, weeksRemaining: offer.weeksUntilFight, campWeeks: offer.weeksUntilFight, campProgress: 0, weightProgress: 35, strategy: "Equilibrada", titleFight: offer.titleFight, purse: offer.purse, winBonus: offer.winBonus };
   const contract = fighter.contract ?? { organizationId: offer.organizationId, fightsRemaining: offer.contractFights, guaranteedPurse: offer.purse, winBonus: offer.winBonus, agencyCommission: 0.1, expiresYear: state.ano + 2 };
   return { state: { ...state, combatOffers: (state.combatOffers ?? []).filter(item => item.fighterId !== fighter.id), combatFighters: (state.combatFighters ?? []).map(item => item.id === fighter.id ? { ...item, organizationId: offer.organizationId, contract, scheduledFight: fight, status: `Camp para ${offer.event}`, timeline: [...item.timeline, `Luta marcada contra ${offer.opponent} no ${offer.event}.`] } : item) }, message: `Luta confirmada: ${fighter.name} x ${offer.opponent}.` };
 }
@@ -162,9 +162,11 @@ export function processCombatWeek(state: GameState, events: string[]): GameState
       next = { ...next, condition: Math.min(100, next.condition + random(2, 5)), status: next.condition < 78 ? "Em recuperação" : "Aguardando oportunidade" };
     }
     if (!next.scheduledFight) return next;
-    const cutLoss = next.scheduledFight.weeksRemaining <= 2 ? random(7, 14) : random(1, 4);
+    const cutGain = next.scheduledFight.weeksRemaining <= 2
+      ? Math.max(6, Math.round(next.attributes.weightCut / 8))
+      : Math.max(2, Math.round(next.attributes.discipline / 22));
     const campGain = Math.max(3, Math.round((next.attributes.discipline + next.attributes.cardio) / 28));
-    const scheduledFight = { ...next.scheduledFight, weeksRemaining: next.scheduledFight.weeksRemaining - 1, campProgress: Math.min(100, next.scheduledFight.campProgress + campGain), weightProgress: Math.max(50, next.scheduledFight.weightProgress - cutLoss) };
+    const scheduledFight = { ...next.scheduledFight, weeksRemaining: next.scheduledFight.weeksRemaining - 1, campProgress: Math.min(100, next.scheduledFight.campProgress + campGain), weightProgress: Math.min(100, next.scheduledFight.weightProgress + cutGain) };
     next = { ...next, scheduledFight, condition: Math.max(45, next.condition - random(1, 4)), status: scheduledFight.weeksRemaining > 0 ? `Camp: ${scheduledFight.weeksRemaining} semana(s)` : next.status };
     if (scheduledFight.weeksRemaining > 0) return next;
     const resolved = resolveFight(state, next);
