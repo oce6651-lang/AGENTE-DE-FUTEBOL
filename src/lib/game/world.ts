@@ -13,6 +13,50 @@ function desce(d: Division): Division {
   return ORDEM[Math.max(0, i - 1)];
 }
 
+function performance(a: Club, b: Club): number {
+  const aproveitamento = (club: Club) => club.pontos / Math.max(1, club.jogos);
+  return aproveitamento(b) - aproveitamento(a)
+    || b.pontos - a.pontos
+    || b.jogos - a.jogos
+    || a.id.localeCompare(b.id);
+}
+
+function promotionGroup(c: Club): string {
+  if ((c.modalidade ?? "campo") !== "futsal") return `campo|${c.pais}`;
+  // LNF e Silver são nacionais; Ouro, Prata, Bronze e Amador são estaduais.
+  return ["Elite", "Serie A"].includes(c.categoria)
+    ? `futsal|nacional|${c.pais}`
+    : `futsal|estadual|${c.pais}|${c.estado}`;
+}
+
+export function calcularMovimentosTemporada(clubes: Club[]): {
+  promovidos: Set<string>;
+  rebaixados: Set<string>;
+  campeoes: Club[];
+} {
+  const promovidos = new Set<string>();
+  const rebaixados = new Set<string>();
+  const campeoes: Club[] = [];
+  const ligas = new Map<string, Club[]>();
+  for (const clube of clubes) {
+    const key = `${promotionGroup(clube)}|${clube.categoria}`;
+    ligas.set(key, [...(ligas.get(key) ?? []), clube]);
+  }
+  for (const [key, lista] of ligas) {
+    if (lista.length < 2) continue;
+    const divisao = key.split("|").pop() as Division;
+    const tabela = [...lista].sort(performance);
+    campeoes.push(tabela[0]);
+    const vagasAcesso = divisao === "Elite" ? 0 : Math.min(2, Math.max(1, lista.length - 1));
+    tabela.slice(0, vagasAcesso).forEach(clube => promovidos.add(clube.id));
+    const disponiveisParaQueda = tabela.slice(vagasAcesso);
+    const vagasQueda = divisao === "Amador" ? 0 : Math.min(2, Math.max(0, disponiveisParaQueda.length - 1));
+    disponiveisParaQueda.slice(-vagasQueda).forEach(clube => rebaixados.add(clube.id));
+  }
+  for (const id of promovidos) rebaixados.delete(id);
+  return { promovidos, rebaixados, campeoes };
+}
+
 /** Bônus permanente de desempenho de alguns clubes. */
 function bonusDesempenho(c: Club): number {
   if (c.nome === "Grêmio FBPA") return 1.5;
@@ -138,52 +182,10 @@ export function mundoSemanal(state: GameState): { state: GameState; manchetes: s
 
   // ---- fim de temporada: promoções e rebaixamentos ----
   if (s.mes === 12 && s.semana === 4) {
-    // Cada liga tem o seu próprio acesso: o campeão sobe uma divisão e o pior
-    // desempenho cai. Vale para o futebol de campo (país a país) e para o
-    // futsal (estado a estado: Bronze → Prata → Ouro).
-    const promovidos = new Set<string>();
-    const rebaixados = new Set<string>();
-    const nomesPromovidos: string[] = [];
-    const nomesRebaixados: string[] = [];
-    const campeoes: string[] = [];
-    const chave = (c: Club) => {
-      if ((c.modalidade ?? "campo") !== "futsal") return `campo|${c.pais}`;
-      // Elite, Série A e Série B formam a pirâmide nacional (LNF/Silver).
-      // Da Série C para baixo, o acesso é estadual (Bronze → Prata → Ouro).
-      return ["Elite", "Serie A", "Serie B"].includes(c.categoria)
-        ? `futsal|nacional|${c.pais}`
-        : `futsal|estadual|${c.pais}|${c.estado}`;
-    };
-    const ligas = new Map<string, Club[]>();
-    for (const c of s.clubes) {
-      const k = `${chave(c)}|${c.categoria}`;
-      ligas.set(k, [...(ligas.get(k) ?? []), c]);
-    }
-    for (const [k, lista] of ligas) {
-      const div = k.split("|").pop() as Division;
-      if (lista.length < 2) continue;
-      const tabela = [...lista].sort(
-        (a, b) => (b.pontos / Math.max(1, b.jogos)) - (a.pontos / Math.max(1, a.jogos)));
-      const campeao = tabela[0];
-      const lanterna = tabela[tabela.length - 1];
-      campeoes.push(`${campeao.nome} (${campeao.liga || LIGAS[div]})`);
-      // O campeão sempre sobe. No futebol de campo, a Série A só vira Elite
-      // quando essa camada existe no país; no futsal, a Série A dá acesso à LNF.
-      const grupo = chave(campeao);
-      const podeElite = (ligas.get(`${grupo}|Elite`)?.length ?? 0) > 0;
-      const futsal = (campeao.modalidade ?? "campo") === "futsal";
-      if (div !== "Elite" && (sobe(div) !== "Elite" || futsal || podeElite)) {
-        promovidos.add(campeao.id);
-        nomesPromovidos.push(campeao.nome);
-      }
-      // O pior time cai, mas nunca o campeão da própria divisão.
-      if (div !== "Amador" && lanterna.id !== campeao.id && lista.length >= 3) {
-        rebaixados.add(lanterna.id);
-        nomesRebaixados.push(lanterna.nome);
-      }
-    }
-    // um clube nunca sobe e cai na mesma virada de temporada
-    for (const id of promovidos) rebaixados.delete(id);
+    const { promovidos, rebaixados, campeoes: campeoesClubes } = calcularMovimentosTemporada(s.clubes);
+    const nomesPromovidos = s.clubes.filter(c => promovidos.has(c.id)).map(c => c.nome);
+    const nomesRebaixados = s.clubes.filter(c => rebaixados.has(c.id)).map(c => c.nome);
+    const campeoes = campeoesClubes.map(c => `${c.nome} (${c.liga || LIGAS[c.categoria]})`);
     s = {
       ...s,
       clubes: s.clubes.map(c => {
