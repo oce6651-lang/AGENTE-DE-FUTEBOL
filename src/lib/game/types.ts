@@ -394,6 +394,145 @@ export interface Agent {
   agencia: string;
 }
 
+// ============ Esportes de combate ============
+
+export type CombatSport = "MMA" | "Boxe" | "Kickboxing";
+export type CombatStance = "Destro" | "Canhoto" | "Ambidestro";
+export type CombatResult = "V" | "D" | "E" | "NC";
+export type CombatMethod = "Nocaute" | "Nocaute técnico" | "Finalização" | "Decisão unânime" | "Decisão dividida" | "Empate" | "Sem resultado";
+
+export interface CombatAttributes {
+  striking: number;
+  grappling: number;
+  wrestling: number;
+  defense: number;
+  power: number;
+  speed: number;
+  cardio: number;
+  chin: number;
+  fightIQ: number;
+  discipline: number;
+  weightCut: number;
+}
+
+export interface CombatRecord {
+  wins: number;
+  losses: number;
+  draws: number;
+  noContests: number;
+  knockouts: number;
+  submissions: number;
+  decisions: number;
+}
+
+export interface FightHistoryEntry {
+  id: string;
+  year: number;
+  month: number;
+  week: number;
+  opponent: string;
+  event: string;
+  organization: string;
+  result: CombatResult;
+  method: CombatMethod;
+  round: number;
+  time: string;
+  purse: number;
+  titleFight: boolean;
+  weightClass: string;
+}
+
+export interface CombatContract {
+  organizationId: string;
+  fightsRemaining: number;
+  guaranteedPurse: number;
+  winBonus: number;
+  agencyCommission: number;
+  expiresYear: number;
+}
+
+export interface ScheduledFight {
+  id: string;
+  opponent: string;
+  opponentRating: number;
+  organizationId: string;
+  event: string;
+  weeksRemaining: number;
+  campWeeks: number;
+  campProgress: number;
+  weightProgress: number;
+  strategy: "Equilibrada" | "Trocação" | "Quedas e chão" | "Defensiva";
+  titleFight: boolean;
+  purse: number;
+  winBonus: number;
+}
+
+export interface Fighter {
+  id: string;
+  name: string;
+  sport: CombatSport;
+  age: number;
+  birthDate: string;
+  nationality: string;
+  city: string;
+  height: number;
+  reach: number;
+  weight: number;
+  weightClass: string;
+  stance: CombatStance;
+  style: string;
+  gym: string;
+  coach: string;
+  attributes: CombatAttributes;
+  rating: number;
+  potential: number;
+  condition: number;
+  morale: number;
+  popularity: number;
+  trust: number;
+  scouted: number;
+  represented: boolean;
+  status: string;
+  organizationId?: string;
+  rank?: number;
+  champion?: boolean;
+  injuryWeeks?: number;
+  record: CombatRecord;
+  fightHistory: FightHistoryEntry[];
+  contract?: CombatContract;
+  scheduledFight?: ScheduledFight;
+  goals: string[];
+  rivalries: string[];
+  timeline: string[];
+}
+
+export interface CombatOrganization {
+  id: string;
+  name: string;
+  sport: CombatSport;
+  country: string;
+  level: number;
+  prestige: number;
+  weightClasses: string[];
+  colors: [string, string];
+}
+
+export interface CombatOffer {
+  id: string;
+  fighterId: string;
+  organizationId: string;
+  opponent: string;
+  opponentRating: number;
+  event: string;
+  purse: number;
+  winBonus: number;
+  contractFights: number;
+  weeksUntilFight: number;
+  titleFight: boolean;
+  status: "aberta" | "aceita" | "recusada";
+  expiresIn: number;
+}
+
 export interface GameState {
   agent: Agent;
   ano: number;
@@ -441,6 +580,13 @@ export interface GameState {
   competicoesCustom?: import("./data/leagues").Competition[];
   /** Leilões de atletas abertos pela agência. */
   leiloes?: Auction[];
+  /** Núcleo de MMA, boxe e kickboxing da mesma agência. */
+  combatFighters?: Fighter[];
+  combatRadar?: Fighter[];
+  combatOrganizations?: CombatOrganization[];
+  combatOffers?: CombatOffer[];
+  combatHistory?: Fighter[];
+  combatReputation?: Record<CombatSport, number>;
   seed: number;
   criadoEm: string;
   atualizadoEm: string;

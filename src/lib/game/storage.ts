@@ -1,5 +1,6 @@
 import type { GameState } from "./types";
 import { competicoesDoClube, ligaPrincipal } from "./data/leagues";
+import { combatOrganizations, defaultCombatReputation } from "./combat";
 
 const LEGACY_KEY = "pfa_save_v6";
 const INDEX_KEY = "pfa_career_slots_v1";
@@ -118,6 +119,12 @@ export function loadGame(slotId?: string): GameState | null {
       historicoAgencia: parsed.historicoAgencia ?? [],
       titulosMundo: parsed.titulosMundo ?? [],
       competicoesCustom,
+      combatFighters: parsed.combatFighters ?? [],
+      combatRadar: parsed.combatRadar ?? [],
+      combatOrganizations: parsed.combatOrganizations?.length ? parsed.combatOrganizations : combatOrganizations(),
+      combatOffers: parsed.combatOffers ?? [],
+      combatHistory: parsed.combatHistory ?? [],
+      combatReputation: { ...defaultCombatReputation(), ...(parsed.combatReputation ?? {}) },
     };
   } catch {
     return null;

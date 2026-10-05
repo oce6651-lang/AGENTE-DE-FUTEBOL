@@ -9,6 +9,7 @@ import { MatchDay } from "./MatchDay";
 import { ClubCrest } from "./ClubCrest";
 import { LeagueBrowser } from "./LeagueBrowser";
 import { TransferMarket } from "./TransferMarket";
+import { CombatHub } from "./CombatHub";
 import { CompetitionLogo } from "./CompetitionLogo";
 import { COMPETICOES } from "@/lib/game/data/leagues";
 import { AdminClubs, AdminCompetitions, AdminUpgrades } from "./AdminEditors";
@@ -42,13 +43,13 @@ import heroTitulos from "@/assets/hero-titulos.jpg";
 import {
   Search, Users, Target, Handshake, Newspaper, Briefcase, Radar, ArrowLeft, ChevronRight,
   Lock, Star, Building2, Check, Megaphone, ShieldCheck, CalendarClock, Archive, Trophy,
-  Phone, ListTree, BarChart3, ArrowLeftRight,
+  Phone, ListTree, BarChart3, ArrowLeftRight, Swords,
 } from "lucide-react";
 
 type View =
   | "home" | "locais" | "matchday" | "radar" | "myPlayers" | "negotiations" | "news"
   | "agency" | "detail" | "tryouts" | "openTryouts" | "clubs" | "admin"
-  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada" | "transfers";
+  | "arquivo" | "competicoes" | "ligas" | "descoberta" | "temporada" | "transfers" | "combat";
 
 /** Único código autorizado a abrir o painel administrativo. */
 const ADMIN_CODE = "GGG-209-213";
@@ -240,6 +241,8 @@ export function Office({ state, setState, onExit }: {
               <MenuTile icon={<Handshake className="h-6 w-6" />} label="Negociações" badge={abertas} onClick={() => setView("negotiations")} />
               <MenuTile icon={<ArrowLeftRight className="h-6 w-6" />} label="Transferências"
                 badge={(state.leiloes ?? []).filter(l => l.status === "aberto").length} onClick={() => setView("transfers")} />
+              <MenuTile icon={<Swords className="h-6 w-6" />} label="Central de lutas"
+                badge={(state.combatOffers ?? []).length} onClick={() => setView("combat")} />
               <MenuTile icon={<Newspaper className="h-6 w-6" />} label="Notícias" onClick={() => setView("news")} />
               <MenuTile icon={<Archive className="h-6 w-6" />} label="Arquivo de clientes"
                 badge={state.jogadores.length + (state.historicoAgencia?.length ?? 0)} onClick={() => setView("arquivo")} />
@@ -802,6 +805,10 @@ export function Office({ state, setState, onExit }: {
 
         {view === "transfers" && (
           <TransferMarket state={state} setState={setState} onBack={() => setView("home")} />
+        )}
+
+        {view === "combat" && (
+          <CombatHub state={state} setState={setState} onBack={() => setView("home")} />
         )}
 
         {view === "descoberta" && (
