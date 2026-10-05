@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { answerFightOffer, defaultCombatReputation, discoverCombatTalent, scoutFighter, seekFightOffer, setFightStrategy, signFighter } from "@/lib/game/combat";
+import { answerFightOffer, defaultCombatReputation, discoverCombatTalent, scoutFighter, seekFightOffer, setFightStrategy, signFighter, strategiesFor } from "@/lib/game/combat";
 import type { CombatOffer, CombatSport, Fighter, GameState, ScheduledFight } from "@/lib/game/types";
 
 type Section = "overview" | "radar" | "fighters" | "offers" | "organizations";
 
-const SPORTS: CombatSport[] = ["MMA", "Boxe", "Kickboxing"];
-const STRATEGIES: ScheduledFight["strategy"][] = ["Equilibrada", "Trocação", "Quedas e chão", "Defensiva"];
+const SPORTS: CombatSport[] = ["MMA", "Boxe", "Kickboxing", "Jiu-jítsu", "Muay Thai"];
 
 export function CombatHub({ state, setState, onBack }: {
   state: GameState;
@@ -45,7 +44,7 @@ export function CombatHub({ state, setState, onBack }: {
         <Button size="icon" variant="outline" aria-label="Voltar ao escritório" onClick={onBack}><ArrowLeft className="size-4" /></Button>
         <div className="min-w-0">
           <h2 className="text-xl font-black">Central de lutas</h2>
-          <p className="text-xs text-muted-foreground">MMA, boxe e kickboxing</p>
+          <p className="text-xs text-muted-foreground">MMA, boxe, kickboxing, jiu-jítsu e Muay Thai</p>
         </div>
       </div>
 
@@ -67,7 +66,7 @@ export function CombatHub({ state, setState, onBack }: {
         <SectionButton active={section === "organizations"} label="Eventos" icon={<Trophy />} onClick={() => setSection("organizations")} />
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {SPORTS.map(item => (
           <Button key={item} variant={sport === item ? "default" : "outline"} onClick={() => setSport(item)} className="px-2">
             {item}
@@ -77,7 +76,7 @@ export function CombatHub({ state, setState, onBack }: {
 
       {section === "overview" && (
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             {SPORTS.map(item => (
               <Card key={item} className="p-3 text-center">
                 <div className="text-lg font-black text-primary">{reputation[item]}</div>
@@ -95,7 +94,7 @@ export function CombatHub({ state, setState, onBack }: {
                   <div className="text-xs text-muted-foreground">{nextFight.scheduledFight?.event} • em {nextFight.scheduledFight?.weeksRemaining} semana(s)</div>
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <Meter label="Camp" value={nextFight.scheduledFight?.campProgress ?? 0} />
-                    <Meter label="Controle de peso" value={nextFight.scheduledFight?.weightProgress ?? 0} />
+                     <Meter label={nextFight.sport === "Jiu-jítsu" ? "Preparação técnica" : "Controle de peso"} value={nextFight.scheduledFight?.weightProgress ?? 0} />
                   </div>
                 </div>
               </div>
@@ -140,11 +139,11 @@ export function CombatHub({ state, setState, onBack }: {
                     <div className="font-black">{fighter.scheduledFight.event}</div>
                     <div className="text-muted-foreground">contra {fighter.scheduledFight.opponent} • em {fighter.scheduledFight.weeksRemaining} semana(s)</div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3"><Meter label="Camp" value={fighter.scheduledFight.campProgress} /><Meter label="Peso" value={fighter.scheduledFight.weightProgress} /></div>
+                   <div className="grid grid-cols-2 gap-3"><Meter label="Camp" value={fighter.scheduledFight.campProgress} /><Meter label={fighter.sport === "Jiu-jítsu" ? "Técnica" : "Peso"} value={fighter.scheduledFight.weightProgress} /></div>
                   <div>
                     <div className="mb-1 text-[10px] font-black uppercase text-muted-foreground">Estratégia</div>
                     <div className="grid grid-cols-2 gap-2">
-                      {STRATEGIES.map(strategy => <Button key={strategy} size="sm" variant={fighter.scheduledFight?.strategy === strategy ? "default" : "outline"} onClick={() => setState(setFightStrategy(state, fighter.id, strategy))}>{strategy}</Button>)}
+                       {strategiesFor(fighter.sport).map(strategy => <Button key={strategy} size="sm" variant={fighter.scheduledFight?.strategy === strategy ? "default" : "outline"} onClick={() => setState(setFightStrategy(state, fighter.id, strategy))}>{strategy}</Button>)}
                     </div>
                   </div>
                 </div>
@@ -209,12 +208,13 @@ function FighterCard({ fighter, expanded, onExpand, children }: { fighter: Fight
             <Info icon={<Shield />} label="Academia" value={fighter.gym} />
             <Info icon={<Dumbbell />} label="Treinador" value={fighter.coach} />
             <Info icon={<Target />} label="Guarda" value={fighter.stance} />
+             {fighter.belt && <Info icon={<Medal />} label="Graduação" value={fighter.belt} />}
             <Info icon={<Medal />} label="Ranking" value={fighter.rank ? `#${fighter.rank}` : "Sem ranking"} />
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <Meter label="Trocação" value={fighter.attributes.striking} />
             <Meter label="Defesa" value={fighter.attributes.defense} />
-            {fighter.sport === "MMA" && <><Meter label="Grappling" value={fighter.attributes.grappling} /><Meter label="Wrestling" value={fighter.attributes.wrestling} /></>}
+             {(fighter.sport === "MMA" || fighter.sport === "Jiu-jítsu") && <><Meter label="Grappling" value={fighter.attributes.grappling} /><Meter label="Wrestling" value={fighter.attributes.wrestling} /></>}
             <Meter label="Cardio" value={fighter.attributes.cardio} />
             <Meter label="QI de luta" value={fighter.attributes.fightIQ} />
             <Meter label="Condição" value={fighter.condition} />
@@ -229,7 +229,7 @@ function FighterCard({ fighter, expanded, onExpand, children }: { fighter: Fight
 
 function FightHistory({ fighter }: { fighter: Fighter }) {
   if (!fighter.fightHistory.length) return <div className="text-xs text-muted-foreground">Nenhuma luta registrada desde a entrada na agência.</div>;
-  return <div><div className="mb-2 text-[10px] font-black uppercase text-muted-foreground">Histórico de lutas</div><div className="space-y-2">{fighter.fightHistory.map(fight => <div key={fight.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md bg-secondary/40 p-2 text-[11px]"><Badge variant={fight.result === "V" ? "default" : fight.result === "D" ? "destructive" : "secondary"}>{fight.result}</Badge><div className="min-w-0"><div className="truncate font-bold">{fight.opponent}</div><div className="truncate text-muted-foreground">{fight.event} • {fight.method} R{fight.round} {fight.time}</div></div><div className="text-right"><div className="font-bold">R$ {fight.purse.toLocaleString("pt-BR")}</div><div className="text-[9px] text-muted-foreground">{fight.month}/{fight.year}</div></div></div>)}</div></div>;
+  return <div><div className="mb-2 text-[10px] font-black uppercase text-muted-foreground">Histórico de lutas</div><div className="space-y-2">{fighter.fightHistory.map(fight => <div key={fight.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md bg-secondary/40 p-2 text-[11px]"><Badge variant={fight.result === "V" ? "default" : fight.result === "D" ? "destructive" : "secondary"}>{fight.result}</Badge><div className="min-w-0"><div className="truncate font-bold">{fight.opponent}</div><div className="truncate text-muted-foreground">{fight.event} • {fight.format ? `${fight.format} • ` : ""}{fight.method}{fight.score ? ` (${fight.score})` : ""} {fighter.sport === "Jiu-jítsu" ? fight.time : `R${fight.round} ${fight.time}`}</div></div><div className="text-right"><div className="font-bold">R$ {fight.purse.toLocaleString("pt-BR")}</div><div className="text-[9px] text-muted-foreground">{fight.month}/{fight.year}</div></div></div>)}</div></div>;
 }
 
 function OfferCard({ offer, state, onAnswer }: { offer: CombatOffer; state: GameState; onAnswer: (accept: boolean) => void }) {
