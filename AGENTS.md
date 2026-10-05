@@ -11,3 +11,4 @@
 
 - Model futsal as one continuous ladder: Elite (LNF), A (Silver), B (Ouro), C (Prata), D (Bronze), then Amador; this keeps display leagues and movement coherent.
 - Store browser careers in five indexed slots with one active slot; this preserves independent progress and enables reliable migration from the legacy save.
+- Keep combat sports in isolated domain modules while sharing the career clock and agency finances; this protects football simulation rules from cross-domain regressions.
