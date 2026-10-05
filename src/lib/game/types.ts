@@ -396,10 +396,11 @@ export interface Agent {
 
 // ============ Esportes de combate ============
 
-export type CombatSport = "MMA" | "Boxe" | "Kickboxing";
+export type CombatSport = "MMA" | "Boxe" | "Kickboxing" | "Jiu-jítsu" | "Muay Thai";
 export type CombatStance = "Destro" | "Canhoto" | "Ambidestro";
 export type CombatResult = "V" | "D" | "E" | "NC";
-export type CombatMethod = "Nocaute" | "Nocaute técnico" | "Finalização" | "Decisão unânime" | "Decisão dividida" | "Empate" | "Sem resultado";
+export type CombatMethod = "Nocaute" | "Nocaute técnico" | "Finalização" | "Pontos" | "Vantagens" | "Decisão dos árbitros" | "Desclassificação" | "Decisão unânime" | "Decisão dividida" | "Empate" | "Sem resultado";
+export type CombatStrategy = "Equilibrada" | "Trocação" | "Quedas e chão" | "Defensiva" | "Buscar finalização" | "Controlar por pontos" | "Clinch e joelhadas" | "Pressão tailandesa";
 
 export interface CombatAttributes {
   striking: number;
@@ -440,6 +441,9 @@ export interface FightHistoryEntry {
   purse: number;
   titleFight: boolean;
   weightClass: string;
+  /** Formato específico da modalidade, como kimono ou sem kimono. */
+  format?: "Com kimono" | "Sem kimono" | "Muay Thai";
+  score?: string;
 }
 
 export interface CombatContract {
@@ -461,7 +465,9 @@ export interface ScheduledFight {
   campWeeks: number;
   campProgress: number;
   weightProgress: number;
-  strategy: "Equilibrada" | "Trocação" | "Quedas e chão" | "Defensiva";
+  strategy: CombatStrategy;
+  rounds: number;
+  format?: "Com kimono" | "Sem kimono" | "Muay Thai";
   titleFight: boolean;
   purse: number;
   winBonus: number;
@@ -481,6 +487,8 @@ export interface Fighter {
   weightClass: string;
   stance: CombatStance;
   style: string;
+  /** Graduação usada no circuito profissional de jiu-jítsu. */
+  belt?: "Faixa-roxa" | "Faixa-marrom" | "Faixa-preta";
   gym: string;
   coach: string;
   attributes: CombatAttributes;
@@ -580,7 +588,7 @@ export interface GameState {
   competicoesCustom?: import("./data/leagues").Competition[];
   /** Leilões de atletas abertos pela agência. */
   leiloes?: Auction[];
-  /** Núcleo de MMA, boxe e kickboxing da mesma agência. */
+  /** Núcleo de esportes de combate da mesma agência. */
   combatFighters?: Fighter[];
   combatRadar?: Fighter[];
   combatOrganizations?: CombatOrganization[];
