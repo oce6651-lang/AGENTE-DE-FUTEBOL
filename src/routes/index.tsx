@@ -16,6 +16,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Construa sua agência de futebol do zero: descubra talentos, negocie com clubes e vire uma potência mundial." },
       { property: "og:title", content: "Project Football Agent" },
       { property: "og:description", content: "Simulação de gerenciamento onde você é o empresário. Descubra, contrate e negocie." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: App,

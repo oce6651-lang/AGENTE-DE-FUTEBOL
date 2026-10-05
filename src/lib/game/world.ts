@@ -47,10 +47,19 @@ export function calcularMovimentosTemporada(clubes: Club[]): {
     const divisao = key.split("|").pop() as Division;
     const tabela = [...lista].sort(performance);
     campeoes.push(tabela[0]);
-    const vagasAcesso = divisao === "Elite" ? 0 : Math.min(2, Math.max(1, lista.length - 1));
+    const referencia = tabela[0];
+    const modalidade = referencia.modalidade ?? "campo";
+    const divisaoSuperior = sobe(divisao);
+    const existeDivisaoSuperior = clubes.some(clube =>
+      (clube.modalidade ?? "campo") === modalidade
+      && clube.pais === referencia.pais
+      && clube.categoria === divisaoSuperior,
+    );
+    const podeSubir = divisaoSuperior !== divisao && existeDivisaoSuperior;
+    const vagasAcesso = podeSubir ? Math.min(2, Math.max(1, lista.length - 1)) : 0;
     tabela.slice(0, vagasAcesso).forEach(clube => promovidos.add(clube.id));
     const disponiveisParaQueda = tabela.slice(vagasAcesso);
-    const vagasQueda = divisao === "Amador" ? 0 : Math.min(2, Math.max(0, disponiveisParaQueda.length - 1));
+    const vagasQueda = desce(divisao) === divisao ? 0 : Math.min(2, Math.max(0, disponiveisParaQueda.length - 1));
     disponiveisParaQueda.slice(-vagasQueda).forEach(clube => rebaixados.add(clube.id));
   }
   for (const id of promovidos) rebaixados.delete(id);
