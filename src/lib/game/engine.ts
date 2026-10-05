@@ -12,6 +12,7 @@ import { torneiosDeSelecao, premiosIndividuais } from "./awards";
 import { janelaAberta, janelaAtual } from "./calendar";
 import { relatoriosAutomaticos, efeitoAlojamento } from "./discovery";
 import { processarLeiloes, processarEmprestimos, iniciarEmprestimo } from "./transfers";
+import { combatOrganizations, defaultCombatReputation, processCombatWeek } from "./combat";
 import { clubesDaRegiao } from "./data/clubs";
 import type { ScoutLocation } from "./locations";
 import { localLiberado } from "./locations";
@@ -111,6 +112,12 @@ export function novoJogo(agent: Omit<Agent, "id">): GameState {
     historicoCompeticoes: [],
     upgrades: [],
     locaisVisitados: [],
+    combatFighters: [],
+    combatRadar: [],
+    combatOrganizations: combatOrganizations(),
+    combatOffers: [],
+    combatHistory: [],
+    combatReputation: defaultCombatReputation(),
     noticias: [
       {
         id: rid("NEW", 1),
@@ -576,6 +583,8 @@ export function avancarSemana(state: GameState): { state: GameState; eventos: st
   // leilões recebem lances e empréstimos vencidos devolvem o atleta ao clube de origem
   s = processarLeiloes(s, eventos);
   s = processarEmprestimos(s, eventos);
+  // MMA, boxe e kickboxing compartilham o calendário e o caixa da agência.
+  s = processCombatWeek(s, eventos);
 
   // propostas expiram — e conversas encerradas somem da mesa para não poluir a aba
   s = {

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LeagueBrowser } from "./LeagueBrowser";
 import { gerarClubes } from "@/lib/game/generators";
 import type { SaveSlot } from "@/lib/game/storage";
-import { ArrowLeft, BriefcaseBusiness, CalendarDays, Trash2 } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, CalendarDays, Swords, Trash2 } from "lucide-react";
 
 interface Props {
   hasSave: boolean;
@@ -86,15 +86,15 @@ export function Menu({ hasSave, saves, onNew, onContinue, onLoad, onDelete }: Pr
     <div className="min-h-screen flex flex-col items-center justify-center px-4"
       style={{ background: "var(--gradient-pitch)" }}>
       <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-        <div className="text-6xl mb-4">⚽</div>
+        <div className="mb-4 flex items-center justify-center gap-3 text-5xl"><span>⚽</span><Swords className="size-12 text-primary" /></div>
         <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground">
           PROJECT
         </h1>
         <h2 className="text-3xl md:text-5xl font-black bg-clip-text text-transparent"
           style={{ backgroundImage: "var(--gradient-primary)" }}>
-          FOOTBALL AGENT
+          SPORTS AGENT
         </h2>
-        <p className="text-muted-foreground mt-3 text-sm">Construa sua agência do zero</p>
+        <p className="text-muted-foreground mt-3 text-sm">Futebol, MMA, boxe e kickboxing na mesma agência</p>
       </div>
 
       <div className="flex flex-col gap-3 w-full max-w-xs">

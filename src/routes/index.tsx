@@ -12,10 +12,10 @@ import type { Agent, GameState } from "@/lib/game/types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Project Football Agent — Simulador de Empresário de Futebol" },
-      { name: "description", content: "Construa sua agência de futebol do zero: descubra talentos, negocie com clubes e vire uma potência mundial." },
-      { property: "og:title", content: "Project Football Agent" },
-      { property: "og:description", content: "Simulação de gerenciamento onde você é o empresário. Descubra, contrate e negocie." },
+      { title: "Project Sports Agent — Futebol e Esportes de Combate" },
+      { name: "description", content: "Gerencie uma agência de futebol, MMA, boxe e kickboxing: descubra talentos, negocie contratos e construa campeões." },
+      { property: "og:title", content: "Project Sports Agent" },
+      { property: "og:description", content: "Simulação profunda de uma agência de futebol e esportes de combate." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
