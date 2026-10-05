@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Project Sports Agent — Futebol e Esportes de Combate" },
-      { name: "description", content: "Gerencie uma agência de futebol, MMA, boxe e kickboxing: descubra talentos, negocie contratos e construa campeões." },
+      { name: "description", content: "Gerencie uma agência de futebol, MMA, boxe, kickboxing, jiu-jítsu e Muay Thai: descubra talentos, negocie contratos e construa campeões." },
       { property: "og:title", content: "Project Sports Agent" },
       { property: "og:description", content: "Simulação profunda de uma agência de futebol e esportes de combate." },
       { property: "og:type", content: "website" },

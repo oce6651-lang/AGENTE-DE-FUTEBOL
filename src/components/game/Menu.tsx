@@ -94,7 +94,7 @@ export function Menu({ hasSave, saves, onNew, onContinue, onLoad, onDelete }: Pr
           style={{ backgroundImage: "var(--gradient-primary)" }}>
           SPORTS AGENT
         </h2>
-        <p className="text-muted-foreground mt-3 text-sm">Futebol, MMA, boxe e kickboxing na mesma agência</p>
+        <p className="text-muted-foreground mt-3 text-sm">Futebol e cinco modalidades de luta na mesma agência</p>
       </div>
 
       <div className="flex flex-col gap-3 w-full max-w-xs">
