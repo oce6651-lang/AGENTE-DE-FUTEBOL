@@ -8,3 +8,9 @@
 - [ ] Adicionar jiu-jítsu profissional e Muay Thai como modalidades completas.
 - [ ] Adaptar regras, organizações, contratos, rankings e históricos por modalidade.
 - [ ] Migrar as cinco carreiras e validar os dois novos fluxos completos.
+- [ ] Implementar os sete estágios de carreira dos lutadores, da origem informal à elite.
+- [ ] Integrar treino, academias, transições de modalidade e cartéis separados à progressão.
+- [ ] Completar contratos, negociação, patrocínios e oportunidades adequadas a cada circuito.
+- [ ] Criar lutas acompanháveis com simulação persistida e relatório técnico.
+- [ ] Implementar descoberta em locais exploráveis com eventos e observação progressiva.
+- [ ] Validar progressão, compatibilidade das carreiras e o fluxo completo de descoberta até a luta.
