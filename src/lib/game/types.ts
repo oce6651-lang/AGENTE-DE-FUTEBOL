@@ -397,6 +397,45 @@ export interface Agent {
 // ============ Esportes de combate ============
 
 export type CombatSport = "MMA" | "Boxe" | "Kickboxing" | "Jiu-jítsu" | "Muay Thai";
+export type CombatStage = "Origem informal" | "Formação amadora" | "MMA amador" | "Profissional regional" | "Circuito nacional" | "Cenário internacional" | "Elite mundial";
+export type CombatCircuit = "informal" | "amador" | "profissional";
+export type CombatTraining = "Equilibrado" | "Trocação" | "Grappling" | "Condicionamento" | "Defesa";
+export interface CombatAction {
+  second: number;
+  round: number;
+  text: string;
+  fighterScore: number;
+  opponentScore: number;
+}
+export interface CombatCareer {
+  version: 1;
+  stage: CombatStage;
+  weeksTraining: number;
+  experience: number;
+  training: CombatTraining;
+  gymLevel: number;
+  informalRecord: CombatRecord;
+  amateurRecord: CombatRecord;
+  professionalRecord: CombatRecord;
+  sportArchives: { sport: CombatSport; record: CombatRecord; amateurRecord: CombatRecord; professionalRecord: CombatRecord }[];
+  titles: string[];
+  lastFightWeek?: number;
+  lastDevelopmentWeek?: number;
+  development: number;
+  transitionWeeks: number;
+  sponsorship?: { name: string; monthlyValue: number; weeksRemaining: number; lastPaymentWeek?: number };
+  origin: string;
+}
+export interface CombatVisit {
+  id: string;
+  locationId: string;
+  sport: CombatSport;
+  event: string;
+  weekIndex: number;
+  candidates: Fighter[];
+  attended: boolean;
+  actions: CombatAction[];
+}
 export type CombatStance = "Destro" | "Canhoto" | "Ambidestro";
 export type CombatResult = "V" | "D" | "E" | "NC";
 export type CombatMethod = "Nocaute" | "Nocaute técnico" | "Finalização" | "Pontos" | "Vantagens" | "Decisão dos árbitros" | "Desclassificação" | "Decisão unânime" | "Decisão dividida" | "Empate" | "Sem resultado";
@@ -444,6 +483,10 @@ export interface FightHistoryEntry {
   /** Formato específico da modalidade, como kimono ou sem kimono. */
   format?: "Com kimono" | "Sem kimono" | "Muay Thai";
   score?: string;
+  sport?: CombatSport;
+  circuit?: CombatCircuit;
+  actions?: CombatAction[];
+  report?: string;
 }
 
 export interface CombatContract {
@@ -453,6 +496,7 @@ export interface CombatContract {
   winBonus: number;
   agencyCommission: number;
   expiresYear: number;
+  exclusive?: boolean;
 }
 
 export interface ScheduledFight {
@@ -471,6 +515,10 @@ export interface ScheduledFight {
   titleFight: boolean;
   purse: number;
   winBonus: number;
+  circuit?: CombatCircuit;
+  roundSeconds?: number;
+  fee?: number;
+  negotiatedFights?: number;
 }
 
 export interface Fighter {
@@ -488,7 +536,7 @@ export interface Fighter {
   stance: CombatStance;
   style: string;
   /** Graduação usada no circuito profissional de jiu-jítsu. */
-  belt?: "Faixa-roxa" | "Faixa-marrom" | "Faixa-preta";
+  belt?: "Faixa-branca" | "Faixa-azul" | "Faixa-roxa" | "Faixa-marrom" | "Faixa-preta";
   gym: string;
   coach: string;
   attributes: CombatAttributes;
@@ -512,6 +560,8 @@ export interface Fighter {
   goals: string[];
   rivalries: string[];
   timeline: string[];
+  career?: CombatCareer;
+  scoutReports?: { weekIndex: number; location: string; text: string }[];
 }
 
 export interface CombatOrganization {
@@ -539,6 +589,11 @@ export interface CombatOffer {
   titleFight: boolean;
   status: "aberta" | "aceita" | "recusada";
   expiresIn: number;
+  circuit?: CombatCircuit;
+  fee?: number;
+  negotiations?: number;
+  durationYears?: number;
+  exclusive?: boolean;
 }
 
 export interface GameState {
@@ -595,6 +650,7 @@ export interface GameState {
   combatOffers?: CombatOffer[];
   combatHistory?: Fighter[];
   combatReputation?: Record<CombatSport, number>;
+  combatVisits?: CombatVisit[];
   seed: number;
   criadoEm: string;
   atualizadoEm: string;
