@@ -14,3 +14,4 @@
 - [ ] Criar lutas acompanháveis com simulação persistida e relatório técnico.
 - [ ] Implementar descoberta em locais exploráveis com eventos e observação progressiva.
 - [ ] Validar progressão, compatibilidade das carreiras e o fluxo completo de descoberta até a luta.
+- [ ] Retomar a integração dos módulos já criados, preservando futebol, futsal e os cinco espaços salvos.
