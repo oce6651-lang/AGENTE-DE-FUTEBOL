@@ -2,6 +2,8 @@ import type { GameState } from "./types";
 import { competicoesDoClube, ligaPrincipal } from "./data/leagues";
 import { combatOrganizations, defaultCombatReputation } from "./combat";
 
+import { migrateFighter } from "./combat/career";
+
 const LEGACY_KEY = "pfa_save_v6";
 const INDEX_KEY = "pfa_career_slots_v1";
 const ACTIVE_KEY = "pfa_active_career_v1";
@@ -119,11 +121,12 @@ export function loadGame(slotId?: string): GameState | null {
       historicoAgencia: parsed.historicoAgencia ?? [],
       titulosMundo: parsed.titulosMundo ?? [],
       competicoesCustom,
-      combatFighters: parsed.combatFighters ?? [],
-      combatRadar: parsed.combatRadar ?? [],
-      combatOrganizations: parsed.combatOrganizations?.length ? parsed.combatOrganizations : combatOrganizations(),
+      combatFighters: (parsed.combatFighters ?? []).map(migrateFighter),
+      combatRadar: (parsed.combatRadar ?? []).map(migrateFighter),
+      combatOrganizations: [...combatOrganizations(), ...(parsed.combatOrganizations ?? []).filter(org => !combatOrganizations().some(current => current.id === org.id))],
       combatOffers: parsed.combatOffers ?? [],
-      combatHistory: parsed.combatHistory ?? [],
+      combatHistory: (parsed.combatHistory ?? []).map(migrateFighter),
+      combatVisits: parsed.combatVisits ?? [],
       combatReputation: { ...defaultCombatReputation(), ...(parsed.combatReputation ?? {}) },
     };
   } catch {
