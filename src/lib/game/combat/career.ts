@@ -4,14 +4,14 @@ export const STAGES: CombatStage[] = ['Origem informal', 'Formação amadora', '
 export const emptyRecord = () => ({ wins: 0, losses: 0, draws: 0, noContests: 0, knockouts: 0, submissions: 0, decisions: 0 });
 export const weekIndex = (state: Pick<GameState, 'ano' | 'mes' | 'semana'>) => state.ano * 48 + (state.mes - 1) * 4 + state.semana;
 export function combatRating(a: CombatAttributes, sport: CombatSport) {
-  const technical = sport === 'MMA' ? (a.striking + a.grappling + a.wrestling) / 3 : sport === 'Jiu-jítsu' ? (a.grappling * 1.55 + a.wrestling * .85 + a.defense * .35) / 2.75 : (a.striking * 1.5 + a.defense) / 2.5;
+  const technical = sport === 'MMA' ? (a.striking + a.grappling + a.wrestling) / 3 : sport === 'Jiu-jítsu' ? (a.grappling * 1.55 + a.wrestling * .85 + a.defense * .35) / 2.75 : sport === 'Muay Thai' ? (a.striking * 1.45 + a.power * .45 + a.defense * .65) / 2.55 : sport === 'Kickboxing' ? (a.striking * 1.35 + a.defense) / 2.35 : (a.striking * 1.5 + a.defense) / 2.5;
   return Math.round(technical * .45 + a.cardio * .12 + a.speed * .1 + a.power * .1 + a.fightIQ * .13 + a.chin * .1);
 }
 export function migrateFighter(f: Fighter): Fighter {
   if (f.career?.version === 1) return f;
   const org = COMBAT_ORGANIZATIONS.find(o => o.id === f.organizationId);
   const level = org?.level ?? 0;
-  const professional = Boolean(f.contract || f.organizationId || f.fightHistory.length);
+  const professional = Boolean(f.contract || f.organizationId || f.fightHistory.length || f.record.wins || f.record.losses);
   const stage: CombatStage = level >= 9 ? 'Elite mundial' : level >= 7 ? 'Cenário internacional' : level >= 5 ? 'Circuito nacional' : professional ? 'Profissional regional' : 'Origem informal';
   const career: CombatCareer = { version: 1, stage, weeksTraining: professional ? 96 : 0, experience: professional ? (f.record.wins + f.record.losses) * 8 : 0, training: 'Equilibrado', gymLevel: professional ? 2 : 1, informalRecord: emptyRecord(), amateurRecord: emptyRecord(), professionalRecord: professional ? { ...f.record } : emptyRecord(), sportArchives: [], titles: [], development: 0, transitionWeeks: 0, origin: f.city };
   return { ...f, career, record: professional ? f.record : emptyRecord(), rating: combatRating(f.attributes, f.sport), scoutReports: f.scoutReports ?? [] };
@@ -20,7 +20,8 @@ export function stageEligible(f: Fighter, rep: number): CombatStage {
   const c = migrateFighter(f).career;
   if (!c) return 'Origem informal';
   const pro = c.professionalRecord, am = c.amateurRecord;
-  if (c.stage === 'Elite mundial' || (c.weeksTraining >= 240 && pro.wins >= 18 && pro.wins > pro.losses * 2 && f.rating >= 78 && rep >= 45)) return 'Elite mundial';
+  const recent = f.fightHistory.slice(0, 5).filter(h => h.result === 'V').length;
+  if (c.stage === 'Elite mundial' || (c.weeksTraining >= 240 && pro.wins >= 18 && pro.wins > pro.losses * 2 && recent >= 3 && f.rating >= 78 && rep >= 45 && f.attributes.discipline >= 50)) return 'Elite mundial';
   if (c.stage === 'Cenário internacional' || (c.weeksTraining >= 160 && pro.wins >= 12 && f.rating >= 65 && rep >= 25)) return 'Cenário internacional';
   if (c.stage === 'Circuito nacional' || (c.weeksTraining >= 100 && pro.wins >= 6 && f.rating >= 50 && rep >= 12)) return 'Circuito nacional';
   if (c.stage === 'Profissional regional' || (c.weeksTraining >= 48 && am.wins >= 5 && f.rating >= 35 && c.transitionWeeks === 0)) return 'Profissional regional';
@@ -48,7 +49,7 @@ export function developFighter(fighter: Fighter, state: GameState, reputation: n
   const focus: Record<CombatTraining, (keyof CombatAttributes)[]> = { Equilibrado: ['striking', 'grappling', 'wrestling', 'defense', 'cardio', 'fightIQ'], Trocação: ['striking', 'power', 'speed'], Grappling: ['grappling', 'wrestling', 'fightIQ'], Condicionamento: ['cardio', 'weightCut', 'chin'], Defesa: ['defense', 'speed', 'fightIQ'] };
   if (development >= 1) { const keys = focus[c.training]; const key = keys[index % keys.length]; if (key) attrs[key] = Math.min(f.potential, attrs[key] + 1); development -= 1; }
   if (age >= 34 && index % 24 === 0) { attrs.speed = Math.max(10, attrs.speed - 1); attrs.cardio = Math.max(10, attrs.cardio - 1); }
-  f = { ...f, age: Math.max(18, age), attributes: attrs, rating: combatRating(attrs, f.sport), career: { ...c, development, lastDevelopmentWeek: index, weeksTraining: c.weeksTraining + (active ? 1 : 0), transitionWeeks: Math.max(0, c.transitionWeeks - (active ? 1 : 0)) } };
+   f = { ...f, age: Math.max(18, age), attributes: attrs, rating: combatRating(attrs, f.sport), career: { ...c, development, lastDevelopmentWeek: index, weeksTraining: c.weeksTraining + (active ? 1 : 0), transitionWeeks: Math.max(0, c.transitionWeeks - (active ? 1 : 0)) } };
   const stage = stageEligible(f, reputation);
   if (stage !== c.stage && f.career) f = { ...f, career: { ...f.career, stage }, timeline: [...f.timeline, `${state.mes}/${state.ano}: avançou para ${stage}.`] };
   if (f.sport === 'Jiu-jítsu') { const weeks = f.career?.weeksTraining ?? 0; const belt = weeks >= 480 ? 'Faixa-preta' : weeks >= 360 ? 'Faixa-marrom' : weeks >= 240 ? 'Faixa-roxa' : weeks >= 96 ? 'Faixa-azul' : 'Faixa-branca'; if (!f.belt || ['Faixa-branca', 'Faixa-azul', 'Faixa-roxa', 'Faixa-marrom', 'Faixa-preta'].indexOf(belt) > ['Faixa-branca', 'Faixa-azul', 'Faixa-roxa', 'Faixa-marrom', 'Faixa-preta'].indexOf(f.belt)) f = { ...f, belt, timeline: [...f.timeline, `${state.mes}/${state.ano}: graduação ${belt}.`] }; }
