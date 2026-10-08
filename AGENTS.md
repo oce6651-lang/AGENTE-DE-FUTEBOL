@@ -14,3 +14,4 @@
 - Keep combat sports in isolated domain modules while sharing the career clock and agency finances; this protects football simulation rules from cross-domain regressions.
 - Persist combat actions with each resolved fight and replay only that stored history; this prevents duplicate results and payments.
 - Store scouting visits and their candidate IDs in each career, exposing candidates only after attendance; this keeps discovery progressive and repeatable.
+- Run combat domain regression tests with Bun's test runner; this verifies persisted careers and simulation without browser dependencies.
