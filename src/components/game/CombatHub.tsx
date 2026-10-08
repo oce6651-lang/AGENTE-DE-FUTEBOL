@@ -6,8 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { answerFightOffer, defaultCombatReputation, discoverCombatTalent, scoutFighter, seekFightOffer, setFightStrategy, signFighter, strategiesFor } from "@/lib/game/combat";
-import type { CombatOffer, CombatSport, Fighter, GameState, ScheduledFight } from "@/lib/game/types";
+import { answerFightOffer, defaultCombatReputation, scoutFighter, seekFightOffer, setFightStrategy, signFighter, strategiesFor } from "@/lib/game/combat";
+import type { CombatOffer, CombatSport, Fighter, FightHistoryEntry, GameState } from "@/lib/game/types";
+
+import { CombatDiscovery } from "./CombatDiscovery";
+import { CombatCareerControls, CombatOfferNegotiation } from "./CombatCareerControls";
+import { CombatPlayback } from "./CombatPlayback";
+import { attendCombatVisit, talkToFighter } from "@/lib/game/combat/discovery";
 
 type Section = "overview" | "radar" | "fighters" | "offers" | "organizations";
 
@@ -20,6 +25,8 @@ export function CombatHub({ state, setState, onBack }: {
 }) {
   const [section, setSection] = useState<Section>("overview");
   const [sport, setSport] = useState<CombatSport>("MMA");
+  const [visitId, setVisitId] = useState<string | null>(null);
+  const [replay, setReplay] = useState<{ name: string; fight: FightHistoryEntry } | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const fighters = state.combatFighters ?? [];
   const radar = state.combatRadar ?? [];
@@ -37,6 +44,10 @@ export function CombatHub({ state, setState, onBack }: {
     setState(action.state);
     toast(action.message);
   };
+
+  const visit = (state.combatVisits ?? []).find(item => item.id === visitId);
+  if (visit) return <div className="p-4"><CombatPlayback key={visit.id} title={`${visit.event} • ${visit.sport}`} actions={visit.actions} onBack={() => setVisitId(null)} onComplete={visit.attended ? undefined : () => { setState(attendCombatVisit(state, visit.id)); setVisitId(null); setSection("radar"); }} /></div>;
+  if (replay) return <div className="p-4"><CombatPlayback key={replay.fight.id} title={`${replay.name} x ${replay.fight.opponent}`} actions={replay.fight.actions ?? []} report={replay.fight.report ?? `${replay.fight.result} • ${replay.fight.method}`} onBack={() => setReplay(null)} /></div>;
 
   return (
     <div className="p-4 space-y-4 animate-in fade-in duration-300">
@@ -102,11 +113,7 @@ export function CombatHub({ state, setState, onBack }: {
           ) : (
             <Card className="p-5 text-center text-sm text-muted-foreground">Nenhuma luta marcada. Contrate um talento e procure uma oportunidade.</Card>
           )}
-          <Card className="p-4 space-y-3">
-            <div className="flex items-center gap-2 font-black"><Search className="size-4 text-primary" /> Observação regional</div>
-            <p className="text-xs text-muted-foreground">Visite academias e eventos amadores. Cada viagem custa R$ 280 e consome 1 de energia.</p>
-            <Button className="w-full" onClick={() => run(discoverCombatTalent(state, sport))}>Buscar talentos de {sport}</Button>
-          </Card>
+          <CombatDiscovery state={state} sport={sport} run={run} onWatch={setVisitId} />
         </div>
       )}
 
@@ -114,11 +121,12 @@ export function CombatHub({ state, setState, onBack }: {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Atributos e potencial ficam mais precisos após novas observações.</p>
-            <Button size="sm" onClick={() => run(discoverCombatTalent(state, sport))}><Search className="size-4" /> Buscar</Button>
+            <Button size="sm" onClick={() => setSection("overview")}><Search className="size-4" /> Buscar</Button>
           </div>
           {!filteredRadar.length && <Empty text={`Nenhum talento de ${sport} no radar.`} />}
           {filteredRadar.map(fighter => (
             <FighterCard key={fighter.id} fighter={fighter} expanded={expanded === fighter.id} onExpand={() => setExpanded(expanded === fighter.id ? null : fighter.id)}>
+              <Button variant="outline" className="w-full" onClick={() => run(talkToFighter(state, fighter.id))}>Conversar com o lutador</Button>
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={() => run(scoutFighter(state, fighter.id))}>Observar • R$ 120</Button>
                 <Button onClick={() => run(signFighter(state, fighter.id))}>Oferecer contrato</Button>
@@ -150,7 +158,8 @@ export function CombatHub({ state, setState, onBack }: {
               ) : (
                 <Button className="w-full" onClick={() => run(seekFightOffer(state, fighter.id))}><Target className="size-4" /> Procurar luta</Button>
               )}
-              <FightHistory fighter={fighter} />
+              <CombatCareerControls fighter={fighter} state={state} run={run} />
+              <FightHistory fighter={fighter} onReplay={fight => setReplay({ name: fighter.name, fight })} />
             </FighterCard>
           ))}
         </div>
@@ -159,7 +168,7 @@ export function CombatHub({ state, setState, onBack }: {
       {section === "offers" && (
         <div className="space-y-3">
           {!offers.length && <Empty text="Nenhuma proposta em aberto." />}
-          {offers.map(offer => <OfferCard key={offer.id} offer={offer} state={state} onAnswer={accept => run(answerFightOffer(state, offer.id, accept))} />)}
+          {offers.map(offer => <OfferCard key={offer.id} offer={offer} state={state} run={run} onAnswer={accept => run(answerFightOffer(state, offer.id, accept))} />)}
         </div>
       )}
 
@@ -227,16 +236,16 @@ function FighterCard({ fighter, expanded, onExpand, children }: { fighter: Fight
   );
 }
 
-function FightHistory({ fighter }: { fighter: Fighter }) {
+function FightHistory({ fighter, onReplay }: { fighter: Fighter; onReplay: (fight: FightHistoryEntry) => void }) {
   if (!fighter.fightHistory.length) return <div className="text-xs text-muted-foreground">Nenhuma luta registrada desde a entrada na agência.</div>;
-  return <div><div className="mb-2 text-[10px] font-black uppercase text-muted-foreground">Histórico de lutas</div><div className="space-y-2">{fighter.fightHistory.map(fight => <div key={fight.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md bg-secondary/40 p-2 text-[11px]"><Badge variant={fight.result === "V" ? "default" : fight.result === "D" ? "destructive" : "secondary"}>{fight.result}</Badge><div className="min-w-0"><div className="truncate font-bold">{fight.opponent}</div><div className="truncate text-muted-foreground">{fight.event} • {fight.format ? `${fight.format} • ` : ""}{fight.method}{fight.score ? ` (${fight.score})` : ""} {fighter.sport === "Jiu-jítsu" ? fight.time : `R${fight.round} ${fight.time}`}</div></div><div className="text-right"><div className="font-bold">R$ {fight.purse.toLocaleString("pt-BR")}</div><div className="text-[9px] text-muted-foreground">{fight.month}/{fight.year}</div></div></div>)}</div></div>;
+  return <div><div className="mb-2 text-[10px] font-black uppercase text-muted-foreground">Histórico de lutas</div><div className="space-y-2">{fighter.fightHistory.map(fight => <div key={fight.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md bg-secondary/40 p-2 text-[11px]"><Badge variant={fight.result === "V" ? "default" : fight.result === "D" ? "destructive" : "secondary"}>{fight.result}</Badge><div className="min-w-0"><div className="truncate font-bold">{fight.opponent}</div><div className="truncate text-muted-foreground">{fight.event} • {fight.format ? `${fight.format} • ` : ""}{fight.method}{fight.score ? ` (${fight.score})` : ""} {fighter.sport === "Jiu-jítsu" ? fight.time : `R${fight.round} ${fight.time}`}</div></div><div className="text-right"><div className="font-bold">R$ {fight.purse.toLocaleString("pt-BR")}</div><div className="text-[9px] text-muted-foreground">{fight.month}/{fight.year}</div><Button size="sm" variant="ghost" onClick={() => onReplay(fight)}>Rever luta</Button></div></div>)}</div></div>;
 }
 
-function OfferCard({ offer, state, onAnswer }: { offer: CombatOffer; state: GameState; onAnswer: (accept: boolean) => void }) {
+function OfferCard({ offer, state, run, onAnswer }: { offer: CombatOffer; state: GameState; run: (action: { state: GameState; message: string }) => void; onAnswer: (accept: boolean) => void }) {
   const fighter = (state.combatFighters ?? []).find(item => item.id === offer.fighterId);
   const organization = (state.combatOrganizations ?? []).find(item => item.id === offer.organizationId);
   if (!fighter) return null;
-  return <Card className="p-4"><div className="flex items-start justify-between gap-3"><div><div className="text-[10px] font-black uppercase text-primary">{organization?.name ?? "Evento regional"}</div><div className="font-black">{fighter.name} x {offer.opponent}</div><div className="text-xs text-muted-foreground">{offer.event} • em {offer.weeksUntilFight} semanas • adversário nível {offer.opponentRating}</div></div>{offer.titleFight && <Badge><Trophy className="size-3" /> Cinturão</Badge>}</div><div className="my-3 grid grid-cols-3 gap-2"><MiniStat label="Bolsa" value={`R$ ${offer.purse.toLocaleString("pt-BR")}`} /><MiniStat label="Bônus vitória" value={`R$ ${offer.winBonus.toLocaleString("pt-BR")}`} /><MiniStat label="Contrato" value={`${offer.contractFights} luta(s)`} /></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => onAnswer(false)}>Recusar</Button><Button onClick={() => onAnswer(true)}>Aceitar e iniciar camp</Button></div></Card>;
+  return <Card className="p-4"><div className="flex items-start justify-between gap-3"><div><div className="text-[10px] font-black uppercase text-primary">{organization?.name ?? "Evento regional"}</div><div className="font-black">{fighter.name} x {offer.opponent}</div><div className="text-xs text-muted-foreground">{offer.event} • em {offer.weeksUntilFight} semanas • adversário nível {offer.opponentRating}</div></div>{offer.titleFight && <Badge><Trophy className="size-3" /> Cinturão</Badge>}</div><div className="my-3 grid grid-cols-3 gap-2"><MiniStat label="Bolsa" value={`R$ ${offer.purse.toLocaleString("pt-BR")}`} /><MiniStat label="Bônus vitória" value={`R$ ${offer.winBonus.toLocaleString("pt-BR")}`} /><MiniStat label="Contrato" value={`${offer.contractFights} luta(s)`} /></div><CombatOfferNegotiation key={offer.id} offer={offer} state={state} run={run} /><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => onAnswer(false)}>Recusar</Button><Button onClick={() => onAnswer(true)}>Aceitar e iniciar camp</Button></div></Card>;
 }
 
 function Meter({ label, value }: { label: string; value: number }) {

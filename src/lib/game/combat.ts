@@ -52,7 +52,7 @@ export function generateFighter(state: GameState, sport?: CombatSport): Fighter 
   const wins = 0;
   const losses = random(0, Math.min(4, Math.ceil(wins / 2)));
   const isBjj = chosenSport === "Jiu-jítsu";
-  const record: CombatRecord = { wins, losses, draws: Math.random() < 0.12 ? 1 : 0, noContests: 0, knockouts: isBjj ? 0 : random(0, wins), submissions: chosenSport === "MMA" || isBjj ? random(0, wins) : 0, decisions: 0 };
+  const record: CombatRecord = { wins, losses, draws: 0, noContests: 0, knockouts: isBjj ? 0 : random(0, wins), submissions: chosenSport === "MMA" || isBjj ? random(0, wins) : 0, decisions: 0 };
   record.submissions = Math.min(record.submissions, wins - record.knockouts);
   record.decisions = Math.max(0, wins - record.knockouts - record.submissions);
   const year = state.ano - age;
@@ -187,9 +187,9 @@ export function processCombatWeek(state: GameState, events: string[]): GameState
     }
     const sponsorship = next.career?.sponsorship;
     if (next.career && sponsorship && sponsorship.weeksRemaining > 0 && sponsorship.lastPaymentWeek !== weekIndex(state)) {
-      const payout = state.semana === 1 ? sponsorship.monthlyValue : 0;
+      const payout = state.semana === 1 ? Math.round(sponsorship.monthlyValue * (next.contract?.agencyCommission ?? .1)) : 0;
       money += payout;
-      if (payout) finances = [{ id: `sponsor-${next.id}-${weekIndex(state)}`, data: dateLabel(state), descricao: `Patrocínio de ${next.name}`, valor: payout, tipo: "receita" }, ...finances];
+      if (payout) finances = [{ id: `sponsor-${next.id}-${weekIndex(state)}`, data: dateLabel(state), descricao: `Comissão do patrocínio de ${next.name}`, valor: payout, tipo: "receita" }, ...finances];
       next = { ...next, career: { ...next.career, sponsorship: { ...sponsorship, weeksRemaining: sponsorship.weeksRemaining - 1, lastPaymentWeek: weekIndex(state) } } };
     }
     if (!next.scheduledFight) return next;
