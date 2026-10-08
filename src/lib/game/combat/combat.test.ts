@@ -50,6 +50,16 @@ describe('Descoberta e carreira de combate', () => {
     expect(developFighter(fighter, state, 0).career?.weeksTraining).toBe(1);
   });
 
+  test('Patrocínio paga somente a comissão de 10% e não duplica na mesma semana', () => {
+    const state = initial();
+    const generated = generateFighter(state, 'MMA');
+    if (!generated.career) throw new Error('Carreira não criada');
+    const fighter = { ...generated, career: { ...generated.career, sponsorship: { name: 'Patrocinador', monthlyValue: 1000, weeksRemaining: 48 } } };
+    const paid = processCombatWeek({ ...state, combatFighters: [fighter] }, []);
+    expect(paid.dinheiro - state.dinheiro).toBe(100);
+    expect(processCombatWeek(paid, []).dinheiro).toBe(paid.dinheiro);
+  });
+
   test('Luta resolvida guarda ações e não repete cartel nem pagamento', () => {
     const state = initial();
     const generated = generateFighter(state, 'Muay Thai');
