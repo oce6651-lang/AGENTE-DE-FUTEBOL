@@ -1,4 +1,4 @@
-import type { CombatSport, CombatVisit, GameState } from '../types';
+import type { CombatAttributes, CombatSport, CombatVisit, GameState } from '../types';
 import { generateFighter } from '../combat';
 import { combatRating, weekIndex } from './career';
 
@@ -20,7 +20,8 @@ export function bookCombatVisit(state: GameState, locationId: string, sport: Com
   const candidates = Array.from({ length: count }, () => {
     const fighter = generateFighter(state, sport);
     const bonus = (location.level - 1) * 7;
-    const attributes = Object.fromEntries(Object.entries(fighter.attributes).map(([key, value]) => [key, Math.min(65, value + bonus)])) as typeof fighter.attributes;
+    const attributes = { ...fighter.attributes };
+    for (const key of Object.keys(attributes) as (keyof CombatAttributes)[]) attributes[key] = Math.min(65, attributes[key] + bonus);
     return { ...fighter, attributes, rating: combatRating(attributes, sport), city: state.agent.cidade, gym: location.name, timeline: [`Conhecido em ${location.name} • ${state.mes}/${state.ano}.`], career: fighter.career ? { ...fighter.career, origin: location.name } : undefined };
   });
   const visit: CombatVisit = { id: crypto.randomUUID(), locationId, sport, event, weekIndex: weekIndex(state), candidates, attended: false, actions: Array.from({ length: 8 }, (_, i) => ({ second: (i + 1) * 30, round: 1, fighterScore: 0, opponentScore: 0, text: i === 7 ? 'Atividade encerrada. Avaliação dos participantes disponível.' : `${event}: ${['aquecimento e movimentação', 'exercícios técnicos', 'trabalho de defesa', 'troca de posições', 'condicionamento', 'atividade em dupla', 'orientação do treinador'][i]}.` })) };
